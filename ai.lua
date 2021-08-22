@@ -299,16 +299,27 @@ end
 WORLD_ROWS = getWorldRows()
 KNOWN_WORLD = emptyWorldGrid()
 
+MAX_TILES=14400
+NR_TILES_SEEN=0
+function updateKnownWorld(x,y, tileId)
+  if KNOWN_WORLD[y+1][x+1] == false
+    then
+      KNOWN_WORLD[y+1][x+1] = tileId
+      NR_TILES_SEEN=NR_TILES_SEEN+1
+      print ("discovered new tile at (x: " .. x .. ", y: " .. y .. "), tile is: " .. OverworldTiles[tileId])
+  end
+end
+
+function percentageOfWorldSeen()
+  return NR_TILES_SEEN/MAX_TILES*100
+end
+
 -- returns the tile id for the given (x,y) for the overworld
 -- {["name"] = "Overworld", ["size"] = {120,120}, ["romAddr"] = {0x1D6D, 0x2668}},
 function getOverworldMapTileIdAt(x, y)
   local tileId = WORLD_ROWS[y+1][x+1]
   -- optimization... each time we get a visible tile, record it in what we have seen
-  if KNOWN_WORLD[y+1][x+1] == false
-    then
-      KNOWN_WORLD[y+1][x+1] = tileId
-      print ("discovered new tile at (x: " .. x .. ", y: " .. y .. "), tile is: " .. OverworldTiles[tileId])
-  end
+  updateKnownWorld(x,y,tileId)
   return tileId
 end
 
@@ -556,11 +567,13 @@ function playerMove(address)
   print("x: " .. getX() .. " y: " .. getY())
   -- todo: will have to fix this to check if on world map.
   printVisibleGrid()
+  print("percentageOfWorldSeen: " .. percentageOfWorldSeen())
 end
 
 -- main loop
 function main()
   emu.speedmode("normal")
+  emu.print("test")
   memory.registerexecute(0xcf44, encounter)
   memory.registerwrite(0x3a, playerMove)
   memory.registerwrite(0x3b, playerMove)
