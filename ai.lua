@@ -285,13 +285,72 @@ function getWorldRows ()
   return rows
 end
 
+function emptyWorldGrid()
+  res = {}
+  for y = 1, 120 do
+    res[y] = {}
+    for x = 1, 120 do
+      res[y][x]=false
+    end
+  end
+  return res
+end
+
 WORLD_ROWS = getWorldRows()
+KNOWN_WORLD = emptyWorldGrid()
 
 -- returns the tile id for the given (x,y) for the overworld
 -- {["name"] = "Overworld", ["size"] = {120,120}, ["romAddr"] = {0x1D6D, 0x2668}},
 function getOverworldMapTileIdAt(x, y)
-  return OverworldTiles[WORLD_ROWS[y][x]]
+  local tileId = WORLD_ROWS[y+1][x+1]
+  -- optimization... each time we get a visible tile, record it in what we have seen
+  if KNOWN_WORLD[y+1][x+1] == false
+    then
+      KNOWN_WORLD[y+1][x+1] = tileId
+      print ("discovered new tile at (x: " .. x .. ", y: " .. y .. "), tile is: " .. OverworldTiles[tileId])
+  end
+  return tileId
 end
+
+function getOverworldMapTileAt(x, y)
+  return OverworldTiles[getOverworldMapTileIdAt(x, y)]
+end
+
+function getVisibleOverworldGrid()
+  local upperLeftX = math.max(0, getX() - 8)
+  local upperLeftY = math.max(0, getY() - 6)
+
+  local bottomRightX = math.min(120, getX() + 7)
+  local bottomRightY = math.min(120, getY() + 7)
+
+  local res = {}
+  for y = upperLeftY, bottomRightY do
+    res[y-upperLeftY+1] = {}
+    for x = upperLeftX, bottomRightX do
+      res[y-upperLeftY+1][x-upperLeftX+1]=getOverworldMapTileIdAt(x, y)
+    end
+  end
+  return res
+end
+
+function printVisibleGrid ()
+  if getMapId() == 1 -- overworld
+    then printVisibleOverworldGrid ()
+  end
+end
+
+function printVisibleOverworldGrid ()
+  local grid = getVisibleOverworldGrid()
+  for y = 1, #(grid) do
+    local row = ""
+    for x = 1, #(grid[y]) do
+      row = row .. " | " .. OverworldTiles[grid[y][x]]
+    end
+    print(row .. " |")
+  end
+  print("-------------------------")
+end
+
 
 emptyInputs = {
   ["start"] = nil,
@@ -483,12 +542,8 @@ function encounter(address)
   local mapId = getMapId()
   if (mapId > 0) then
     print ("entering battle vs a " .. Enemies[getEnemyId()])
---     player.valid_tile = false
---     battle_message(strings.encounter, memory.readbyte(0x3c)+1)
---     pre_battle = true
   end
 end
-
 
 -- DB10 - DB1F | "Return" placement code
 -- 56080 - 56095
@@ -497,15 +552,21 @@ function setReturnWarpLocation(x, y)
   writeROM(0xDB1D, y)
 end
 
+function playerMove(address)
+  print("x: " .. getX() .. " y: " .. getY())
+  -- todo: will have to fix this to check if on world map.
+  printVisibleGrid()
+end
+
 -- main loop
 function main()
   emu.speedmode("normal")
+  memory.registerexecute(0xcf44, encounter)
+  memory.registerwrite(0x3a, playerMove)
+  memory.registerwrite(0x3b, playerMove)
   hud_main()
-  setReturnWarpLocation(119,119)
-  -- runGameStartScript()
-  print("x: " .. getX())
-  print("y: " .. getY())
 
+--   runGameStartScript()
   while true do
     emu.frameadvance()
   end
