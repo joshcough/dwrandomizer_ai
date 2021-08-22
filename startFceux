@@ -1,3 +1,7 @@
+ln -s /Users/joshcough/work/dwrandomizer_ai/controller.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/controller.lua
+ln -s /Users/joshcough/work/dwrandomizer_ai/enemies.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/enemies.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/ai.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/ai.lua
+ln -s /Users/joshcough/work/dwrandomizer_ai/helpers.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/helpers.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/hud.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/hud.lua
+ln -s /Users/joshcough/work/dwrandomizer_ai/maps.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/maps.lua
 fceux
