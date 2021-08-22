@@ -1,5 +1,10 @@
+require 'hud'
+
 function readMemory(addr) return memory.readbyte(addr) end
 function writeMemory(addr, value) memory.writebyte(addr, value) end
+
+function readROM(addr) return rom.readbyte(addr) end
+function writeROM(addr, value) rom.writebyte(addr, value) end
 
 function bitwise_and(a, b)
   local result = 0
@@ -13,6 +18,28 @@ function bitwise_and(a, b)
     b = math.floor(b/2)
   end
   return result
+end
+
+function decimalToHex(num)
+    if num == 0 then
+        return '0'
+    end
+    local neg = false
+    if num < 0 then
+        neg = true
+        num = num * -1
+    end
+    local hexstr = "0123456789ABCDEF"
+    local result = ""
+    while num > 0 do
+        local n = math.mod(num, 16)
+        result = string.sub(hexstr, n + 1, n + 1) .. result
+        num = math.floor(num / 16)
+    end
+    if neg then
+        result = '-' .. result
+    end
+    return result
 end
 
 -- HI_NIBBLE(b) (((b) >> 4) & 0x0F)
@@ -32,7 +59,7 @@ function table.shallow_copy(t)
 end
 
 MapData = {
-  [1] = {["name"] = "Overworld", ["size"] = {120,120}, ["romAddr"] = {0x1D6, 0x2668}},
+  [1] = {["name"] = "Overworld", ["size"] = {120,120}, ["romAddr"] = {0x1D6D, 0x2668}},
   [2] = {["name"] = "Charlock", ["size"] = {20,20}, ["romAddr"] = {0xC0, 0x187}},
   [3] = {["name"] = "Hauksness", ["size"] = {20,20}, ["romAddr"] = {0x188, 0x24f}},
   [4] = {["name"] = "Tantegel", ["size"] = {30,30}, ["romAddr"] = {0x250, 0x411}},
@@ -81,6 +108,50 @@ Tiles = {
   [0xE] = "Bridge",
   [0xF] = "Large Tile",
 }
+
+Enemies = {
+  "Slime",  -- 0
+  "Red Slime",
+  "Drakee",
+  "Ghost",
+  "Magician",
+  "Magidrakee", -- 5
+  "Scorpion",
+  "Druin",
+  "Poltergeist",
+  "Droll",
+  "Drakeema",  --10
+  "Skeleton",
+  "Warlock",
+  "Metal Scorpion",
+  "Wolf",
+  "Wraith",  --15
+  "Metal Slime",
+  "Specter",
+  "Wolflord",
+  "Druinlord",
+  "Drollmagi",  --20
+  "Wyvern",
+  "Rogue Scorpion",
+  "Wraith Knight",
+  "Golem",
+  "Goldman",  -- 25
+  "Knight",
+  "Magiwyvern",
+  "Demon Knight",
+  "Werewolf",
+  "Green Dragon",  -- 30
+  "Starwyvern",
+  "Wizard",
+  "Axe Knight",
+  "Blue Dragon",
+  "Stoneman", --35
+  "Armored Knight",
+  "Red Dragon",
+  "Dragonlord",  --first form
+  "Dragonlord"  --second form
+}
+
 
 MapAddress = 0x45
 X_ADDR = 0x8e
@@ -146,6 +217,80 @@ function printMap ()
   end
   print(row .. " |")
   end
+end
+
+OverworldTiles = {
+  [0] = "Grass",
+  [1] = "Desert",
+  [2] = "Hills",
+  [3] = "Mountain",
+  [4] = "Water",
+  [5] = "Rock Wall",
+  [6] = "Forest",
+  [7] = "Swamp",
+  [8] = "Town",
+  [9] = "Cave",
+  [0xA] = "Castle",
+  [0xB] = "Bridge",
+  [0xC] = "Stairs",
+}
+
+-- 1D6D - 2662  | Overworld map          | RLE encoded, 1st nibble is tile, 2nd how many - 1
+-- 2663 - 26DA  | Overworld map pointers | 16 bits each - address of each row of the map. (value - 0x8000 + 16)
+function decodeWorldPointer (p)
+  -- mcgrew: Keep in mind they are in little endian format.
+  -- mcgrew: So it's LOW_BYTE, HIGH_BYTE
+  -- Also keep in mind they are addresses as the NES sees them, so to get the address in
+  -- ROM you'll need to subtract 0x8000 (and add 16 for the header)
+  local lowByte = readROM(p)
+  local highByte = readROM(p+1)
+  -- left shift the high byte by 8
+  local shiftedHighByte = highByte * (2 ^ 8)
+  local addr = shiftedHighByte + lowByte - 0x8000 + 16
+  return addr
+end
+
+function getWorldPointers ()
+  local res = {}
+  for i = 0,119 do
+    res[i+1] = decodeWorldPointer(0x2663 + i * 2)
+  end
+  return res
+end
+
+function getOverworldTileRow(overworldPointer)
+  local totalCount = 0
+  local tileIds = {}
+  local currentAddr = overworldPointer
+
+  while( totalCount < 120 )
+  do
+    tileId = hiNibble(rom.readbyte(currentAddr))
+    count = loNibble(rom.readbyte(currentAddr)) + 1
+    for i = 1,count do
+      tileIds[totalCount+i] = tileId
+    end
+    currentAddr = currentAddr + 1
+    totalCount = totalCount + count
+  end
+  return tileIds
+end
+
+function getWorldRows ()
+  local pointers = getWorldPointers()
+  local rows = {}
+  for i = 1,120 do
+    rows[i] = getOverworldTileRow(pointers[i])
+  end
+  return rows
+end
+
+WORLD_ROWS = getWorldRows()
+
+-- returns the tile id for the given (x,y) for the overworld
+-- {["name"] = "Overworld", ["size"] = {120,120}, ["romAddr"] = {0x1D6D, 0x2668}},
+function getOverworldMapTileIdAt(x, y)
+  return OverworldTiles[WORLD_ROWS[y][x]]
 end
 
 emptyInputs = {
@@ -324,13 +469,46 @@ function printTestData ()
   printMap()
 end
 
+function getEnemyId ()
+  return memory.readbyte(0x3c)+1
+end
+
 -------------------
 ---- MAIN LOOP ----
 -------------------
 
-emu.speedmode("normal")
 
-while true do
-  runGameStartScript()
-  emu.frameadvance() -- This essentially tells FCEUX to keep running
+-- A thing draws near!
+function encounter(address)
+  local mapId = getMapId()
+  if (mapId > 0) then
+    print ("entering battle vs a " .. Enemies[getEnemyId()])
+--     player.valid_tile = false
+--     battle_message(strings.encounter, memory.readbyte(0x3c)+1)
+--     pre_battle = true
+  end
 end
+
+
+-- DB10 - DB1F | "Return" placement code
+-- 56080 - 56095
+function setReturnWarpLocation(x, y)
+  writeROM(0xDB15, x)
+  writeROM(0xDB1D, y)
+end
+
+-- main loop
+function main()
+  emu.speedmode("normal")
+  hud_main()
+  setReturnWarpLocation(119,119)
+  -- runGameStartScript()
+  print("x: " .. getX())
+  print("y: " .. getY())
+
+  while true do
+    emu.frameadvance()
+  end
+end
+
+main ()

@@ -1,0 +1,3 @@
+ln -s /Users/joshcough/work/dwrandomizer_ai/ai.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/ai.lua
+ln -s /Users/joshcough/work/dwrandomizer_ai/hud.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/hud.lua
+fceux
