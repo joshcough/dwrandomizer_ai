@@ -1,4 +1,5 @@
 require 'helpers'
+require 'Class'
 
 MapData = {
   [1] = {["name"] = "Overworld", ["size"] = {120,120}, ["romAddr"] = {0x1D6D, 0x2668}},
@@ -51,6 +52,26 @@ Tiles = {
   [0xF] = "Large Tile",
 }
 
+OVERWORLD_TILES = {
+  [0] = "Grass",
+  [1] = "Desert",
+  [2] = "Hills",
+  [3] = "Mountain",
+  [4] = "Water",
+  [5] = "Rock Wall",
+  [6] = "Forest",
+  [7] = "Swamp",
+  [8] = "Town",
+  [9] = "Cave",
+  [0xA] = "Castle",
+  [0xB] = "Bridge",
+  [0xC] = "Stairs",
+}
+
+function getOverworldTileName(tileId)
+  return OVERWORLD_TILES[tileId] and OVERWORLD_TILES[tileId] or "unknown"
+end
+
 MapAddress = 0x45
 X_ADDR = 0x8e
 Y_ADDR = 0x8f
@@ -72,110 +93,52 @@ function getMapSize() return getMapData()["size"] end
 -- get the address in ram of the current map
 function getMapAddr() return getMapData()["romAddr"] end
 
--- returns the tile id for the given (x,y) for the current map
-function getMapTileIdAt(x, y)
-  local startAddr = getMapAddr()[1]
-  local size = getMapSize()
-  local height = size[1]
-  local offset = (y*height) + x
-  local addr = startAddr + math.floor(offset/2)
-  local res;
-  if (isEven(offset))
-    then res = hiNibble(rom.readbyte(addr))
-    else res = loNibble(rom.readbyte(addr))
-  end
-  return res
-end
+MAX_TILES=14400
 
--- returns a two dimensional grid of tile ids for the current map
-function getMapTileIds ()
-  local size = getMapSize()
-  local width = size[1]
-  local height = size[2]
-  local res = {}
-  for y = 0, height-1 do
-    res[y+1] = {}
-    for x = 0, width-1 do
-      res[y+1][x+1]=getMapTileIdAt(x,y)
+function readOverworldFromROM ()
+
+  -- 1D6D - 2662  | Overworld map          | RLE encoded, 1st nibble is tile, 2nd how many - 1
+  -- 2663 - 26DA  | Overworld map pointers | 16 bits each - address of each row of the map. (value - 0x8000 + 16)
+  function decodeOverworldPointer (p)
+    -- mcgrew: Keep in mind they are in little endian format.
+    -- mcgrew: So it's LOW_BYTE, HIGH_BYTE
+    -- Also keep in mind they are addresses as the NES sees them, so to get the address in
+    -- ROM you'll need to subtract 0x8000 (and add 16 for the header)
+    local lowByte = readROM(p)
+    local highByte = readROM(p+1)
+    -- left shift the high byte by 8
+    local shiftedHighByte = highByte * (2 ^ 8)
+    local addr = shiftedHighByte + lowByte - 0x8000 + 16
+    return addr
+  end
+
+  function getOverworldPointers ()
+    local res = {}
+    for i = 0,119 do
+      res[i+1] = decodeOverworldPointer(0x2663 + i * 2)
     end
+    return res
   end
-  return res
-end
 
--- print out the current map to the console
-function printMap ()
-  local size = getMapSize()
-  local width = size[1]
-  local height = size[2]
-  local tileIds = getMapTileIds()
-  for x = 1,width do
-  local row = ""
-  for y = 1,height do
-    row = row .. " | " .. Tiles[tileIds[x][y]]
-  end
-  print(row .. " |")
-  end
-end
+  function getOverworldTileRow(overworldPointer)
+    local totalCount = 0
+    local tileIds = {}
+    local currentAddr = overworldPointer
 
-OverworldTiles = {
-  [0] = "Grass",
-  [1] = "Desert",
-  [2] = "Hills",
-  [3] = "Mountain",
-  [4] = "Water",
-  [5] = "Rock Wall",
-  [6] = "Forest",
-  [7] = "Swamp",
-  [8] = "Town",
-  [9] = "Cave",
-  [0xA] = "Castle",
-  [0xB] = "Bridge",
-  [0xC] = "Stairs",
-}
-
--- 1D6D - 2662  | Overworld map          | RLE encoded, 1st nibble is tile, 2nd how many - 1
--- 2663 - 26DA  | Overworld map pointers | 16 bits each - address of each row of the map. (value - 0x8000 + 16)
-function decodeWorldPointer (p)
-  -- mcgrew: Keep in mind they are in little endian format.
-  -- mcgrew: So it's LOW_BYTE, HIGH_BYTE
-  -- Also keep in mind they are addresses as the NES sees them, so to get the address in
-  -- ROM you'll need to subtract 0x8000 (and add 16 for the header)
-  local lowByte = readROM(p)
-  local highByte = readROM(p+1)
-  -- left shift the high byte by 8
-  local shiftedHighByte = highByte * (2 ^ 8)
-  local addr = shiftedHighByte + lowByte - 0x8000 + 16
-  return addr
-end
-
-function getWorldPointers ()
-  local res = {}
-  for i = 0,119 do
-    res[i+1] = decodeWorldPointer(0x2663 + i * 2)
-  end
-  return res
-end
-
-function getOverworldTileRow(overworldPointer)
-  local totalCount = 0
-  local tileIds = {}
-  local currentAddr = overworldPointer
-
-  while( totalCount < 120 )
-  do
-    tileId = hiNibble(rom.readbyte(currentAddr))
-    count = loNibble(rom.readbyte(currentAddr)) + 1
-    for i = 1,count do
-      tileIds[totalCount+i] = tileId
+    while( totalCount < 120 )
+    do
+      tileId = hiNibble(rom.readbyte(currentAddr))
+      count = loNibble(rom.readbyte(currentAddr)) + 1
+      for i = 1,count do
+        tileIds[totalCount+i] = tileId
+      end
+      currentAddr = currentAddr + 1
+      totalCount = totalCount + count
     end
-    currentAddr = currentAddr + 1
-    totalCount = totalCount + count
+    return tileIds
   end
-  return tileIds
-end
 
-function getWorldRows ()
-  local pointers = getWorldPointers()
+  local pointers = getOverworldPointers()
   local rows = {}
   for i = 1,120 do
     rows[i] = getOverworldTileRow(pointers[i])
@@ -194,69 +157,135 @@ function emptyWorldGrid()
   return res
 end
 
-WORLD_ROWS = getWorldRows()
-KNOWN_WORLD = emptyWorldGrid()
+-- o = OverWorld(emptyWorldGrid())
+OverWorld = class(function(a,rows)
+  a.overworldRows = rows
+  a.knownWorld = emptyWorldGrid() -- the world the player has seen. maybe this should be in a Player object!
+  a.nrTilesSeen = 0
+end)
 
-MAX_TILES=14400
-NR_TILES_SEEN=0
-function updateKnownWorld(x,y, tileId)
-  if KNOWN_WORLD[y+1][x+1] == false
-    then
-      KNOWN_WORLD[y+1][x+1] = tileId
-      NR_TILES_SEEN=NR_TILES_SEEN+1
-      print ("discovered new tile at (x: " .. x .. ", y: " .. y .. "), tile is: " .. OverworldTiles[tileId])
-  end
+-- function OverWorld:dump ()
+--   print("OverWorld:")
+--   print("  overworldRows: ", self.overworldRows)
+--   print("  knownWorld: ",  self.knownWorld)
+--   print("  nrTilesSeen: " .. self.nrTilesSeen)
+-- end
+
+function OverWorld:percentageOfWorldSeen()
+  return self.nrTilesSeen/MAX_TILES*100
 end
 
-function percentageOfWorldSeen()
-  return NR_TILES_SEEN/MAX_TILES*100
+function OverWorld:getOverworldMapTileAt(x, y)
+  return OVERWORLD_TILES[self:getOverworldMapTileIdAt(x, y)]
+end
+
+function OverWorld:updateKnownWorld(x, y, tileId)
+  if self.knownWorld[y+1][x+1] == false
+    then
+      self.knownWorld[y+1][x+1] = tileId
+      self.nrTilesSeen=self.nrTilesSeen+1
+      local tileName = getOverworldTileName(tileId)
+      print ("discovered new tile at (x: " .. x .. ", y: " .. y .. "), tile is: " .. tileName)
+  end
 end
 
 -- returns the tile id for the given (x,y) for the overworld
 -- {["name"] = "Overworld", ["size"] = {120,120}, ["romAddr"] = {0x1D6D, 0x2668}},
-function getOverworldMapTileIdAt(x, y)
-  local tileId = WORLD_ROWS[y+1][x+1]
+function OverWorld:getOverworldMapTileIdAt(x, y)
+  local tileId = self.overworldRows[y+1][x+1]
   -- optimization... each time we get a visible tile, record it in what we have seen
-  updateKnownWorld(x,y,tileId)
+  self:updateKnownWorld(x,y,tileId)
   return tileId
 end
 
-function getOverworldMapTileAt(x, y)
-  return OverworldTiles[getOverworldMapTileIdAt(x, y)]
-end
+function OverWorld:getVisibleOverworldGrid(currentX, currentY)
+  local upperLeftX = math.max(0, currentX - 8)
+  local upperLeftY = math.max(0, currentY - 6)
 
-function getVisibleOverworldGrid()
-  local upperLeftX = math.max(0, getX() - 8)
-  local upperLeftY = math.max(0, getY() - 6)
-
-  local bottomRightX = math.min(120, getX() + 7)
-  local bottomRightY = math.min(120, getY() + 7)
+  local bottomRightX = math.min(120, currentX + 7)
+  local bottomRightY = math.min(120, currentY + 7)
 
   local res = {}
   for y = upperLeftY, bottomRightY do
     res[y-upperLeftY+1] = {}
     for x = upperLeftX, bottomRightX do
-      res[y-upperLeftY+1][x-upperLeftX+1]=getOverworldMapTileIdAt(x, y)
+      res[y-upperLeftY+1][x-upperLeftX+1]=self:getOverworldMapTileIdAt(x, y)
     end
   end
   return res
 end
 
-function printVisibleGrid ()
-  if getMapId() == 1 -- overworld
-    then printVisibleOverworldGrid ()
-  end
-end
-
-function printVisibleOverworldGrid ()
-  local grid = getVisibleOverworldGrid()
+function OverWorld:printVisibleGrid (currentX, currentY)
+  local grid = self:getVisibleOverworldGrid(currentX, currentY)
   for y = 1, #(grid) do
     local row = ""
     for x = 1, #(grid[y]) do
-      row = row .. " | " .. OverworldTiles[grid[y][x]]
+      row = row .. " | " .. getOverworldTileName(grid[y][x])
     end
     print(row .. " |")
   end
   print("-------------------------")
 end
 
+OtherMap = class(function(a,rows)
+  a.rows = rows
+end)
+
+function OtherMap:dump ()
+  print("Map:")
+  print("  rows: " .. self.rows)
+end
+
+-- this is not for the overworld
+-- returns the tile id for the given (x,y) for the current map
+function getMapTileIdAt(x, y)
+  local startAddr = getMapAddr()[1]
+  local size = getMapSize()
+  local height = size[1]
+  local offset = (y*height) + x
+  local addr = startAddr + math.floor(offset/2)
+  local res;
+  if (isEven(offset))
+    then res = hiNibble(rom.readbyte(addr))
+    else res = loNibble(rom.readbyte(addr))
+  end
+  return res
+end
+
+-- this is not for the overworld
+-- returns a two dimensional grid of tile ids for the current map
+function getMapTileIds ()
+  local size = getMapSize()
+  local width = size[1]
+  local height = size[2]
+  local res = {}
+  for y = 0, height-1 do
+    res[y+1] = {}
+    for x = 0, width-1 do
+      res[y+1][x+1]=getMapTileIdAt(x,y)
+    end
+  end
+  return res
+end
+
+-- this is not for the overworld
+-- print out the current map to the console
+function printMap ()
+  local size = getMapSize()
+  local width = size[1]
+  local height = size[2]
+  local tileIds = getMapTileIds()
+  for x = 1,width do
+  local row = ""
+  for y = 1,height do
+    row = row .. " | " .. Tiles[tileIds[x][y]]
+  end
+  print(row .. " |")
+  end
+end
+
+-- function printVisibleGrid ()
+--   if getMapId() == 1 -- overworld
+--     then printVisibleOverworldGrid ()
+--   end
+-- end

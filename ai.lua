@@ -135,11 +135,13 @@ function onEncounter(address)
   end
 end
 
-function onPlayerMove(address)
-  print("x: " .. getX() .. " y: " .. getY())
-  -- todo: will have to fix this to check if on world map.
-  printVisibleGrid()
-  print("percentageOfWorldSeen: " .. percentageOfWorldSeen())
+function onPlayerMove(overworld)
+  return function(address)
+    print("x: " .. getX() .. " y: " .. getY())
+    -- todo: will have to fix this to check if on world map.
+    overworld:printVisibleGrid(getX(), getY())
+    print("percentageOfWorldSeen: " .. overworld:percentageOfWorldSeen())
+  end
 end
 
 -------------------
@@ -147,10 +149,11 @@ end
 -------------------
 
 function main()
+  overworld = OverWorld(readOverworldFromROM())
   emu.speedmode("normal")
   memory.registerexecute(0xcf44, onEncounter)
-  memory.registerwrite(0x3a, onPlayerMove)
-  memory.registerwrite(0x3b, onPlayerMove)
+  memory.registerwrite(0x3a, onPlayerMove(overworld))
+  memory.registerwrite(0x3b, onPlayerMove(overworld))
   hud_main()
 
 --   runGameStartScript()
