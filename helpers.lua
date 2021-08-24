@@ -1,9 +1,3 @@
-function readMemory(addr) return memory.readbyte(addr) end
-function writeMemory(addr, value) memory.writebyte(addr, value) end
-
-function readROM(addr) return rom.readbyte(addr) end
-function writeROM(addr, value) rom.writebyte(addr, value) end
-
 function bitwise_and(a, b)
   local result = 0
   local bitval = 1

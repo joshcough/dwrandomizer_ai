@@ -72,18 +72,6 @@ function getOverworldTileName(tileId)
   return OVERWORLD_TILES[tileId] and OVERWORLD_TILES[tileId] or "unknown"
 end
 
-MapAddress = 0x45
-X_ADDR = 0x8e
-Y_ADDR = 0x8f
-
--- get the x coordinate of the player in the current map
-function getX () return readMemory(X_ADDR) end
--- get the y coordinate of the player in the current map
-function getY () return readMemory(Y_ADDR) end
--- get the x,y coordinates of the player in the current map
-function getXY () return {["x"]=getX(), ["y"]=getY()} end
--- get the id of the current map
-function getMapId () return readMemory(MapAddress) end
 -- get all the map data for the current map
 function getMapData() return MapData[getMapId()] end
 -- get the name of the current map
@@ -95,7 +83,11 @@ function getMapAddr() return getMapData()["romAddr"] end
 
 MAX_TILES=14400
 
-function readOverworldFromROM ()
+-- This implementation that reads from NES memory basically.
+-- We could have an implementation that does it differently
+-- such as reading an overworld from a file, or just generating one
+-- randomly or whatever... but for now this is all we have.
+function readOverworldFromROM (memory)
 
   -- 1D6D - 2662  | Overworld map          | RLE encoded, 1st nibble is tile, 2nd how many - 1
   -- 2663 - 26DA  | Overworld map pointers | 16 bits each - address of each row of the map. (value - 0x8000 + 16)
@@ -104,8 +96,8 @@ function readOverworldFromROM ()
     -- mcgrew: So it's LOW_BYTE, HIGH_BYTE
     -- Also keep in mind they are addresses as the NES sees them, so to get the address in
     -- ROM you'll need to subtract 0x8000 (and add 16 for the header)
-    local lowByte = readROM(p)
-    local highByte = readROM(p+1)
+    local lowByte = memory:readROM(p)
+    local highByte = memory:readROM(p+1)
     -- left shift the high byte by 8
     local shiftedHighByte = highByte * (2 ^ 8)
     local addr = shiftedHighByte + lowByte - 0x8000 + 16
@@ -127,8 +119,8 @@ function readOverworldFromROM ()
 
     while( totalCount < 120 )
     do
-      tileId = hiNibble(rom.readbyte(currentAddr))
-      count = loNibble(rom.readbyte(currentAddr)) + 1
+      tileId = hiNibble(memory:readROM(currentAddr))
+      count = loNibble(memory:readROM(currentAddr)) + 1
       for i = 1,count do
         tileIds[totalCount+i] = tileId
       end
@@ -157,19 +149,11 @@ function emptyWorldGrid()
   return res
 end
 
--- o = OverWorld(emptyWorldGrid())
 OverWorld = class(function(a,rows)
   a.overworldRows = rows
   a.knownWorld = emptyWorldGrid() -- the world the player has seen. maybe this should be in a Player object!
   a.nrTilesSeen = 0
 end)
-
--- function OverWorld:dump ()
---   print("OverWorld:")
---   print("  overworldRows: ", self.overworldRows)
---   print("  knownWorld: ",  self.knownWorld)
---   print("  nrTilesSeen: " .. self.nrTilesSeen)
--- end
 
 function OverWorld:percentageOfWorldSeen()
   return self.nrTilesSeen/MAX_TILES*100
@@ -246,8 +230,8 @@ function getMapTileIdAt(x, y)
   local addr = startAddr + math.floor(offset/2)
   local res;
   if (isEven(offset))
-    then res = hiNibble(rom.readbyte(addr))
-    else res = loNibble(rom.readbyte(addr))
+    then res = hiNibble(readROM(addr))
+    else res = loNibble(readROM(addr))
   end
   return res
 end

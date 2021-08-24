@@ -1,3 +1,4 @@
+require 'mem'
 require 'controller'
 require 'enemies'
 require 'helpers'
@@ -116,17 +117,6 @@ function runGameStartScript ()
   end
 end
 
-function getEnemyId ()
-  return memory.readbyte(0x3c)+1
-end
-
--- DB10 - DB1F | "Return" placement code
--- 56080 - 56095
-function setReturnWarpLocation(x, y)
-  writeROM(0xDB15, x)
-  writeROM(0xDB1D, y)
-end
-
 -- A thing draws near!
 function onEncounter(address)
   local mapId = getMapId()
@@ -135,11 +125,11 @@ function onEncounter(address)
   end
 end
 
-function onPlayerMove(overworld)
+function onPlayerMove(memory, overworld)
   return function(address)
-    print("x: " .. getX() .. " y: " .. getY())
+    print("x: " .. memory:getX() .. " y: " .. memory:getY())
     -- todo: will have to fix this to check if on world map.
-    overworld:printVisibleGrid(getX(), getY())
+    overworld:printVisibleGrid(memory:getX(), memory:getY())
     print("percentageOfWorldSeen: " .. overworld:percentageOfWorldSeen())
   end
 end
@@ -149,14 +139,17 @@ end
 -------------------
 
 function main()
-  overworld = OverWorld(readOverworldFromROM())
-  emu.speedmode("normal")
+  mem = Memory(memory, rom)
+  overworld = OverWorld(readOverworldFromROM(mem))
   memory.registerexecute(0xcf44, onEncounter)
-  memory.registerwrite(0x3a, onPlayerMove(overworld))
-  memory.registerwrite(0x3b, onPlayerMove(overworld))
+  memory.registerwrite(0x3a, onPlayerMove(mem, overworld))
+  memory.registerwrite(0x3b, onPlayerMove(mem, overworld))
+
   hud_main()
 
 --   runGameStartScript()
+
+  emu.speedmode("normal")
   while true do
     emu.frameadvance()
   end
