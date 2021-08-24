@@ -72,15 +72,6 @@ function getOverworldTileName(tileId)
   return OVERWORLD_TILES[tileId] and OVERWORLD_TILES[tileId] or "unknown"
 end
 
--- get all the map data for the current map
-function getMapData() return MapData[getMapId()] end
--- get the name of the current map
-function getMapName() return getMapData()["name"] end
--- get the size of the current map
-function getMapSize() return getMapData()["size"] end
--- get the address in ram of the current map
-function getMapAddr() return getMapData()["romAddr"] end
-
 MAX_TILES=14400
 
 -- This implementation that reads from NES memory basically.
@@ -211,65 +202,57 @@ function OverWorld:printVisibleGrid (currentX, currentY)
   print("-------------------------")
 end
 
-OtherMap = class(function(a,rows)
+OtherMap = class(function(a, mapId, mapName, width, height, rows)
+  a.mapId = mapId
+  a.mapName = mapName
+  a.width = width
+  a.height = height
   a.rows = rows
 end)
 
-function OtherMap:dump ()
-  print("Map:")
-  print("  rows: " .. self.rows)
-end
-
--- this is not for the overworld
--- returns the tile id for the given (x,y) for the current map
-function getMapTileIdAt(x, y)
-  local startAddr = getMapAddr()[1]
-  local size = getMapSize()
-  local height = size[1]
-  local offset = (y*height) + x
-  local addr = startAddr + math.floor(offset/2)
-  local res;
-  if (isEven(offset))
-    then res = hiNibble(readROM(addr))
-    else res = loNibble(readROM(addr))
-  end
-  return res
-end
-
--- this is not for the overworld
--- returns a two dimensional grid of tile ids for the current map
-function getMapTileIds ()
-  local size = getMapSize()
-  local width = size[1]
-  local height = size[2]
-  local res = {}
-  for y = 0, height-1 do
-    res[y+1] = {}
-    for x = 0, width-1 do
-      res[y+1][x+1]=getMapTileIdAt(x,y)
-    end
-  end
-  return res
-end
-
--- this is not for the overworld
--- print out the current map to the console
-function printMap ()
-  local size = getMapSize()
-  local width = size[1]
-  local height = size[2]
-  local tileIds = getMapTileIds()
-  for x = 1,width do
+function OtherMap:printMap ()
+  for x = 1,self.width do
   local row = ""
-  for y = 1,height do
-    row = row .. " | " .. Tiles[tileIds[x][y]]
+  for y = 1,self.height do
+    row = row .. " | " .. Tiles[self.rows[x][y]]
   end
   print(row .. " |")
   end
 end
 
--- function printVisibleGrid ()
---   if getMapId() == 1 -- overworld
---     then printVisibleOverworldGrid ()
---   end
--- end
+function readOtherMapFromRom(memory, mapId)
+
+  local mapData = MapData[mapId]
+  local mapSize = mapData["size"]
+  local width = mapSize[1]
+  local height = mapSize[2]
+  local mapAddr = mapData["romAddr"]
+
+  -- returns the tile id for the given (x,y) for the current map
+  function getMapTileIdAt(x, y)
+    local startAddr = mapAddr[1]
+    local offset = (y*width) + x
+    local addr = startAddr + math.floor(offset/2)
+    local res
+    if (isEven(offset))
+      then res = hiNibble(memory:readROM(addr))
+      else res = loNibble(memory:readROM(addr))
+    end
+    return res
+  end
+
+  -- returns a two dimensional grid of tile ids for the current map
+  function getMapTileIds ()
+    local res = {}
+    for y = 0, height-1 do
+      res[y+1] = {}
+      for x = 0, width-1 do
+        res[y+1][x+1]=getMapTileIdAt(x,y)
+      end
+    end
+    return res
+  end
+
+  return OtherMap(mapId, mapData["name"], width, height, getMapTileIds())
+end
+

@@ -147,6 +147,8 @@ function main()
 
   hud_main()
 
+  local charlock = readOtherMapFromRom(mem, 2):printMap()
+
 --   runGameStartScript()
 
   emu.speedmode("normal")
