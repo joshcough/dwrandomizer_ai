@@ -2,54 +2,92 @@ require 'helpers'
 require 'Class'
 
 MapData = {
-  [1] = {["name"] = "Overworld", ["size"] = {120,120}, ["romAddr"] = {0x1D6D, 0x2668}},
-  [2] = {["name"] = "Charlock", ["size"] = {20,20}, ["romAddr"] = {0xC0, 0x187}},
-  [3] = {["name"] = "Hauksness", ["size"] = {20,20}, ["romAddr"] = {0x188, 0x24f}},
-  [4] = {["name"] = "Tantegel", ["size"] = {30,30}, ["romAddr"] = {0x250, 0x411}},
-  [5] = {["name"] = "Tantegel Throne Room", ["size"] = {10,10}, ["romAddr"] = {0x412, 0x444}},
-  [6] = {["name"] = "Charlock Throne Room", ["size"] = {30,30}, ["romAddr"] = {0x444, 0x605}},
-  [7] = {["name"] = "Kol", ["size"] = {24,24}, ["romAddr"] = {0x606, 0x825}},
-  [8] = {["name"] = "Brecconary", ["size"] = {30,30}, ["romAddr"] = {0x826, 0x8E7}},
-  [9] = {["name"] = "Garinham", ["size"] = {20,20}, ["romAddr"] = {0xAAA, 0xB71}},
-  [10]= {["name"] = "Cantlin", ["size"] = {30,30}, ["romAddr"] = {0x8E8, 0xAA9}},
-  [11]= {["name"] = "Rimuldar", ["size"] = {30,30}, ["romAddr"] = {0xB72, 0xD33}},
-  [12]= {["name"] = "Tantegel Basement", ["size"] = {10,10}, ["romAddr"] = {0xD34,0xD65}},
-  [13]= {["name"] = "Northern Shrine", ["size"] = {10,10}, ["romAddr"] = {0xD66,0xD97}},
-  [14]= {["name"] = "Southern Shrine", ["size"] = {10,10}, ["romAddr"] = {0xD98,0xDC9}},
-  [15]= {["name"] = "Charlock Cave Lv 1", ["size"] = {20,20}, ["romAddr"] = {0xDCA, 0xE91}},
-  [16]= {["name"] = "Charlock Cave Lv 2", ["size"] = {10,10}, ["romAddr"] = {0xE92, 0xEC3}},
-  [17]= {["name"] = "Charlock Cave Lv 3", ["size"] = {10,10}, ["romAddr"] = {0xEC4, 0xEF5}},
-  [18]= {["name"] = "Charlock Cave Lv 4", ["size"] = {10,10}, ["romAddr"] = {0xEF6, 0xF27}},
-  [19]= {["name"] = "Charlock Cave Lv 5", ["size"] = {10,10}, ["romAddr"] = {0xF28, 0xF59}},
-  [20]= {["name"] = "Charlock Cave Lv 6", ["size"] = {10,10}, ["romAddr"] = {0xF5A, 0xF8B}},
-  [21]= {["name"] = "Swamp Cave", ["size"] = {6,30}, ["romAddr"] = {0xF8C, 0xFE5}},
-  [22]= {["name"] = "Mountain Cave", ["size"] = {14,14}, ["romAddr"] = {0xFE6, 0x1047}},
-  [23]= {["name"] = "Mountain Cave Lv 2", ["size"] = {14,14}, ["romAddr"] = {0x1048, 0x10A9}},
-  [24]= {["name"] = "Garin's Grave Lv 1", ["size"] = {20,20}, ["romAddr"] = {0x10AA, 0x1171}},
-  [25]= {["name"] = "Garin's Grave Lv 2", ["size"] = {14,12}, ["romAddr"] = {0x126C, 0x12BF}},
-  [26]= {["name"] = "Garin's Grave Lv 3", ["size"] = {20,20}, ["romAddr"] = {0x1172, 0x1239}},
-  [27]= {["name"] = "Garin's Grave Lv 4", ["size"] = {10,10}, ["romAddr"] = {0x123A, 0x126B}},
-  [28]= {["name"] = "Erdrick's Cave", ["size"] = {10,10}, ["romAddr"] = {0x12C0, 0x12F1}},
-  [29]= {["name"] = "Erdrick's Cave Lv 2", ["size"] = {10,10}, ["romAddr"] = {0x12F2, 0x1323 }},
+  [1] = {["name"] = "Overworld", ["size"] = {["w"]=120,["h"]=120}, ["romAddr"] = 0x1D6D},
+  [2] = {["name"] = "Charlock", ["size"] = {["w"]=20,["h"]=20}, ["romAddr"] = 0xC0},
+  [3] = {["name"] = "Hauksness", ["size"] = {["w"]=20,["h"]=20}, ["romAddr"] = 0x188},
+  [4] = {["name"] = "Tantegel", ["size"] = {["w"]=30,["h"]=30}, ["romAddr"] = 0x250},
+  [5] = {["name"] = "Tantegel Throne Room", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0x412},
+  [6] = {["name"] = "Charlock Throne Room", ["size"] = {["w"]=30,["h"]=30}, ["romAddr"] = 0x444},
+  [7] = {["name"] = "Kol", ["size"] = {["w"]=24,["h"]=24}, ["romAddr"] = 0x606},
+  [8] = {["name"] = "Brecconary", ["size"] = {["w"]=30,["h"]=30}, ["romAddr"] = 0x726},
+  [9] = {["name"] = "Garinham", ["size"] = {["w"]=20,["h"]=20}, ["romAddr"] = 0xAAA},
+  [10]= {["name"] = "Cantlin", ["size"] = {["w"]=30,["h"]=30}, ["romAddr"] = 0x8E8},
+  [11]= {["name"] = "Rimuldar", ["size"] = {["w"]=30,["h"]=30}, ["romAddr"] = 0xB72},
+  [12]= {["name"] = "Tantegel Basement", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0xD34},
+  [13]= {["name"] = "Northern Shrine", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0xD66},
+  [14]= {["name"] = "Southern Shrine", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0xD98},
+  [15]= {["name"] = "Charlock Cave Lv 1", ["size"] = {["w"]=20,["h"]=20}, ["romAddr"] = 0xDCA},
+  [16]= {["name"] = "Charlock Cave Lv 2", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0xE92},
+  [17]= {["name"] = "Charlock Cave Lv 3", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0xEC4},
+  [18]= {["name"] = "Charlock Cave Lv 4", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0xEF6},
+  [19]= {["name"] = "Charlock Cave Lv 5", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0xF28},
+  [20]= {["name"] = "Charlock Cave Lv 6", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0xF5A},
+  [21]= {["name"] = "Swamp Cave", ["size"] = {["w"]=6,["h"]=30}, ["romAddr"] = 0xF8C},
+  [22]= {["name"] = "Mountain Cave", ["size"] = {["w"]=14,["h"]=14}, ["romAddr"] = 0xFE6},
+  [23]= {["name"] = "Mountain Cave Lv 2", ["size"] = {["w"]=14,["h"]=14}, ["romAddr"] = 0x1048},
+  [24]= {["name"] = "Garin's Grave Lv 1", ["size"] = {["w"]=20,["h"]=20}, ["romAddr"] = 0x10AA},
+  [25]= {["name"] = "Garin's Grave Lv 2", ["size"] = {["w"]=14,["h"]=12}, ["romAddr"] = 0x126C},
+  [26]= {["name"] = "Garin's Grave Lv 3", ["size"] = {["w"]=20,["h"]=20}, ["romAddr"] = 0x1172},
+  [27]= {["name"] = "Garin's Grave Lv 4", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0x123A},
+  [28]= {["name"] = "Erdrick's Cave", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0x12C0},
+  [29]= {["name"] = "Erdrick's Cave Lv 2", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0x12F2},
 }
 
 Tiles = {
-  [0] = "Grass",
-  [1] = "Sand",
-  [2] = "Water",
-  [3] = "Treasure Chest",
-  [4] = "Stone",
-  [5] = "Stairs Up",
-  [6] = "Brick",
-  [7] = "Stairs Down",
-  [8] = "Trees",
-  [9] = "Swamp",
-  [0xA] = "Force Field",
-  [0xB] = "Door",
-  [0xC] = "Weapon Shop Sign",
-  [0xD] = "Inn Sign",
+  [0]   = "Grass ",
+  [1]   = "Sand  ",
+  [2]   = "Water ",
+  [3]   = "Chest ",
+  [4]   = "Stone ",
+  [5]   = "Up    ",
+  [6]   = "Brick ",
+  [7]   = "Down  ",
+  [8]   = "Trees ",
+  [9]   = "Swamp ",
+  [0xA] = "Field ",
+  [0xB] = "Door  ",
+  [0xC] = "Weapon",
+  [0xD] = "Inn   ",
   [0xE] = "Bridge",
-  [0xF] = "Large Tile",
+  [0xF] = "Tile  ",
+}
+
+ShrineTiles = {
+  [0]   = "Grass ",
+  [1]   = "Sand  ",
+  [2]   = "Water ",
+  [3]   = "Chest ",
+  [4]   = "Stone ",
+  [5]   = "Up    ",
+  [6]   = "Brick ",
+  [7]   = "Down  ",
+  [8]   = "NA", -- 0
+  [9]   = "NA", -- 1
+  [0xA] = "NA", -- 2
+  [0xB] = "Chest ", -- 3
+  [0xC] = "Stone ", -- 4
+  [0xD] = "NA", -- 5
+  [0xE] = "Brick ", -- 6
+  [0xF] = "NA", -- 7
+}
+
+DungeonTiles = {
+  [0]   = "Stone",
+  [1]   = "Up   ",
+  [2]   = "Brick",
+  [3]   = "Down ",
+  [4]   = "Chest",
+  [5]   = "Door ",
+  [6]   = "Brick", -- in swamp cave, we get id six where the princess is. its the only 6 we get in any dungeon.
+  [7]   = "NA",
+  [8]   = "Stone",
+  [9]   = "Up   ",
+  [0xA] = "Brick",
+  [0xB] = "Down ",
+  [0xC] = "NA",
+  [0xD] = "NA",
+  [0xE] = "NA",
+  [0xF] = "NA",
 }
 
 OVERWORLD_TILES = {
@@ -202,7 +240,7 @@ function OverWorld:printVisibleGrid (currentX, currentY)
   print("-------------------------")
 end
 
-OtherMap = class(function(a, mapId, mapName, width, height, rows)
+StaticMap = class(function(a, mapId, mapName, width, height, rows)
   a.mapId = mapId
   a.mapName = mapName
   a.width = width
@@ -210,27 +248,58 @@ OtherMap = class(function(a, mapId, mapName, width, height, rows)
   a.rows = rows
 end)
 
-function OtherMap:printMap ()
-  for x = 1,self.width do
-  local row = ""
+function StaticMap:toString ()
+  local tileSet = self.mapId < 12 and Tiles or (self.mapId >= 15 and DungeonTiles or ShrineTiles)
+  local res = ""
   for y = 1,self.height do
-    row = row .. " | " .. Tiles[self.rows[x][y]]
+    local row = ""
+    for x = 1,self.width do
+      row = row .. " | " .. tileSet[self.rows[y][x]]
+    end
+    res = res .. row .. " |\n"
   end
-  print(row .. " |")
-  end
+  return res
 end
 
-function readOtherMapFromRom(memory, mapId)
+function StaticMap:printMap ()
+  print(self.mapName)
+  print(self)
+  print("------")
+  print(self:toString())
+end
 
+function StaticMap:writeToFile (file)
+  file:write(self.mapName .. "\n")
+  file:write(self:toString() .. "\n")
+  file:write("------------------\n")
+end
+
+function readAllStaticMaps(memory)
+  res = {}
+  for i = 2, 29 do
+    res[i] = readStaticMapFromRom(memory, i)
+  end
+  return res
+end
+
+function writeAllStaticMapsToFile(memory, filename)
+  local file = io.open(filename, "w")
+  local maps = readAllStaticMaps(memory)
+  for i = 2, 29 do
+    maps[i]:writeToFile(file)
+  end
+  file:close()
+end
+
+function readStaticMapFromRom(memory, mapId)
   local mapData = MapData[mapId]
   local mapSize = mapData["size"]
-  local width = mapSize[1]
-  local height = mapSize[2]
-  local mapAddr = mapData["romAddr"]
+  local width = mapSize["w"]
+  local height = mapSize["h"]
+  local startAddr = mapData["romAddr"]
 
   -- returns the tile id for the given (x,y) for the current map
   function getMapTileIdAt(x, y)
-    local startAddr = mapAddr[1]
     local offset = (y*width) + x
     local addr = startAddr + math.floor(offset/2)
     local res
@@ -253,6 +322,6 @@ function readOtherMapFromRom(memory, mapId)
     return res
   end
 
-  return OtherMap(mapId, mapData["name"], width, height, getMapTileIds())
+  return StaticMap(mapId, mapData["name"], width, height, getMapTileIds())
 end
 

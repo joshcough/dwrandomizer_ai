@@ -147,8 +147,7 @@ function main()
 
   hud_main()
 
-  local charlock = readOtherMapFromRom(mem, 2):printMap()
-
+--  writeAllStaticMapsToFile(mem, "/Users/joshcough/work/dwrandomizer_ai/static_maps.txt")
 --   runGameStartScript()
 
   emu.speedmode("normal")
