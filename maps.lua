@@ -52,25 +52,6 @@ Tiles = {
   [0xF] = "Tile  ",
 }
 
-ShrineTiles = {
-  [0]   = "Grass ",
-  [1]   = "Sand  ",
-  [2]   = "Water ",
-  [3]   = "Chest ",
-  [4]   = "Stone ",
-  [5]   = "Up    ",
-  [6]   = "Brick ",
-  [7]   = "Down  ",
-  [8]   = "NA", -- 0
-  [9]   = "NA", -- 1
-  [0xA] = "NA", -- 2
-  [0xB] = "Chest ", -- 3
-  [0xC] = "Stone ", -- 4
-  [0xD] = "NA", -- 5
-  [0xE] = "Brick ", -- 6
-  [0xF] = "NA", -- 7
-}
-
 DungeonTiles = {
   [0]   = "Stone",
   [1]   = "Up   ",
@@ -79,31 +60,22 @@ DungeonTiles = {
   [4]   = "Chest",
   [5]   = "Door ",
   [6]   = "Brick", -- in swamp cave, we get id six where the princess is. its the only 6 we get in any dungeon.
-  [7]   = "NA",
-  [8]   = "Stone",
-  [9]   = "Up   ",
-  [0xA] = "Brick",
-  [0xB] = "Down ",
-  [0xC] = "NA",
-  [0xD] = "NA",
-  [0xE] = "NA",
-  [0xF] = "NA",
 }
 
 OVERWORLD_TILES = {
-  [0] = "Grass",
-  [1] = "Desert",
-  [2] = "Hills",
-  [3] = "Mountain",
-  [4] = "Water",
-  [5] = "Rock Wall",
-  [6] = "Forest",
-  [7] = "Swamp",
-  [8] = "Town",
-  [9] = "Cave",
-  [0xA] = "Castle",
-  [0xB] = "Bridge",
-  [0xC] = "Stairs",
+  [0]   = "Grass   ",
+  [1]   = "Desert  ",
+  [2]   = "Hills   ",
+  [3]   = "Mountain",
+  [4]   = "Water   ",
+  [5]   = "Rock    ",
+  [6]   = "Forest  ",
+  [7]   = "Swamp   ",
+  [8]   = "Town    ",
+  [9]   = "Cave    ",
+  [0xA] = "Castle  ",
+  [0xB] = "Bridge  ",
+  [0xC] = "Stairs  ",
 }
 
 function getOverworldTileName(tileId)
@@ -248,8 +220,12 @@ StaticMap = class(function(a, mapId, mapName, width, height, rows)
   a.rows = rows
 end)
 
+function StaticMap:getTileSet ()
+  return self.mapId < 15 and Tiles or DungeonTiles
+end
+
 function StaticMap:toString ()
-  local tileSet = self.mapId < 12 and Tiles or (self.mapId >= 15 and DungeonTiles or ShrineTiles)
+  local tileSet = self:getTileSet()
   local res = ""
   for y = 1,self.height do
     local row = ""
@@ -259,13 +235,6 @@ function StaticMap:toString ()
     res = res .. row .. " |\n"
   end
   return res
-end
-
-function StaticMap:printMap ()
-  print(self.mapName)
-  print(self)
-  print("------")
-  print(self:toString())
 end
 
 function StaticMap:writeToFile (file)
@@ -302,12 +271,9 @@ function readStaticMapFromRom(memory, mapId)
   function getMapTileIdAt(x, y)
     local offset = (y*width) + x
     local addr = startAddr + math.floor(offset/2)
-    local res
-    if (isEven(offset))
-      then res = hiNibble(memory:readROM(addr))
-      else res = loNibble(memory:readROM(addr))
-    end
-    return res
+    local val = memory:readROM(addr)
+    -- TODO: i tried to use 0x111 but it went insane... so just using 7 instead.
+    return bitwise_and(isEven(offset) and hiNibble(val) or loNibble(val), 7)
   end
 
   -- returns a two dimensional grid of tile ids for the current map
