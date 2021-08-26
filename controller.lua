@@ -1,12 +1,19 @@
+A = "A"
+B = "B"
+START = "start"
+UP = "up"
+DOWN = "down"
+LEFT = "left"
+RIGHT = "right"
 
 emptyInputs = {
-  ["start"] = nil,
-  ["A"]     = nil,
-  ["B"]     = nil,
-  ["up"]    = nil,
-  ["down"]  = nil,
-  ["left"]  = nil,
-  ["right"] = nil,
+  [START] = nil,
+  [A]     = nil,
+  [B]     = nil,
+  [UP]    = nil,
+  [DOWN]  = nil,
+  [LEFT]  = nil,
+  [RIGHT] = nil,
 }
 
 function waitFrames (n)
@@ -37,20 +44,20 @@ function holdButton (button, frames)
   emu.frameadvance();
 end
 
-function pressStart (wait) pressButton("start", wait) end
+function pressStart (wait) pressButton(START, wait) end
 function pressSelect (wait) pressButton("select", wait) end
-function pressA (wait) pressButton("A", wait) end
-function pressB (wait) pressButton("B", wait) end
-function pressLeft (wait) pressButton("left", wait) end
-function pressRight (wait) pressButton("right", wait) end
-function pressUp (wait) pressButton("up", wait) end
-function pressDown (wait) pressButton("down", wait) end
+function pressA (wait) pressButton(A, wait) end
+function pressB (wait) pressButton(B, wait) end
+function pressLeft (wait) pressButton(LEFT, wait) end
+function pressRight (wait) pressButton(RIGHT, wait) end
+function pressUp (wait) pressButton(UP, wait) end
+function pressDown (wait) pressButton(DOWN, wait) end
 
-function holdStart (frames) holdButton("start", frames) end
+function holdStart (frames) holdButton(START, frames) end
 function holdSelect (frames) holdButton("select", frames) end
-function holdA (frames) holdButton("A", frames) end
-function holdB (frames) holdButton("B", frames) end
-function holdLeft (frames) holdButton("left", frames) end
-function holdRight (frames) holdButton("right", frames) end
-function holdUp (frames) holdButton("up", frames) end
-function holdDown (frames) holdButton("down", frames) end
+function holdA (frames) holdButton(A, frames) end
+function holdB (frames) holdButton(B, frames) end
+function holdLeft (frames) holdButton(LEFT, frames) end
+function holdRight (frames) holdButton(RIGHT, frames) end
+function holdUp (frames) holdButton(UP, frames) end
+function holdDown (frames) holdButton(DOWN, frames) end

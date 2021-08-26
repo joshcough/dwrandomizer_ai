@@ -1,3 +1,4 @@
+require 'mem'
 require 'controller'
 require 'enemies'
 require 'helpers'
@@ -116,17 +117,6 @@ function runGameStartScript ()
   end
 end
 
-function getEnemyId ()
-  return memory.readbyte(0x3c)+1
-end
-
--- DB10 - DB1F | "Return" placement code
--- 56080 - 56095
-function setReturnWarpLocation(x, y)
-  writeROM(0xDB15, x)
-  writeROM(0xDB1D, y)
-end
-
 -- A thing draws near!
 function onEncounter(address)
   local mapId = getMapId()
@@ -135,11 +125,13 @@ function onEncounter(address)
   end
 end
 
-function onPlayerMove(address)
-  print("x: " .. getX() .. " y: " .. getY())
-  -- todo: will have to fix this to check if on world map.
-  printVisibleGrid()
-  print("percentageOfWorldSeen: " .. percentageOfWorldSeen())
+function onPlayerMove(memory, overworld)
+  return function(address)
+    print("x: " .. memory:getX() .. " y: " .. memory:getY())
+    -- todo: will have to fix this to check if on world map.
+    overworld:printVisibleGrid(memory:getX(), memory:getY())
+    print("percentageOfWorldSeen: " .. overworld:percentageOfWorldSeen())
+  end
 end
 
 -------------------
@@ -147,13 +139,24 @@ end
 -------------------
 
 function main()
-  emu.speedmode("normal")
+  mem = Memory(memory, rom)
+  overworld = OverWorld(readOverworldFromROM(mem))
   memory.registerexecute(0xcf44, onEncounter)
-  memory.registerwrite(0x3a, onPlayerMove)
-  memory.registerwrite(0x3b, onPlayerMove)
+  memory.registerwrite(0x3a, onPlayerMove(mem, overworld))
+  memory.registerwrite(0x3b, onPlayerMove(mem, overworld))
+
   hud_main()
 
+  -- i run this each time to make sure nothing has changed.
+  -- if anything changes, git will tell me.
+  writeAllStaticMapsToFile(mem, STATIC_MAPS_FILE)
+  writeAllStaticMapIdsToIndividualFiles(mem)
+  -- i print this out just to make sure things look sane when i start the script.
+  print(loadStaticMapFromFile(Brecconary))
+
 --   runGameStartScript()
+
+  emu.speedmode("normal")
   while true do
     emu.frameadvance()
   end
