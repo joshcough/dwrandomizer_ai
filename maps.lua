@@ -1,6 +1,36 @@
 require 'helpers'
 require 'Class'
 
+Overworld = 1
+Charlock = 2
+Hauksness = 3
+Tantegel = 4
+TantegelThroneRoom = 5
+CharlockThroneRoom = 6
+Kol = 7
+Brecconary = 8
+Garinham = 9
+Cantlin = 10
+Rimuldar = 11
+TantegelBasement = 12
+NorthernShrine = 13
+SouthernShrine = 14
+CharlockCaveLv1 = 15
+CharlockCaveLv2 = 16
+CharlockCaveLv3 = 17
+CharlockCaveLv4 = 18
+CharlockCaveLv5 = 19
+CharlockCaveLv6 = 20
+SwampCave = 21
+MountainCaveLv1 = 22
+MountainCaveLv2 = 23
+GarinsGraveLv1 = 24
+GarinsGraveLv2 = 25
+GarinsGraveLv3 = 26
+GarinsGraveLv4 = 27
+ErdricksCaveLv1 = 28
+ErdricksCaveLv2 = 29
+
 MapData = {
   [1] = {["name"] = "Overworld", ["size"] = {["w"]=120,["h"]=120}, ["romAddr"] = 0x1D6D},
   [2] = {["name"] = "Charlock", ["size"] = {["w"]=20,["h"]=20}, ["romAddr"] = 0xC0},
@@ -237,10 +267,25 @@ function StaticMap:toString ()
   return res
 end
 
-function StaticMap:writeToFile (file)
+function StaticMap:writeTileNamesToFile (file)
   file:write(self.mapName .. "\n")
-  file:write(self:toString() .. "\n")
   file:write("------------------\n")
+  file:write(self:toString() .. "\n")
+end
+
+MAP_DIRECTORY = "/Users/joshcough/work/dwrandomizer_ai/maps/"
+STATIC_MAPS_FILE = MAP_DIRECTORY .. "static_maps.txt"
+
+function StaticMap:saveIdsToFile ()
+  local mapFileName = MAP_DIRECTORY .. self.mapName
+  table.save(self.rows, mapFileName)
+end
+
+function loadStaticMapFromFile (mapId)
+  local mapData = MapData[mapId]
+  local mapName = mapData["name"]
+  local mapFileName = MAP_DIRECTORY .. mapName
+  return StaticMap(mapId, mapName, mapData["size"]["w"], mapData["size"]["h"], table.load(mapFileName))
 end
 
 function readAllStaticMaps(memory)
@@ -255,9 +300,16 @@ function writeAllStaticMapsToFile(memory, filename)
   local file = io.open(filename, "w")
   local maps = readAllStaticMaps(memory)
   for i = 2, 29 do
-    maps[i]:writeToFile(file)
+    maps[i]:writeTileNamesToFile(file)
   end
   file:close()
+end
+
+function writeAllStaticMapIdsToIndividualFiles(memory)
+  local maps = readAllStaticMaps(memory)
+  for i = 2, 29 do
+    maps[i]:saveIdsToFile()
+  end
 end
 
 function readStaticMapFromRom(memory, mapId)
@@ -272,8 +324,9 @@ function readStaticMapFromRom(memory, mapId)
     local offset = (y*width) + x
     local addr = startAddr + math.floor(offset/2)
     local val = memory:readROM(addr)
+    local tile = isEven(offset) and hiNibble(val) or loNibble(val)
     -- TODO: i tried to use 0x111 but it went insane... so just using 7 instead.
-    return bitwise_and(isEven(offset) and hiNibble(val) or loNibble(val), 7)
+    return mapId < 12 and tile or bitwise_and(tile, 7)
   end
 
   -- returns a two dimensional grid of tile ids for the current map

@@ -147,7 +147,13 @@ function main()
 
   hud_main()
 
---  writeAllStaticMapsToFile(mem, "/Users/joshcough/work/dwrandomizer_ai/static_maps.txt")
+  -- i run this each time to make sure nothing has changed.
+  -- if anything changes, git will tell me.
+  writeAllStaticMapsToFile(mem, STATIC_MAPS_FILE)
+  writeAllStaticMapIdsToIndividualFiles(mem)
+  -- i print this out just to make sure things look sane when i start the script.
+  print(loadStaticMapFromFile(Brecconary))
+
 --   runGameStartScript()
 
   emu.speedmode("normal")
