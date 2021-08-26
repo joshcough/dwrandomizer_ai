@@ -1,0 +1,568 @@
+Charlock
+------------------
+ | Swamp  | Swamp  | Stone  | Stone  | Stone  | Swamp  | Swamp  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Swamp  | Swamp  |
+ | Swamp  | Stone  | Stone  | Brick  | Stone  | Stone  | Swamp  | Stone  | Field  | Field  | Down   | Field  | Field  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Swamp  |
+ | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Field  | Tile   | Tile   | Tile   | Field  | Stone  | Brick  | Stone  | Brick  | Brick  | Stone  | Stone  |
+ | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Field  | Tile   | Brick  | Tile   | Field  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  |
+ | Stone  | Brick  | Stone  | Stone  | Stone  | Stone  | Brick  | Stone  | Field  | Field  | Field  | Field  | Field  | Stone  | Stone  | Brick  | Stone  | Stone  | Brick  | Stone  |
+ | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Field  | Field  | Field  | Field  | Field  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Stone  |
+ | Stone  | Brick  | Stone  | Stone  | Brick  | Stone  | Brick  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  |
+ | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Field  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Stone  |
+ | Stone  | Brick  | Stone  | Stone  | Door   | Stone  | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Door   | Stone  | Stone  | Brick  | Stone  |
+ | Stone  | Brick  | Stone  | Field  | Field  | Field  | Stone  | Brick  | Stone  | Stone  | Field  | Stone  | Stone  | Stone  | Field  | Field  | Field  | Stone  | Brick  | Stone  |
+ | Stone  | Brick  | Stone  | Field  | Stone  | Field  | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Field  | Stone  | Field  | Stone  | Brick  | Stone  |
+ | Stone  | Brick  | Stone  | Field  | Field  | Field  | Stone  | Brick  | Stone  | Stone  | Field  | Stone  | Stone  | Stone  | Field  | Field  | Field  | Stone  | Brick  | Stone  |
+ | Stone  | Brick  | Stone  | Field  | Stone  | Field  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Field  | Stone  | Field  | Stone  | Brick  | Stone  |
+ | Stone  | Brick  | Stone  | Field  | Field  | Field  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Field  | Field  | Field  | Stone  | Brick  | Stone  |
+ | Stone  | Brick  | Stone  | Stone  | Down   | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Down   | Stone  | Stone  | Brick  | Stone  |
+ | Stone  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  |
+ | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  |
+ | Swamp  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Swamp  |
+ | Swamp  | Swamp  | Stone  | Stone  | Stone  | Stone  | Stone  | Swamp  | Stone  | Brick  | Brick  | Stone  | Swamp  | Stone  | Stone  | Stone  | Stone  | Stone  | Swamp  | Swamp  |
+ | Swamp  | Swamp  | Swamp  | Swamp  | Swamp  | Swamp  | Swamp  | Swamp  | Stone  | Brick  | Brick  | Stone  | Swamp  | Swamp  | Swamp  | Swamp  | Swamp  | Swamp  | Swamp  | Swamp  |
+
+Hauksness
+------------------
+ | Stone  | Stone  | Sand   | Sand   | Grass  | Stone  | Stone  | Sand   | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Swamp  | Stone  |
+ | Stone  | Sand   | Sand   | Grass  | Trees  | Stone  | Sand   | Brick  | Brick  | Tile   | Brick  | Stone  | Trees  | Grass  | Grass  | Sand   | Brick  | Swamp  | Swamp  | Stone  |
+ | Sand   | Sand   | Sand   | Trees  | Grass  | Stone  | Stone  | Brick  | Brick  | Stone  | Brick  | Stone  | Grass  | Grass  | Grass  | Brick  | Swamp  | Swamp  | Sand   | Stone  |
+ | Sand   | Grass  | Grass  | Grass  | Swamp  | Swamp  | Stone  | Stone  | Brick  | Stone  | Stone  | Stone  | Grass  | Swamp  | Grass  | Brick  | Brick  | Swamp  | Sand   | Sand   |
+ | Sand   | Sand   | Grass  | Grass  | Grass  | Swamp  | Swamp  | Grass  | Brick  | Grass  | Grass  | Grass  | Trees  | Grass  | Grass  | Brick  | Brick  | Grass  | Sand   | Stone  |
+ | Stone  | Grass  | Brick  | Brick  | Brick  | Sand   | Swamp  | Sand   | Brick  | Brick  | Brick  | Sand   | Sand   | Brick  | Brick  | Sand   | Brick  | Grass  | Grass  | Stone  |
+ | Stone  | Grass  | Brick  | Brick  | Brick  | Brick  | Sand   | Brick  | Brick  | Sand   | Sand   | Sand   | Brick  | Brick  | Brick  | Brick  | Brick  | Grass  | Trees  | Grass  |
+ | Grass  | Grass  | Brick  | Brick  | Grass  | Sand   | Sand   | Sand   | Grass  | Trees  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Brick  | Grass  | Grass  | Trees  |
+ | Stone  | Grass  | Brick  | Brick  | Grass  | Sand   | Stone  | Stone  | Stone  | Stone  | Sand   | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Stone  | Stone  | Grass  |
+ | Brick  | Brick  | Sand   | Brick  | Grass  | Stone  | Brick  | Brick  | Brick  | Sand   | Sand   | Stone  | Swamp  | Grass  | Stone  | Brick  | Tile   | Swamp  | Stone  | Sand   |
+ | Brick  | Sand   | Brick  | Brick  | Grass  | Stone  | Stone  | Stone  | Tile   | Stone  | Stone  | Stone  | Grass  | Swamp  | Stone  | Brick  | Swamp  | Swamp  | Stone  | Swamp  |
+ | Trees  | Trees  | Brick  | Brick  | Trees  | Stone  | Sand   | Sand   | Brick  | Brick  | Brick  | Stone  | Trees  | Grass  | Stone  | Stone  | Swamp  | Stone  | Stone  | Swamp  |
+ | Trees  | Grass  | Sand   | Brick  | Trees  | Stone  | Sand   | Stone  | Brick  | Stone  | Sand   | Stone  | Trees  | Trees  | Sand   | Sand   | Swamp  | Swamp  | Trees  | Stone  |
+ | Stone  | Grass  | Brick  | Sand   | Trees  | Stone  | Brick  | Brick  | Brick  | Sand   | Sand   | Sand   | Trees  | Sand   | Grass  | Stone  | Stone  | Stone  | Stone  | Sand   |
+ | Stone  | Grass  | Brick  | Brick  | Grass  | Stone  | Stone  | Brick  | Brick  | Stone  | Stone  | Stone  | Sand   | Grass  | Grass  | Stone  | Sand   | Sand   | Sand   | Stone  |
+ | Stone  | Swamp  | Sand   | Brick  | Grass  | Sand   | Sand   | Trees  | Brick  | Sand   | Brick  | Brick  | Brick  | Brick  | Sand   | Brick  | Brick  | Tile   | Sand   | Stone  |
+ | Swamp  | Swamp  | Brick  | Brick  | Grass  | Grass  | Sand   | Grass  | Brick  | Trees  | Grass  | Grass  | Grass  | Grass  | Grass  | Stone  | Brick  | Stone  | Sand   | Sand   |
+ | Sand   | Swamp  | Brick  | Sand   | Brick  | Brick  | Brick  | Brick  | Sand   | Grass  | Grass  | Grass  | Swamp  | Grass  | Grass  | Stone  | Stone  | Stone  | Stone  | Stone  |
+ | Stone  | Swamp  | Swamp  | Swamp  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Swamp  | Swamp  | Swamp  | Grass  | Sand   | Sand   | Sand   | Sand   | Sand   |
+ | Sand   | Sand   | Swamp  | Stone  | Stone  | Stone  | Stone  | Grass  | Stone  | Swamp  | Swamp  | Swamp  | Swamp  | Stone  | Stone  | Stone  | Sand   | Stone  | Stone  | Stone  |
+
+Tantegel
+------------------
+ | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Grass  | Stone  | Stone  | Stone  | Grass  | Trees  | Grass  | Grass  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Trees  | Grass  | Trees  | Trees  | Grass  | Trees  | Grass  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Stone  | Brick  | Stone  | Grass  | Grass  | Grass  | Grass  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Stone  | Tile   | Stone  | Grass  | Grass  | Grass  | Grass  |
+ | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Grass  | Grass  | Grass  | Trees  | Trees  | Grass  | Grass  | Grass  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Trees  | Trees  | Trees  | Grass  | Grass  | Grass  | Grass  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  |
+ | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Door   | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Stone  | Stone  | Stone  | Grass  | Grass  |
+ | Stone  | Up     | Brick  | Brick  | Stone  | Brick  | Stone  | Up     | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Grass  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Grass  |
+ | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Grass  | Grass  |
+ | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Stone  | Trees  | Trees  | Brick  | Brick  | Brick  | Brick  | Trees  | Trees  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Grass  | Grass  |
+ | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Stone  | Trees  | Trees  | Brick  | Brick  | Brick  | Brick  | Trees  | Trees  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Grass  | Grass  |
+ | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Stone  | Trees  | Grass  | Brick  | Brick  | Brick  | Brick  | Grass  | Trees  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Grass  |
+ | Stone  | Chest  | Brick  | Brick  | Door   | Brick  | Stone  | Grass  | Grass  | Brick  | Brick  | Brick  | Brick  | Grass  | Grass  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Grass  |
+ | Stone  | Brick  | Chest  | Brick  | Stone  | Brick  | Stone  | Grass  | Grass  | Brick  | Brick  | Brick  | Brick  | Grass  | Grass  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Grass  | Grass  |
+ | Stone  | Chest  | Brick  | Chest  | Stone  | Brick  | Stone  | Grass  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Grass  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Grass  | Grass  |
+ | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Stone  | Grass  | Brick  | Water  | Water  | Water  | Water  | Brick  | Grass  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Stone  | Stone  | Grass  | Grass  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Water  | Field  | Field  | Water  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Grass  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Water  | Field  | Field  | Water  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Field  | Field  | Field  | Field  | Field  | Stone  | Grass  | Grass  |
+ | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Water  | Water  | Water  | Water  | Brick  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Field  | Field  | Field  | Field  | Field  | Stone  | Grass  | Grass  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Grass  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Water  | Grass  |
+ | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Water  | Grass  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Grass  |
+ | Stone  | Brick  | Water  | Water  | Brick  | Brick  | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Grass  |
+ | Stone  | Water  | Water  | Water  | Water  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Stone  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Grass  |
+ | Stone  | Water  | Water  | Water  | Water  | Brick  | Brick  | Brick  | Stone  | Stone  | Brick  | Brick  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Tile   | Brick  | Stone  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Grass  |
+ | Stone  | Water  | Water  | Water  | Water  | Water  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Stone  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Grass  |
+ | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Grass  |
+ | Water  | Water  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Brick  | Brick  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Down   |
+
+Tantegel Throne Room
+------------------
+ | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Chest  | Brick  | Brick  | Stone  |
+ | Stone  | Brick  | Tile   | Tile   | Tile   | Tile   | Tile   | Tile   | Brick  | Stone  |
+ | Stone  | Brick  | Tile   | Brick  | Tile   | Tile   | Brick  | Tile   | Brick  | Stone  |
+ | Stone  | Brick  | Brick  | Brick  | Chest  | Chest  | Brick  | Brick  | Brick  | Stone  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  |
+ | Stone  | Stone  | Stone  | Stone  | Door   | Stone  | Stone  | Stone  | Stone  | Stone  |
+ | Stone  | Down   | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Down   | Stone  |
+ | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  |
+
+Charlock Throne Room
+------------------
+ | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  |
+ | Water  | Water  | Water  | Stone  | Stone  | Stone  | Stone  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Water  | Stone  | Stone  | Stone  | Water  | Water  | Water  |
+ | Water  | Water  | Stone  | Stone  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Stone  | Stone  | Water  | Water  |
+ | Water  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Water  |
+ | Water  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Brick  | Brick  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Stone  | Brick  | Brick  | Stone  | Water  |
+ | Water  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Water  |
+ | Water  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Stone  | Brick  | Brick  | Stone  | Water  |
+ | Water  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Water  |
+ | Water  | Water  | Stone  | Stone  | Brick  | Brick  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Stone  | Stone  | Sand   | Water  |
+ | Water  | Water  | Water  | Stone  | Brick  | Stone  | Stone  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Stone  | Sand   | Stone  | Brick  | Stone  | Sand   | Sand   | Water  |
+ | Water  | Water  | Water  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Water  | Water  |
+ | Water  | Water  | Water  | Stone  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Chest  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Stone  | Stone  | Sand   | Sand   | Water  | Sand   | Sand   | Sand   | Water  | Water  | Water  |
+ | Water  | Water  | Water  | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Chest  | Chest  | Brick  | Brick  | Brick  | Brick  | Door   | Brick  | Stone  | Sand   | Sand   | Water  | Water  | Water  | Water  | Sand   | Bridge | Sand   | Water  |
+ | Water  | Water  | Water  | Stone  | Brick  | Stone  | Brick  | Stone  | Brick  | Stone  | Brick  | Chest  | Chest  | Chest  | Brick  | Stone  | Stone  | Stone  | Brick  | Stone  | Stone  | Sand   | Water  | Water  | Water  | Water  | Water  | Water  | Grass  | Water  |
+ | Water  | Water  | Water  | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Water  | Water  | Water  | Sand   | Water  | Water  | Swamp  | Grass  | Water  |
+ | Water  | Water  | Water  | Stone  | Brick  | Stone  | Brick  | Stone  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Water  | Sand   | Water  | Swamp  | Sand   | Bridge | Sand   | Water  | Water  |
+ | Water  | Water  | Water  | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Water  | Water  | Water  | Water  | Grass  | Grass  | Water  | Water  | Water  | Water  |
+ | Water  | Water  | Water  | Stone  | Brick  | Stone  | Brick  | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Stone  | Stone  | Water  | Water  | Water  | Sand   | Water  | Water  | Swamp  | Sand   | Water  | Water  | Water  |
+ | Water  | Water  | Water  | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Stone  | Water  | Stone  | Stone  | Stone  | Water  | Water  | Water  | Sand   | Sand   | Water  | Sand   | Swamp  | Grass  | Water  | Sand   | Water  |
+ | Water  | Water  | Water  | Stone  | Brick  | Stone  | Brick  | Stone  | Brick  | Stone  | Brick  | Stone  | Stone  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Sand   | Sand   | Water  | Water  | Sand   | Sand   | Grass  | Sand   | Sand   | Water  |
+ | Water  | Water  | Water  | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Stone  | Water  | Water  | Water  | Stone  | Stone  | Stone  | Water  | Water  | Water  | Water  | Water  | Sand   | Sand   | Swamp  | Swamp  | Sand   | Water  | Water  |
+ | Water  | Water  | Stone  | Stone  | Brick  | Stone  | Stone  | Brick  | Stone  | Stone  | Brick  | Stone  | Stone  | Water  | Stone  | Stone  | Brick  | Stone  | Stone  | Water  | Water  | Water  | Sand   | Sand   | Grass  | Grass  | Swamp  | Sand   | Sand   | Water  |
+ | Water  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Water  | Water  | Sand   | Stone  | Stone  | Brick  | Stone  | Stone  | Sand   | Water  |
+ | Water  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Brick  | Tile   | Tile   | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Sand   | Water  |
+ | Water  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Tile   | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Water  |
+ | Water  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Stone  | Stone  | Stone  | Brick  | Tile   | Tile   | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Grass  | Water  |
+ | Water  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Water  | Stone  | Brick  | Stone  | Water  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Water  | Water  | Swamp  | Stone  | Stone  | Stone  | Stone  | Stone  | Sand   | Water  |
+ | Water  | Water  | Stone  | Stone  | Brick  | Stone  | Stone  | Water  | Water  | Stone  | Brick  | Stone  | Water  | Water  | Stone  | Stone  | Brick  | Stone  | Stone  | Water  | Water  | Water  | Sand   | Sand   | Swamp  | Swamp  | Swamp  | Sand   | Sand   | Water  |
+ | Water  | Water  | Water  | Stone  | Stone  | Stone  | Water  | Water  | Swamp  | Stone  | Brick  | Stone  | Swamp  | Water  | Water  | Stone  | Stone  | Stone  | Water  | Water  | Water  | Water  | Water  | Sand   | Sand   | Sand   | Sand   | Sand   | Water  | Water  |
+ | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Swamp  | Swamp  | Stone  | Up     | Stone  | Swamp  | Swamp  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  |
+
+Kol
+------------------
+ | Stone  | Stone  | Stone  | Grass  | Trees  | Trees  | Trees  | Stone  | Stone  | Stone  | Stone  | Stone  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Stone  | Stone  | Stone  | Stone  |
+ | Stone  | Brick  | Stone  | Grass  | Grass  | Trees  | Trees  | Stone  | Brick  | Brick  | Brick  | Stone  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Stone  | Inn    | Stone  | Brick  | Brick  | Stone  |
+ | Stone  | Tile   | Stone  | Swamp  | Grass  | Trees  | Trees  | Brick  | Brick  | Water  | Brick  | Brick  | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  |
+ | Swamp  | Brick  | Swamp  | Swamp  | Grass  | Trees  | Trees  | Stone  | Brick  | Brick  | Brick  | Stone  | Trees  | Sand   | Trees  | Trees  | Trees  | Trees  | Stone  | Tile   | Stone  | Stone  | Stone  | Stone  |
+ | Swamp  | Swamp  | Swamp  | Grass  | Grass  | Stone  | Stone  | Stone  | Stone  | Brick  | Stone  | Stone  | Trees  | Sand   | Trees  | Trees  | Trees  | Trees  | Stone  | Brick  | Stone  | Trees  | Trees  | Trees  |
+ | Grass  | Swamp  | Grass  | Grass  | Grass  | Stone  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Sand   | Trees  | Trees  | Trees  | Trees  | Stone  | Stone  | Stone  | Trees  | Trees  | Trees  |
+ | Grass  | Grass  | Grass  | Grass  | Trees  | Stone  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Sand   | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Grass  | Trees  |
+ | Trees  | Grass  | Grass  | Trees  | Trees  | Stone  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Sand   | Trees  | Trees  | Trees  | Trees  | Trees  | Grass  | Grass  | Grass  | Grass  | Trees  |
+ | Trees  | Trees  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Trees  | Trees  | Trees  | Trees  | Sand   | Sand   | Sand   | Trees  | Trees  | Trees  | Grass  | Grass  | Grass  | Trees  | Grass  | Grass  |
+ | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Stone  | Trees  | Trees  | Trees  | Sand   | Sand   | Sand   | Sand   | Sand   | Trees  | Trees  | Trees  | Grass  | Trees  | Grass  | Grass  | Trees  |
+ | Stone  | Stone  | Stone  | Stone  | Stone  | Trees  | Trees  | Stone  | Trees  | Trees  | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Trees  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  |
+ | Stone  | Brick  | Brick  | Brick  | Stone  | Trees  | Trees  | Stone  | Trees  | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Stone  | Brick  | Brick  | Stone  | Brick  | Stone  |
+ | Stone  | Brick  | Brick  | Brick  | Stone  | Trees  | Sand   | Door   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Brick  | Brick  | Brick  | Tile   | Brick  | Stone  |
+ | Stone  | Brick  | Brick  | Brick  | Stone  | Trees  | Sand   | Stone  | Trees  | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Stone  | Brick  | Brick  | Stone  | Brick  | Stone  |
+ | Stone  | Door   | Stone  | Stone  | Stone  | Brick  | Sand   | Stone  | Trees  | Trees  | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Trees  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  |
+ | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Trees  | Trees  | Trees  | Sand   | Sand   | Sand   | Sand   | Sand   | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  |
+ | Stone  | Brick  | Stone  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Trees  | Sand   | Sand   | Sand   | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  |
+ | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Trees  | Trees  | Sand   | Trees  | Trees  | Trees  | Trees  | Stone  | Stone  | Stone  | Stone  | Trees  | Trees  |
+ | Stone  | Brick  | Stone  | Brick  | Stone  | Brick  | Grass  | Brick  | Grass  | Brick  | Stone  | Trees  | Trees  | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Stone  | Trees  | Trees  |
+ | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Trees  | Stone  | Stone  | Stone  | Stone  | Stone  | Trees  | Sand   | Sand   | Sand   | Stone  | Trees  | Trees  |
+ | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Chest  | Stone  | Trees  | Sand   | Sand   | Sand   | Stone  | Trees  | Trees  |
+ | Stone  | Stone  | Brick  | Stone  | Stone  | Brick  | Grass  | Brick  | Grass  | Brick  | Brick  | Brick  | Brick  | Tile   | Brick  | Chest  | Stone  | Trees  | Trees  | Sand   | Trees  | Trees  | Trees  | Trees  |
+ | Trees  | Grass  | Grass  | Grass  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Chest  | Stone  | Trees  | Trees  | Sand   | Trees  | Trees  | Trees  | Trees  |
+ | Trees  | Trees  | Grass  | Grass  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Trees  | Stone  | Stone  | Stone  | Stone  | Stone  | Trees  | Trees  | Sand   | Trees  | Trees  | Trees  | Trees  |
+
+Brecconary
+------------------
+ | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Sand   | Brick  | Brick  | Sand   | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  |
+ | Stone  | Trees  | Trees  | Trees  | Grass  | Grass  | Grass  | Grass  | Trees  | Trees  | Trees  | Trees  | Sand   | Sand   | Brick  | Brick  | Sand   | Sand   | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Stone  |
+ | Stone  | Trees  | Trees  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Trees  | Grass  | Trees  | Grass  | Sand   | Brick  | Brick  | Sand   | Grass  | Grass  | Trees  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Trees  | Stone  |
+ | Stone  | Trees  | Grass  | Stone  | Stone  | Stone  | Stone  | Stone  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Brick  | Brick  | Grass  | Grass  | Grass  | Trees  | Stone  | Brick  | Brick  | Tile   | Brick  | Water  | Water  | Stone  | Trees  | Stone  |
+ | Stone  | Trees  | Grass  | Stone  | Brick  | Brick  | Brick  | Stone  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Brick  | Brick  | Sand   | Grass  | Grass  | Grass  | Stone  | Brick  | Brick  | Tile   | Brick  | Water  | Water  | Stone  | Trees  | Stone  |
+ | Stone  | Trees  | Grass  | Stone  | Brick  | Tile   | Brick  | Stone  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Brick  | Brick  | Sand   | Grass  | Trees  | Grass  | Stone  | Brick  | Brick  | Tile   | Brick  | Water  | Water  | Stone  | Trees  | Stone  |
+ | Stone  | Trees  | Grass  | Stone  | Stone  | Brick  | Stone  | Stone  | Grass  | Grass  | Sand   | Sand   | Grass  | Grass  | Brick  | Brick  | Sand   | Sand   | Trees  | Grass  | Stone  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Grass  | Stone  |
+ | Stone  | Trees  | Grass  | Grass  | Grass  | Brick  | Weapon | Grass  | Grass  | Sand   | Sand   | Sand   | Sand   | Grass  | Brick  | Brick  | Sand   | Grass  | Trees  | Grass  | Grass  | Grass  | Grass  | Trees  | Grass  | Grass  | Trees  | Grass  | Grass  | Stone  |
+ | Stone  | Trees  | Trees  | Grass  | Grass  | Brick  | Grass  | Grass  | Sand   | Sand   | Trees  | Sand   | Sand   | Grass  | Brick  | Brick  | Sand   | Grass  | Grass  | Grass  | Grass  | Grass  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Grass  | Stone  |
+ | Stone  | Trees  | Grass  | Grass  | Grass  | Brick  | Grass  | Grass  | Sand   | Trees  | Trees  | Trees  | Sand   | Sand   | Brick  | Brick  | Grass  | Grass  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Trees  | Grass  | Stone  |
+ | Stone  | Trees  | Grass  | Grass  | Grass  | Brick  | Grass  | Sand   | Sand   | Sand   | Trees  | Trees  | Trees  | Sand   | Brick  | Brick  | Grass  | Grass  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Grass  | Grass  | Stone  |
+ | Stone  | Grass  | Grass  | Grass  | Grass  | Brick  | Grass  | Sand   | Sand   | Trees  | Trees  | Trees  | Sand   | Grass  | Brick  | Brick  | Grass  | Grass  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Grass  | Grass  | Stone  |
+ | Stone  | Trees  | Trees  | Grass  | Grass  | Brick  | Grass  | Grass  | Sand   | Sand   | Sand   | Sand   | Sand   | Grass  | Brick  | Brick  | Grass  | Grass  | Stone  | Stone  | Brick  | Stone  | Stone  | Stone  | Brick  | Stone  | Stone  | Grass  | Trees  | Stone  |
+ | Trees  | Trees  | Grass  | Grass  | Grass  | Brick  | Grass  | Grass  | Grass  | Grass  | Sand   | Sand   | Grass  | Grass  | Brick  | Brick  | Grass  | Grass  | Grass  | Grass  | Brick  | Grass  | Grass  | Grass  | Brick  | Grass  | Grass  | Grass  | Trees  | Trees  |
+ | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
+ | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
+ | Trees  | Trees  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Brick  | Grass  | Grass  | Grass  | Grass  | Trees  | Grass  | Brick  | Grass  | Grass  | Grass  | Trees  | Grass  | Grass  | Grass  | Grass  | Grass  | Water  | Water  | Water  | Trees  | Trees  |
+ | Stone  | Trees  | Trees  | Grass  | Grass  | Grass  | Grass  | Grass  | Brick  | Grass  | Grass  | Grass  | Trees  | Trees  | Grass  | Brick  | Grass  | Trees  | Trees  | Trees  | Trees  | Grass  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Trees  |
+ | Stone  | Trees  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Brick  | Grass  | Grass  | Trees  | Trees  | Grass  | Grass  | Brick  | Trees  | Trees  | Trees  | Grass  | Grass  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  |
+ | Stone  | Grass  | Grass  | Grass  | Grass  | Grass  | Stone  | Inn    | Brick  | Stone  | Grass  | Grass  | Grass  | Grass  | Grass  | Brick  | Grass  | Trees  | Grass  | Grass  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  |
+ | Stone  | Grass  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Stone  | Stone  | Stone  | Grass  | Grass  | Grass  | Brick  | Trees  | Grass  | Grass  | Water  | Water  | Water  | Water  | Grass  | Grass  | Water  | Water  | Water  | Water  | Water  |
+ | Stone  | Grass  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Tile   | Brick  | Stone  | Grass  | Grass  | Grass  | Brick  | Grass  | Grass  | Water  | Water  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Water  | Water  | Water  |
+ | Stone  | Grass  | Stone  | Brick  | Brick  | Stone  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Grass  | Trees  | Grass  | Brick  | Brick  | Brick  | Bridge | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Water  |
+ | Stone  | Grass  | Stone  | Brick  | Brick  | Door   | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Trees  | Grass  | Grass  | Grass  | Grass  | Water  | Grass  | Grass  | Stone  | Brick  | Stone  | Stone  | Stone  | Stone  | Trees  | Grass  | Water  |
+ | Stone  | Grass  | Stone  | Brick  | Stone  | Stone  | Brick  | Stone  | Stone  | Brick  | Brick  | Stone  | Grass  | Trees  | Trees  | Grass  | Grass  | Water  | Water  | Grass  | Grass  | Stone  | Brick  | Brick  | Stone  | Brick  | Stone  | Trees  | Grass  | Water  |
+ | Stone  | Grass  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Trees  | Trees  | Trees  | Trees  | Grass  | Water  | Water  | Water  | Grass  | Stone  | Brick  | Brick  | Tile   | Brick  | Stone  | Grass  | Water  | Water  |
+ | Stone  | Grass  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Grass  | Trees  | Trees  | Grass  | Grass  | Water  | Water  | Grass  | Grass  | Stone  | Brick  | Brick  | Stone  | Brick  | Stone  | Grass  | Trees  | Water  |
+ | Stone  | Grass  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Grass  | Trees  | Grass  | Grass  | Water  | Water  | Water  | Water  | Grass  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Trees  | Trees  | Water  |
+ | Stone  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Water  | Water  | Water  | Water  | Water  | Grass  | Grass  | Grass  | Grass  | Grass  | Water  | Water  | Trees  | Water  | Water  |
+ | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  |
+
+Garinham
+------------------
+ | Water  | Water  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Water  | Water  | Stone  | Down   |
+ | Water  | Water  | Stone  | Brick  | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Brick  | Brick  | Bridge | Brick  | Brick  |
+ | Stone  | Stone  | Stone  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Water  | Stone  | Stone  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Water  | Water  | Water  |
+ | Stone  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Water  | Water  | Water  | Stone  | Water  | Stone  | Stone  |
+ | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Chest  | Chest  | Brick  | Brick  | Brick  | Stone  | Water  | Water  | Water  | Water  | Water  | Stone  |
+ | Stone  | Brick  | Stone  | Stone  | Door   | Stone  | Stone  | Brick  | Chest  | Brick  | Brick  | Brick  | Brick  | Stone  | Water  | Stone  | Water  | Stone  | Water  | Stone  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  |
+ | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  |
+ | Water  | Stone  | Brick  | Brick  | Stone  | Brick  | Stone  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Stone  | Stone  | Door   | Stone  | Stone  |
+ | Water  | Stone  | Brick  | Brick  | Tile   | Brick  | Stone  | Trees  | Trees  | Grass  | Brick  | Brick  | Brick  | Grass  | Trees  | Trees  | Trees  | Brick  | Trees  | Trees  |
+ | Stone  | Stone  | Brick  | Stone  | Stone  | Stone  | Stone  | Trees  | Grass  | Grass  | Brick  | Trees  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
+ | Grass  | Grass  | Brick  | Grass  | Grass  | Grass  | Grass  | Grass  | Brick  | Brick  | Brick  | Brick  | Brick  | Grass  | Grass  | Brick  | Grass  | Grass  | Grass  | Grass  |
+ | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Grass  | Brick  | Grass  | Grass  | Grass  | Inn    | Brick  | Stone  | Stone  | Stone  | Trees  |
+ | Trees  | Trees  | Trees  | Grass  | Brick  | Grass  | Trees  | Grass  | Grass  | Grass  | Brick  | Weapon | Grass  | Grass  | Stone  | Brick  | Tile   | Brick  | Stone  | Stone  |
+ | Stone  | Stone  | Stone  | Stone  | Brick  | Stone  | Trees  | Sand   | Stone  | Stone  | Brick  | Stone  | Stone  | Grass  | Stone  | Brick  | Stone  | Stone  | Stone  | Stone  |
+ | Water  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Sand   | Stone  | Brick  | Tile   | Brick  | Stone  | Grass  | Stone  | Brick  | Stone  | Brick  | Brick  | Stone  |
+ | Water  | Stone  | Stone  | Stone  | Stone  | Stone  | Water  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Grass  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  |
+ | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Stone  | Stone  | Stone  | Stone  | Stone  | Grass  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  |
+
+Cantlin
+------------------
+ | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
+ | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Weapon | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Brick  | Stone  | Stone  | Stone  | Brick  |
+ | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Sand   | Sand   | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Sand   | Brick  | Stone  | Brick  | Stone  | Brick  |
+ | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Trees  | Trees  | Stone  | Brick  | Brick  | Tile   | Brick  | Stone  | Sand   | Brick  | Stone  | Brick  | Stone  | Brick  |
+ | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Tile   | Stone  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Tile   | Brick  | Stone  | Sand   | Brick  | Brick  | Brick  | Brick  | Brick  |
+ | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Tile   | Brick  | Stone  | Sand   | Brick  | Stone  | Stone  | Stone  | Brick  |
+ | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Stone  | Brick  | Stone  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Trees  | Trees  | Stone  | Brick  | Brick  | Tile   | Brick  | Stone  | Sand   | Brick  | Stone  | Brick  | Stone  | Brick  |
+ | Brick  | Stone  | Brick  | Tile   | Brick  | Brick  | Sand   | Inn    | Sand   | Sand   | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Sand   | Sand   | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Sand   | Brick  | Stone  | Tile   | Stone  | Brick  |
+ | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Sand   | Sand   | Sand   | Sand   | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Brick  | Stone  | Brick  | Stone  | Brick  |
+ | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Door   | Brick  | Stone  | Brick  |
+ | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Brick  | Stone  | Brick  |
+ | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Grass  | Water  | Water  | Water  | Grass  | Grass  | Grass  | Grass  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Brick  |
+ | Brick  | Stone  | Brick  | Tile   | Brick  | Brick  | Tile   | Brick  | Stone  | Brick  | Brick  | Water  | Water  | Water  | Water  | Water  | Grass  | Grass  | Grass  | Brick  | Brick  | Stone  | Brick  | Stone  | Brick  | Tile   | Brick  | Brick  | Stone  | Brick  |
+ | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Water  | Water  | Trees  | Water  | Water  | Water  | Grass  | Grass  | Brick  | Brick  | Tile   | Brick  | Stone  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  |
+ | Brick  | Stone  | Brick  | Tile   | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Grass  | Water  | Water  | Water  | Grass  | Water  | Water  | Grass  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  |
+ | Brick  | Stone  | Stone  | Stone  | Brick  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Bridge | Grass  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
+ | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Water  | Grass  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
+ | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Grass  | Grass  | Grass  | Grass  | Grass  | Water  | Water  | Grass  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  |
+ | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Grass  | Grass  | Grass  | Water  | Water  | Water  | Water  | Water  | Brick  | Brick  | Tile   | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  |
+ | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Grass  | Grass  | Water  | Water  | Water  | Trees  | Water  | Water  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Brick  | Stone  | Brick  |
+ | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Grass  | Water  | Water  | Water  | Trees  | Trees  | Water  | Water  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  |
+ | Brick  | Stone  | Stone  | Stone  | Door   | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Grass  | Water  | Water  | Trees  | Trees  | Water  | Water  | Grass  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
+ | Brick  | Stone  | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Stone  | Brick  | Brick  | Grass  | Grass  | Water  | Water  | Water  | Water  | Grass  | Grass  | Brick  | Brick  | Stone  | Brick  | Stone  | Stone  | Stone  | Stone  | Brick  | Stone  | Brick  |
+ | Brick  | Stone  | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Stone  | Brick  | Brick  | Grass  | Grass  | Grass  | Water  | Water  | Grass  | Grass  | Grass  | Brick  | Brick  | Stone  | Tile   | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  |
+ | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Sand   | Sand   | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Stone  | Stone  | Brick  | Stone  | Stone  | Stone  | Brick  |
+ | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Sand   | Sand   | Door   | Brick  | Stone  | Stone  | Stone  | Stone  | Door   | Door   | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Chest  | Stone  | Brick  |
+ | Brick  | Stone  | Brick  | Brick  | Brick  | Tile   | Sand   | Sand   | Stone  | Brick  | Stone  | Field  | Field  | Field  | Field  | Field  | Field  | Field  | Field  | Stone  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Tile   | Brick  | Stone  | Brick  |
+ | Brick  | Stone  | Chest  | Brick  | Brick  | Stone  | Sand   | Sand   | Stone  | Brick  | Stone  | Field  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Field  | Stone  | Brick  | Stone  | Brick  | Stone  | Brick  | Brick  | Stone  | Chest  | Stone  | Brick  |
+ | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Stone  | Field  | Field  | Field  | Brick  | Brick  | Field  | Field  | Field  | Stone  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  |
+ | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
+
+Rimuldar
+------------------
+ | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  |
+ | Grass  | Grass  | Grass  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  |
+ | Grass  | Water  | Water  | Water  | Stone  | Stone  | Stone  | Trees  | Trees  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Water  | Water  | Water  | Water  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  |
+ | Grass  | Bridge | Grass  | Grass  | Brick  | Brick  | Stone  | Trees  | Grass  | Grass  | Grass  | Grass  | Grass  | Trees  | Trees  | Trees  | Grass  | Grass  | Grass  | Trees  | Water  | Water  | Water  | Water  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  |
+ | Water  | Water  | Grass  | Grass  | Brick  | Brick  | Stone  | Grass  | Grass  | Grass  | Grass  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Trees  | Trees  | Grass  | Grass  | Water  | Water  | Water  | Water  | Grass  | Grass  | Grass  |
+ | Water  | Trees  | Stone  | Brick  | Brick  | Brick  | Stone  | Grass  | Trees  | Grass  | Grass  | Brick  | Grass  | Trees  | Grass  | Brick  | Sand   | Sand   | Brick  | Grass  | Grass  | Grass  | Grass  | Grass  | Trees  | Trees  | Water  | Grass  | Grass  | Grass  |
+ | Water  | Trees  | Stone  | Stone  | Tile   | Stone  | Stone  | Grass  | Grass  | Stone  | Stone  | Brick  | Stone  | Stone  | Stone  | Brick  | Stone  | Stone  | Brick  | Grass  | Grass  | Stone  | Stone  | Stone  | Stone  | Stone  | Water  | Grass  | Grass  | Grass  |
+ | Water  | Grass  | Stone  | Brick  | Brick  | Brick  | Stone  | Grass  | Grass  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Grass  | Grass  | Stone  | Brick  | Brick  | Brick  | Stone  | Water  | Water  | Grass  | Grass  |
+ | Water  | Grass  | Stone  | Stone  | Stone  | Stone  | Stone  | Grass  | Grass  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Trees  | Grass  | Stone  | Stone  | Tile   | Stone  | Stone  | Sand   | Water  | Grass  | Grass  |
+ | Water  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Sand   | Water  | Grass  | Grass  |
+ | Water  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Water  | Water  | Trees  | Grass  | Grass  | Grass  | Grass  | Grass  | Trees  | Grass  | Grass  | Brick  | Grass  | Weapon | Stone  | Brick  | Brick  | Brick  | Stone  | Sand   | Water  | Grass  | Grass  |
+ | Water  | Grass  | Trees  | Grass  | Water  | Water  | Water  | Water  | Water  | Water  | Grass  | Grass  | Grass  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Grass  | Stone  | Brick  | Brick  | Brick  | Stone  | Sand   | Water  | Water  | Grass  |
+ | Water  | Sand   | Grass  | Water  | Water  | Trees  | Trees  | Trees  | Water  | Water  | Grass  | Trees  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Grass  | Stone  | Stone  | Stone  | Stone  | Stone  | Trees  | Grass  | Water  | Grass  |
+ | Water  | Sand   | Water  | Water  | Trees  | Grass  | Grass  | Trees  | Water  | Grass  | Grass  | Brick  | Brick  | Brick  | Grass  | Grass  | Grass  | Grass  | Brick  | Brick  | Grass  | Grass  | Grass  | Grass  | Trees  | Trees  | Trees  | Trees  | Water  | Grass  |
+ | Water  | Sand   | Sand   | Sand   | Trees  | Grass  | Trees  | Water  | Water  | Grass  | Brick  | Brick  | Brick  | Grass  | Grass  | Trees  | Grass  | Grass  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Bridge | Brick  |
+ | Water  | Sand   | Water  | Water  | Trees  | Trees  | Water  | Water  | Grass  | Grass  | Brick  | Brick  | Grass  | Grass  | Trees  | Trees  | Grass  | Grass  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Bridge | Brick  |
+ | Water  | Sand   | Grass  | Water  | Water  | Water  | Water  | Grass  | Grass  | Grass  | Brick  | Brick  | Grass  | Trees  | Trees  | Grass  | Stone  | Inn    | Brick  | Grass  | Grass  | Trees  | Trees  | Grass  | Grass  | Trees  | Trees  | Trees  | Water  | Grass  |
+ | Water  | Grass  | Trees  | Grass  | Grass  | Grass  | Grass  | Trees  | Grass  | Grass  | Brick  | Brick  | Grass  | Grass  | Trees  | Stone  | Stone  | Stone  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Trees  | Grass  | Water  | Grass  |
+ | Water  | Grass  | Grass  | Grass  | Grass  | Grass  | Trees  | Trees  | Trees  | Grass  | Brick  | Brick  | Grass  | Trees  | Trees  | Stone  | Brick  | Tile   | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Grass  | Water  | Water  | Grass  |
+ | Water  | Grass  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Grass  | Trees  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Water  | Grass  | Grass  |
+ | Water  | Grass  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Grass  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Trees  | Water  | Grass  | Grass  |
+ | Water  | Grass  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Trees  | Stone  | Stone  | Brick  | Stone  | Stone  | Stone  | Door   | Stone  | Stone  | Stone  | Stone  | Trees  | Water  | Grass  | Grass  |
+ | Water  | Grass  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Sand   | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Water  | Water  | Grass  | Grass  |
+ | Water  | Trees  | Stone  | Brick  | Tile   | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Brick  | Stone  | Grass  | Sand   | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Door   | Brick  | Chest  | Stone  | Water  | Grass  | Grass  | Grass  |
+ | Water  | Trees  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Sand   | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Water  | Grass  | Grass  | Grass  |
+ | Water  | Water  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Trees  | Sand   | Sand   | Sand   | Sand   | Trees  | Grass  | Grass  | Trees  | Trees  | Water  | Water  | Water  | Water  | Grass  | Grass  | Grass  |
+ | Grass  | Water  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Trees  | Trees  | Grass  | Grass  | Trees  | Grass  | Grass  | Water  | Water  | Water  | Water  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  |
+ | Grass  | Water  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Trees  | Trees  | Trees  | Trees  | Water  | Water  | Water  | Water  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  |
+ | Grass  | Grass  | Grass  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  |
+ | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  |
+
+Tantegel Basement
+------------------
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  |
+ | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  |
+ | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
+ | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  |
+ | Up     | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  |
+ | Brick  | Brick  | Brick  | Stone  | Chest  | Brick  | Stone  | Brick  | Brick  | Brick  |
+ | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  |
+ | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
+ | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  |
+
+Northern Shrine
+------------------
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  |
+ | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
+ | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  |
+ | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Stone  | Brick  | Brick  |
+ | Brick  | Brick  | Stone  | Chest  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
+ | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Stone  | Brick  | Brick  |
+ | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  |
+ | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  |
+ | Stone  | Stone  | Stone  | Stone  | Up     | Brick  | Stone  | Stone  | Stone  | Stone  |
+
+Southern Shrine
+------------------
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
+ | Stone  | Brick  | Brick  | Stone  | Brick  | Stone  | Brick  | Stone  | Brick  | Brick  |
+ | Stone  | Brick  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Brick  |
+ | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  |
+ | Up     | Brick  | Stone  | Brick  | Stone  | Brick  | Stone  | Brick  | Stone  | Brick  |
+ | Brick  | Brick  | Stone  | Brick  | Brick  | Chest  | Stone  | Brick  | Stone  | Brick  |
+ | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  |
+ | Stone  | Brick  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Brick  |
+ | Stone  | Brick  | Brick  | Stone  | Brick  | Stone  | Brick  | Stone  | Brick  | Brick  |
+ | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
+
+Charlock Cave Lv 1
+------------------
+ | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Up    | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick |
+ | Brick | Stone | Stone | Stone | Stone | Stone | Brick | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Stone | Down  | Stone | Stone | Stone | Brick |
+ | Brick | Stone | Brick | Brick | Brick | Stone | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Brick | Brick | Brick |
+ | Brick | Stone | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Stone | Brick | Brick | Stone | Brick |
+ | Brick | Stone | Down  | Brick | Stone | Brick | Stone | Stone | Brick | Brick | Brick | Brick | Brick | Stone | Stone | Brick | Brick | Stone | Stone | Stone |
+ | Brick | Stone | Stone | Stone | Stone | Brick | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Brick | Brick | Stone | Stone | Brick | Brick |
+ | Brick | Brick | Brick | Brick | Stone | Stone | Brick | Stone | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Stone | Stone | Brick | Brick | Brick |
+ | Stone | Stone | Brick | Brick | Stone | Brick | Brick | Stone | Stone | Brick | Brick | Stone | Stone | Down  | Brick | Stone | Brick | Brick | Stone | Down  |
+ | Brick | Stone | Stone | Brick | Stone | Brick | Stone | Stone | Brick | Brick | Brick | Brick | Stone | Stone | Stone | Stone | Brick | Brick | Stone | Stone |
+ | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Brick | Brick | Stone | Stone | Brick | Brick | Stone | Down  | Stone | Stone | Brick | Stone | Brick |
+ | Brick | Stone | Stone | Stone | Stone | Brick | Stone | Brick | Brick | Stone | Stone | Brick | Brick | Stone | Brick | Brick | Stone | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Brick | Brick | Brick | Stone | Stone | Brick | Brick | Brick | Brick | Stone | Stone | Brick | Brick | Stone | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Stone | Brick | Brick | Brick | Stone | Stone | Brick | Brick | Stone | Stone | Brick | Brick | Stone | Stone | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Stone | Stone | Stone | Brick | Stone | Up    | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Stone | Brick |
+ | Brick | Stone | Down  | Stone | Brick | Brick | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Brick |
+ | Brick | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Up    | Brick | Brick |
+ | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Brick | Brick | Brick |
+ | Brick | Stone | Brick | Brick | Stone | Stone | Stone | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick |
+ | Brick | Stone | Stone | Stone | Stone | Brick | Brick | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Stone | Brick | Brick | Brick | Stone | Brick |
+ | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Down  | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick |
+
+Charlock Cave Lv 2
+------------------
+ | Up    | Brick | Stone | Down  | Stone | Up    | Brick | Stone | Up    | Brick |
+ | Up    | Stone | Stone | Brick | Stone | Stone | Brick | Stone | Stone | Down  |
+ | Stone | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Stone | Stone |
+ | Brick | Brick | Brick | Stone | Stone | Stone | Stone | Brick | Brick | Brick |
+ | Brick | Stone | Stone | Stone | Up    | Brick | Stone | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Stone | Brick | Chest | Stone | Stone | Stone | Brick |
+ | Brick | Brick | Brick | Stone | Stone | Stone | Stone | Brick | Brick | Brick |
+ | Stone | Stone | Brick | Brick | Stone | Brick | Brick | Brick | Stone | Stone |
+ | Down  | Stone | Stone | Brick | Stone | Stone | Brick | Stone | Stone | Up    |
+ | Brick | Down  | Stone | Brick | Brick | Brick | Brick | Stone | Up    | Brick |
+
+Charlock Cave Lv 3
+------------------
+ | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Up    | Brick | Brick |
+ | Brick | Stone | Stone | Stone | Brick | Brick | Stone | Stone | Stone | Brick |
+ | Brick | Stone | Up    | Stone | Brick | Brick | Brick | Brick | Brick | Brick |
+ | Brick | Stone | Brick | Stone | Stone | Stone | Brick | Stone | Stone | Brick |
+ | Brick | Stone | Brick | Brick | Stone | Up    | Brick | Brick | Stone | Brick |
+ | Brick | Stone | Stone | Brick | Stone | Stone | Stone | Brick | Stone | Brick |
+ | Brick | Down  | Stone | Brick | Brick | Brick | Stone | Stone | Stone | Brick |
+ | Stone | Stone | Stone | Stone | Stone | Brick | Brick | Down  | Stone | Brick |
+ | Brick | Brick | Brick | Brick | Stone | Stone | Stone | Stone | Stone | Brick |
+ | Up    | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
+
+Charlock Cave Lv 4
+------------------
+ | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
+ | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Brick | Down  | Brick |
+ | Brick | Stone | Down  | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
+ | Brick | Stone | Stone | Stone | Stone | Brick | Brick | Brick | Stone | Brick |
+ | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Stone | Brick |
+ | Brick | Stone | Stone | Brick | Stone | Stone | Stone | Brick | Stone | Brick |
+ | Stone | Stone | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Brick |
+ | Stone | Brick | Brick | Brick | Stone | Brick | Stone | Up    | Stone | Brick |
+ | Brick | Brick | Brick | Stone | Stone | Brick | Stone | Stone | Stone | Brick |
+ | Up    | Brick | Stone | Stone | Brick | Brick | Brick | Brick | Brick | Brick |
+
+Charlock Cave Lv 5
+------------------
+ | Down  | Stone | Brick | Stone | Up    | Brick | Brick | Brick | Stone | Up    |
+ | Brick | Stone | Brick | Stone | Stone | Stone | Stone | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Stone | Stone | Brick | Stone | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Stone | Brick | Brick | Stone | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Stone | Brick | Down  | Stone | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Stone | Stone | Stone | Stone | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick |
+ | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Brick |
+ | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
+
+Charlock Cave Lv 6
+------------------
+ | Up    | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Down  |
+ | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone |
+ | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone |
+ | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone |
+ | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone |
+ | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone |
+ | Up    | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Down  |
+ | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone |
+ | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone |
+ | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone |
+
+Swamp Cave
+------------------
+ | Up    | Brick | Brick | Brick | Brick | Brick |
+ | Brick | Stone | Stone | Brick | Stone | Stone |
+ | Brick | Stone | Brick | Brick | Stone | Brick |
+ | Brick | Stone | Stone | Brick | Brick | Brick |
+ | Brick | Brick | Brick | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Stone | Stone | Brick |
+ | Brick | Brick | Stone | Stone | Brick | Brick |
+ | Brick | Stone | Stone | Brick | Brick | Brick |
+ | Brick | Brick | Brick | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Stone | Stone | Brick |
+ | Brick | Stone | Brick | Brick | Brick | Brick |
+ | Brick | Stone | Brick | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Stone | Stone | Brick |
+ | Brick | Stone | Brick | Brick | Brick | Brick |
+ | Brick | Stone | Stone | Stone | Brick | Stone |
+ | Brick | Stone | Brick | Brick | Brick | Brick |
+ | Brick | Stone | Brick | Stone | Stone | Stone |
+ | Brick | Stone | Brick | Stone | Brick | Brick |
+ | Brick | Stone | Brick | Stone | Brick | Brick |
+ | Brick | Stone | Brick | Stone | Brick | Brick |
+ | Brick | Stone | Brick | Stone | Stone | Door  |
+ | Brick | Stone | Brick | Brick | Brick | Brick |
+ | Brick | Stone | Stone | Stone | Stone | Stone |
+ | Brick | Brick | Brick | Brick | Stone | Brick |
+ | Brick | Stone | Stone | Brick | Stone | Brick |
+ | Brick | Brick | Stone | Brick | Brick | Brick |
+ | Stone | Brick | Brick | Brick | Stone | Stone |
+ | Stone | Stone | Stone | Brick | Brick | Brick |
+ | Brick | Brick | Stone | Brick | Stone | Brick |
+ | Up    | Brick | Brick | Brick | Stone | Brick |
+
+Mountain Cave
+------------------
+ | Down  | Brick | Brick | Brick | Stone | Stone | Stone | Stone | Brick | Brick | Brick | Brick | Brick | Brick |
+ | Brick | Stone | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Stone | Brick |
+ | Brick | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Brick | Brick |
+ | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Brick | Brick |
+ | Stone | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Brick | Brick |
+ | Brick | Brick | Brick | Brick | Brick | Stone | Down  | Brick | Brick | Brick | Brick | Stone | Brick | Chest |
+ | Stone | Stone | Brick | Stone | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone |
+ | Up    | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Stone |
+ | Stone | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Brick | Brick | Brick | Stone | Brick | Stone |
+ | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick |
+ | Brick | Stone | Stone | Stone | Brick | Stone | Brick | Stone | Brick | Stone | Stone | Stone | Brick | Stone |
+ | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Brick |
+ | Brick | Stone | Brick | Stone | Brick | Stone | Stone | Stone | Brick | Stone | Brick | Brick | Down  | Brick |
+ | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick |
+
+Mountain Cave Lv 2
+------------------
+ | Up    | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
+ | Brick | Brick | Stone | Brick | Stone | Brick | Stone | Brick | Stone | Stone | Brick | Stone | Stone | Brick |
+ | Stone | Stone | Chest | Chest | Stone | Brick | Stone | Brick | Stone | Brick | Brick | Brick | Stone | Brick |
+ | Brick | Stone | Stone | Stone | Brick | Brick | Stone | Stone | Stone | Brick | Brick | Brick | Brick | Brick |
+ | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Stone | Stone | Brick | Stone | Stone | Stone |
+ | Stone | Stone | Stone | Stone | Brick | Stone | Up    | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
+ | Brick | Chest | Brick | Stone | Brick | Stone | Brick | Brick | Stone | Stone | Brick | Stone | Stone | Brick |
+ | Brick | Brick | Brick | Stone | Brick | Stone | Stone | Stone | Stone | Brick | Brick | Stone | Brick | Brick |
+ | Stone | Brick | Stone | Stone | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Stone | Brick | Brick |
+ | Brick | Brick | Brick | Stone | Stone | Stone | Brick | Brick | Brick | Brick | Chest | Stone | Stone | Brick |
+ | Brick | Stone | Stone | Stone | Brick | Brick | Brick | Stone | Stone | Stone | Stone | Brick | Stone | Stone |
+ | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick |
+ | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Brick | Stone | Up    | Brick |
+ | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick |
+
+Garin's Grave Lv 1
+------------------
+ | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Chest | Chest | Chest | Stone | Brick | Brick | Brick | Brick | Stone |
+ | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Stone | Stone | Brick | Brick |
+ | Brick | Stone | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Stone | Stone | Brick | Brick | Brick | Stone | Brick | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Brick | Brick | Brick | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Brick | Stone | Brick | Stone | Brick | Brick | Brick |
+ | Brick | Stone | Stone | Stone | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Stone | Brick | Stone | Brick | Stone | Brick |
+ | Brick | Brick | Brick | Brick | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Brick | Stone | Brick | Stone | Brick | Stone | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
+ | Brick | Stone | Brick | Stone | Stone | Brick | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Brick |
+ | Brick | Stone | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick |
+ | Brick | Stone | Brick | Stone | Brick | Stone | Brick | Stone | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Brick | Brick | Brick | Brick | Brick |
+ | Brick | Stone | Brick | Brick | Brick | Stone | Up    | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Stone | Stone | Brick | Brick |
+ | Brick | Stone | Brick | Stone | Brick | Stone | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Brick | Brick | Brick | Stone | Stone | Brick | Stone |
+ | Brick | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Brick | Brick | Stone | Brick | Brick |
+ | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Stone | Stone | Stone | Stone | Brick |
+ | Stone | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Brick | Stone | Brick | Stone | Brick | Stone | Brick |
+ | Brick | Brick | Brick | Stone | Stone | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick |
+ | Brick | Brick | Stone | Brick | Stone | Brick | Brick | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Door  | Stone | Stone |
+ | Brick | Down  | Brick | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick |
+ | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Brick |
+
+Garin's Grave Lv 2
+------------------
+ | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
+ | Brick | Down  | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Brick | Down  | Brick |
+ | Brick | Stone | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Up    | Brick | Brick |
+ | Brick | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Brick |
+ | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick |
+ | Brick | Brick | Stone | Brick | Stone | Brick | Stone | Brick | Stone | Brick | Stone | Brick | Stone | Brick |
+ | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Brick | Stone | Brick |
+ | Brick | Brick | Stone | Brick | Stone | Brick | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Brick |
+ | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick |
+ | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Brick |
+ | Brick | Down  | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Down  | Brick |
+ | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
+
+Garin's Grave Lv 3
+------------------
+ | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick |
+ | Brick | Chest | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Brick | Stone | Up    | Brick | Stone | Brick | Up    | Brick |
+ | Brick | Brick | Brick | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick |
+ | Brick | Stone | Stone | Stone | Brick | Stone | Brick | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone |
+ | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Stone | Stone | Brick | Brick | Brick | Stone | Stone | Brick | Brick | Brick |
+ | Brick | Stone | Brick | Stone | Stone | Stone | Brick | Stone | Brick | Down  | Stone | Brick | Brick | Brick | Brick | Brick | Stone | Stone | Stone | Brick |
+ | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Stone | Stone | Stone | Stone | Brick | Brick | Chest | Brick | Brick | Stone | Brick | Stone | Brick |
+ | Brick | Stone | Stone | Stone | Brick | Stone | Brick | Stone | Brick | Stone | Stone | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Stone | Brick | Stone | Brick | Stone | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Stone | Stone | Brick | Brick | Brick |
+ | Brick | Stone | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Stone | Down  | Brick | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Stone | Brick | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Stone | Brick | Stone | Brick | Brick | Brick | Stone | Brick |
+ | Brick | Stone | Brick | Stone | Brick | Stone | Up    | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Stone | Stone | Brick |
+ | Brick | Stone | Brick | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Brick | Brick |
+ | Brick | Stone | Brick | Stone | Brick | Stone | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Up    | Brick |
+ | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Stone | Brick | Stone | Brick | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Brick |
+ | Brick | Stone | Stone | Brick | Brick | Stone | Brick | Brick | Stone | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick |
+ | Brick | Stone | Brick | Brick | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Brick | Stone | Brick |
+ | Brick | Stone | Up    | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Brick |
+ | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Brick |
+ | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
+
+Garin's Grave Lv 4
+------------------
+ | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Stone |
+ | Stone | Stone | Stone | Stone | Brick | Brick | Brick | Stone | Stone | Stone |
+ | Stone | Stone | Stone | Brick | Brick | Stone | Brick | Brick | Stone | Stone |
+ | Stone | Stone | Brick | Brick | Stone | Stone | Stone | Brick | Brick | Stone |
+ | Up    | Brick | Brick | Stone | Stone | Up    | Brick | Brick | Brick | Brick |
+ | Stone | Stone | Brick | Brick | Stone | Stone | Stone | Brick | Brick | Stone |
+ | Stone | Stone | Stone | Brick | Brick | Stone | Brick | Brick | Stone | Stone |
+ | Stone | Stone | Stone | Stone | Brick | Brick | Brick | Stone | Stone | Stone |
+ | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Stone |
+ | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone |
+
+Erdrick's Cave
+------------------
+ | Up    | Brick | Stone | Brick | Brick | Brick | Brick | Stone | Stone | Brick |
+ | Stone | Brick | Stone | Brick | Stone | Stone | Brick | Brick | Brick | Brick |
+ | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Stone | Brick |
+ | Stone | Brick | Stone | Stone | Stone | Brick | Stone | Stone | Brick | Brick |
+ | Brick | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Stone |
+ | Brick | Stone | Stone | Stone | Stone | Brick | Brick | Brick | Stone | Stone |
+ | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Brick |
+ | Stone | Stone | Brick | Stone | Brick | Stone | Stone | Brick | Brick | Brick |
+ | Stone | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Brick |
+ | Stone | Brick | Stone | Brick | Stone | Brick | Brick | Brick | Stone | Down  |
+
+Erdrick's Cave Lv 2
+------------------
+ | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
+ | Brick | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Stone | Stone |
+ | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Brick | Brick |
+ | Stone | Stone | Stone | Brick | Stone | Stone | Brick | Brick | Brick | Chest |
+ | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Stone | Brick | Brick |
+ | Brick | Stone | Brick | Stone | Stone | Brick | Stone | Brick | Stone | Stone |
+ | Brick | Stone | Stone | Brick | Stone | Brick | Brick | Brick | Brick | Brick |
+ | Brick | Brick | Brick | Brick | Stone | Stone | Brick | Stone | Stone | Brick |
+ | Stone | Brick | Stone | Brick | Brick | Stone | Brick | Stone | Brick | Brick |
+ | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Stone | Up    | Brick |
+
