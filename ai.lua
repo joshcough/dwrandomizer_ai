@@ -128,8 +128,9 @@ end
 function onPlayerMove(memory, overworld)
   return function(address)
     print("x: " .. memory:getX() .. " y: " .. memory:getY())
-    -- todo: will have to fix this to check if on world map.
-    overworld:printVisibleGrid(memory:getX(), memory:getY())
+    if memory:getMapId() == 0
+      then overworld:printVisibleGrid(memory:getX(), memory:getY())
+    end
     print("percentageOfWorldSeen: " .. overworld:percentageOfWorldSeen())
   end
 end
@@ -149,11 +150,10 @@ function main()
 
   -- i run this each time to make sure nothing has changed.
   -- if anything changes, git will tell me.
-  writeAllStaticMapsToFile(mem, STATIC_MAPS_FILE)
-  writeAllStaticMapIdsToIndividualFiles(mem)
+  saveStaticMaps(mem)
   -- i print this out just to make sure things look sane when i start the script.
-  print(loadStaticMapFromFile(Brecconary))
-
+--   print("path: ", bfs(loadStaticMapFromFile(TantegelThroneRoom):mkGraph(true), 10,
+--     Point3D(TantegelThroneRoom, 7,2), Point3D(TantegelThroneRoom, 5,7)))
 --   runGameStartScript()
 
   emu.speedmode("normal")
@@ -162,4 +162,4 @@ function main()
   end
 end
 
-main ()
+main()

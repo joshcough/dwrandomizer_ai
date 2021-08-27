@@ -1,3 +1,5 @@
+require "Class"
+
 function bitwise_and(a, b)
   local result = 0
   local bitval = 1
@@ -152,4 +154,164 @@ function table.load( sfile )
      end
   end
   return tables[1]
+end
+
+function table.dump( t )
+  for i,v in ipairs(t) do
+    print(i,v)
+  end
+end
+
+function table.contains(list, x, equalityOp)
+  for _, v in pairs(list) do
+    if equalityOp(x, v) then return true end
+  end
+  return false
+end
+
+function table.copy(tbl)
+  local t = {}
+  for _, v in pairs(tbl) do table.insert(t, v)  end
+  return t
+end
+
+function table.reverse(tbl)
+  local t = {}
+  for i=1, #tbl do
+     table.insert(t, tbl[#tbl + 1 - i])
+  end
+  return t
+end
+
+function table.concat(tbl1, tbl2)
+  local res = table.copy(tbl1)
+  for _,v in ipairs(tbl2) do
+      table.insert(res, v)
+  end
+  return res
+end
+
+function print_r(arr, indentLevel)
+    local str = ""
+    local indentStr = "#"
+
+    if(indentLevel == nil) then
+        print(print_r(arr, 0))
+        return
+    end
+
+    for i = 0, indentLevel do
+        indentStr = indentStr.."\t"
+    end
+
+    for index,value in pairs(arr) do
+        if type(value) == "table" then
+            str = str..indentStr..index..": \n"..print_r(value, (indentLevel + 1))
+        else
+            str = str..indentStr..index..": "..tostring(value).."\n"
+        end
+    end
+    return str
+end
+
+Point2D = class(function(a, x, y)
+  a.x = x
+  a.y = y
+end)
+
+function Point2D:__tostring()
+  return "{x:" .. self.x .. ", y:" .. self.y .. "}"
+end
+
+function Point2D:equals(p2)
+  if p2 == nil then return false end
+  return self.x == p2.x and self.y == p2.y
+end
+
+Point3D = class(function(a, mapId, x, y)
+  a.mapId = mapId
+  a.x = x
+  a.y = y
+end)
+
+function Point3D:__tostring()
+  return "{mapId:" .. self.mapId .. ", x:" .. self.x .. ", y:" .. self.y .. "}"
+end
+
+function Point3D:equals(p2)
+  if p2 == nil then return false end
+  return self.mapId == p2.mapId and self.x == p2.x and self.y == p2.y
+end
+
+Queue = class(function(a)
+  a.stack = {}
+end)
+
+function Queue:push(e)
+  table.insert(self.stack, e)
+end
+
+function Queue:pop()
+  local e = self.stack[1]
+  table.remove(self.stack, 1)
+  return e
+end
+
+function Queue:size()
+  return #self.stack
+end
+
+function Queue:isEmpty()
+  return self:size() == 0
+end
+
+function bfs(graph, startNode, endNode)
+  function solve(s)
+    local q = Queue()
+    q:push(s)
+
+    local visited = {}
+    for m = 2, 29 do
+      visited[m] = {}
+      for y = 0, graph[m].staticMap.height-1 do visited[m][y] = {} end
+    end
+
+    visited[s.mapId][s.y][s.x] = true
+
+    local prev = {}
+
+    for m = 2, 29 do
+      prev[m] = {}
+      for y = 0, graph[m].staticMap.height-1 do prev[m][y] = {} end
+    end
+
+    while not q:isEmpty() do
+      local node = q:pop()
+      local neighbors = graph[node.mapId].graph[node.y][node.x]
+
+      for _, neighbor in ipairs(neighbors) do
+        if not visited[neighbor.mapId][neighbor.y][neighbor.x] then
+      	  q:push(neighbor)
+      	  visited[neighbor.mapId][neighbor.y][neighbor.x] = true
+      	  prev[neighbor.mapId][neighbor.y][neighbor.x] = node
+      	end
+      end
+    end
+
+    return prev
+  end
+
+  function reconstruct(s, e, prev)
+    local path = {}
+    local at = e
+    while not (at == nil) do
+      table.insert(path, at)
+      at = prev[at.mapId][at.y][at.x]
+    end
+    local pathR = table.reverse(path)
+    return pathR[1]:equals(s) and pathR or {}
+  end
+
+  local prev = solve(startNode)
+  return reconstruct(startNode, endNode, prev)
 end
