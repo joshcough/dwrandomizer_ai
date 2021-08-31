@@ -1,5 +1,4 @@
 Charlock
-------------------
  | Swamp  | Swamp  | Stone  | Stone  | Stone  | Swamp  | Swamp  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Swamp  | Swamp  |
  | Swamp  | Stone  | Stone  | Brick  | Stone  | Stone  | Swamp  | Stone  | Field  | Field  | Down   | Field  | Field  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Swamp  |
  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Field  | Tile   | Tile   | Tile   | Field  | Stone  | Brick  | Stone  | Brick  | Brick  | Stone  | Stone  |
@@ -22,7 +21,6 @@ Charlock
  | Swamp  | Swamp  | Swamp  | Swamp  | Swamp  | Swamp  | Swamp  | Swamp  | Stone  | Brick  | Brick  | Stone  | Swamp  | Swamp  | Swamp  | Swamp  | Swamp  | Swamp  | Swamp  | Swamp  |
 
 Hauksness
-------------------
  | Stone  | Stone  | Sand   | Sand   | Grass  | Stone  | Stone  | Sand   | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Swamp  | Stone  |
  | Stone  | Sand   | Sand   | Grass  | Trees  | Stone  | Sand   | Brick  | Brick  | Tile   | Brick  | Stone  | Trees  | Grass  | Grass  | Sand   | Brick  | Swamp  | Swamp  | Stone  |
  | Sand   | Sand   | Sand   | Trees  | Grass  | Stone  | Stone  | Brick  | Brick  | Stone  | Brick  | Stone  | Grass  | Grass  | Grass  | Brick  | Swamp  | Swamp  | Sand   | Stone  |
@@ -45,7 +43,6 @@ Hauksness
  | Sand   | Sand   | Swamp  | Stone  | Stone  | Stone  | Stone  | Grass  | Stone  | Swamp  | Swamp  | Swamp  | Swamp  | Stone  | Stone  | Stone  | Sand   | Stone  | Stone  | Stone  |
 
 Tantegel
-------------------
  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Grass  | Stone  | Stone  | Stone  | Grass  | Trees  | Grass  | Grass  |
  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Trees  | Grass  | Trees  | Trees  | Grass  | Trees  | Grass  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Stone  | Brick  | Stone  | Grass  | Grass  | Grass  | Grass  |
  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Grass  | Stone  | Tile   | Stone  | Grass  | Grass  | Grass  | Grass  |
@@ -78,7 +75,6 @@ Tantegel
  | Water  | Water  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Brick  | Brick  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Down   |
 
 Tantegel Throne Room
-------------------
  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  |
  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Chest  | Brick  | Brick  | Stone  |
  | Stone  | Brick  | Tile   | Tile   | Tile   | Tile   | Tile   | Tile   | Brick  | Stone  |
@@ -91,7 +87,6 @@ Tantegel Throne Room
  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  |
 
 Charlock Throne Room
-------------------
  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  |
  | Water  | Water  | Water  | Stone  | Stone  | Stone  | Stone  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Water  | Stone  | Stone  | Stone  | Water  | Water  | Water  |
  | Water  | Water  | Stone  | Stone  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Brick  | Stone  | Stone  | Water  | Water  |
@@ -124,7 +119,6 @@ Charlock Throne Room
  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Swamp  | Swamp  | Stone  | Up     | Stone  | Swamp  | Swamp  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  |
 
 Kol
-------------------
  | Stone  | Stone  | Stone  | Grass  | Trees  | Trees  | Trees  | Stone  | Stone  | Stone  | Stone  | Stone  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Stone  | Stone  | Stone  | Stone  |
  | Stone  | Brick  | Stone  | Grass  | Grass  | Trees  | Trees  | Stone  | Brick  | Brick  | Brick  | Stone  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Stone  | Inn    | Stone  | Brick  | Brick  | Stone  |
  | Stone  | Tile   | Stone  | Swamp  | Grass  | Trees  | Trees  | Brick  | Brick  | Water  | Brick  | Brick  | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  |
@@ -151,7 +145,6 @@ Kol
  | Trees  | Trees  | Grass  | Grass  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Trees  | Stone  | Stone  | Stone  | Stone  | Stone  | Trees  | Trees  | Sand   | Trees  | Trees  | Trees  | Trees  |
 
 Brecconary
-------------------
  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Sand   | Brick  | Brick  | Sand   | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  |
  | Stone  | Trees  | Trees  | Trees  | Grass  | Grass  | Grass  | Grass  | Trees  | Trees  | Trees  | Trees  | Sand   | Sand   | Brick  | Brick  | Sand   | Sand   | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Trees  | Stone  |
  | Stone  | Trees  | Trees  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Trees  | Grass  | Trees  | Grass  | Sand   | Brick  | Brick  | Sand   | Grass  | Grass  | Trees  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Trees  | Stone  |
@@ -184,7 +177,6 @@ Brecconary
  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  |
 
 Garinham
-------------------
  | Water  | Water  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Water  | Water  | Stone  | Down   |
  | Water  | Water  | Stone  | Brick  | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Brick  | Brick  | Bridge | Brick  | Brick  |
  | Stone  | Stone  | Stone  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Water  | Stone  | Stone  |
@@ -207,7 +199,6 @@ Garinham
  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Stone  | Stone  | Stone  | Stone  | Stone  | Grass  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  |
 
 Cantlin
-------------------
  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
  | Brick  | Stone  | Stone  | Stone  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Weapon | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Sand   | Brick  | Stone  | Stone  | Stone  | Brick  |
  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Stone  | Brick  | Brick  | Brick  | Stone  | Brick  | Brick  | Sand   | Sand   | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Sand   | Brick  | Stone  | Brick  | Stone  | Brick  |
@@ -240,7 +231,6 @@ Cantlin
  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
 
 Rimuldar
-------------------
  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  |
  | Grass  | Grass  | Grass  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Water  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  |
  | Grass  | Water  | Water  | Water  | Stone  | Stone  | Stone  | Trees  | Trees  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Water  | Water  | Water  | Water  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  |
@@ -273,7 +263,6 @@ Rimuldar
  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  | Grass  |
 
 Tantegel Basement
-------------------
  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  |
  | Brick  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  | Brick  |
  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
@@ -286,7 +275,6 @@ Tantegel Basement
  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  |
 
 Northern Shrine
-------------------
  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Stone  |
  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
  | Brick  | Brick  | Stone  | Stone  | Stone  | Stone  | Stone  | Stone  | Brick  | Brick  |
@@ -299,7 +287,6 @@ Northern Shrine
  | Stone  | Stone  | Stone  | Stone  | Up     | Brick  | Stone  | Stone  | Stone  | Stone  |
 
 Southern Shrine
-------------------
  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
  | Stone  | Brick  | Brick  | Stone  | Brick  | Stone  | Brick  | Stone  | Brick  | Brick  |
  | Stone  | Brick  | Stone  | Stone  | Brick  | Brick  | Brick  | Stone  | Stone  | Brick  |
@@ -312,7 +299,6 @@ Southern Shrine
  | Stone  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  | Brick  |
 
 Charlock Cave Lv 1
-------------------
  | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Up    | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick |
  | Brick | Stone | Stone | Stone | Stone | Stone | Brick | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Stone | Down  | Stone | Stone | Stone | Brick |
  | Brick | Stone | Brick | Brick | Brick | Stone | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Brick | Brick | Brick |
@@ -335,7 +321,6 @@ Charlock Cave Lv 1
  | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Down  | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick |
 
 Charlock Cave Lv 2
-------------------
  | Up    | Brick | Stone | Down  | Stone | Up    | Brick | Stone | Up    | Brick |
  | Up    | Stone | Stone | Brick | Stone | Stone | Brick | Stone | Stone | Down  |
  | Stone | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Stone | Stone |
@@ -348,7 +333,6 @@ Charlock Cave Lv 2
  | Brick | Down  | Stone | Brick | Brick | Brick | Brick | Stone | Up    | Brick |
 
 Charlock Cave Lv 3
-------------------
  | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Up    | Brick | Brick |
  | Brick | Stone | Stone | Stone | Brick | Brick | Stone | Stone | Stone | Brick |
  | Brick | Stone | Up    | Stone | Brick | Brick | Brick | Brick | Brick | Brick |
@@ -361,7 +345,6 @@ Charlock Cave Lv 3
  | Up    | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
 
 Charlock Cave Lv 4
-------------------
  | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
  | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Brick | Down  | Brick |
  | Brick | Stone | Down  | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
@@ -374,7 +357,6 @@ Charlock Cave Lv 4
  | Up    | Brick | Stone | Stone | Brick | Brick | Brick | Brick | Brick | Brick |
 
 Charlock Cave Lv 5
-------------------
  | Down  | Stone | Brick | Stone | Up    | Brick | Brick | Brick | Stone | Up    |
  | Brick | Stone | Brick | Stone | Stone | Stone | Stone | Brick | Stone | Brick |
  | Brick | Stone | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Brick |
@@ -387,7 +369,6 @@ Charlock Cave Lv 5
  | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
 
 Charlock Cave Lv 6
-------------------
  | Up    | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Down  |
  | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone |
  | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone |
@@ -400,7 +381,6 @@ Charlock Cave Lv 6
  | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone |
 
 Swamp Cave
-------------------
  | Up    | Brick | Brick | Brick | Brick | Brick |
  | Brick | Stone | Stone | Brick | Stone | Stone |
  | Brick | Stone | Brick | Brick | Stone | Brick |
@@ -433,7 +413,6 @@ Swamp Cave
  | Up    | Brick | Brick | Brick | Stone | Brick |
 
 Mountain Cave
-------------------
  | Down  | Brick | Brick | Brick | Stone | Stone | Stone | Stone | Brick | Brick | Brick | Brick | Brick | Brick |
  | Brick | Stone | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Stone | Brick |
  | Brick | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Brick | Brick |
@@ -450,7 +429,6 @@ Mountain Cave
  | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick |
 
 Mountain Cave Lv 2
-------------------
  | Up    | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
  | Brick | Brick | Stone | Brick | Stone | Brick | Stone | Brick | Stone | Stone | Brick | Stone | Stone | Brick |
  | Stone | Stone | Chest | Chest | Stone | Brick | Stone | Brick | Stone | Brick | Brick | Brick | Stone | Brick |
@@ -467,7 +445,6 @@ Mountain Cave Lv 2
  | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick |
 
 Garin's Grave Lv 1
-------------------
  | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Chest | Chest | Chest | Stone | Brick | Brick | Brick | Brick | Stone |
  | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Stone | Stone | Brick | Brick |
  | Brick | Stone | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Stone | Brick |
@@ -490,7 +467,6 @@ Garin's Grave Lv 1
  | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Brick |
 
 Garin's Grave Lv 2
-------------------
  | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
  | Brick | Down  | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Brick | Down  | Brick |
  | Brick | Stone | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Up    | Brick | Brick |
@@ -505,7 +481,6 @@ Garin's Grave Lv 2
  | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
 
 Garin's Grave Lv 3
-------------------
  | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick |
  | Brick | Chest | Brick | Stone | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Brick | Stone | Up    | Brick | Stone | Brick | Up    | Brick |
  | Brick | Brick | Brick | Stone | Brick | Stone | Stone | Stone | Stone | Stone | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Brick | Brick |
@@ -528,7 +503,6 @@ Garin's Grave Lv 3
  | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
 
 Garin's Grave Lv 4
-------------------
  | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Stone | Stone | Stone |
  | Stone | Stone | Stone | Stone | Brick | Brick | Brick | Stone | Stone | Stone |
  | Stone | Stone | Stone | Brick | Brick | Stone | Brick | Brick | Stone | Stone |
@@ -541,7 +515,6 @@ Garin's Grave Lv 4
  | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone | Stone |
 
 Erdrick's Cave
-------------------
  | Up    | Brick | Stone | Brick | Brick | Brick | Brick | Stone | Stone | Brick |
  | Stone | Brick | Stone | Brick | Stone | Stone | Brick | Brick | Brick | Brick |
  | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Stone | Stone | Brick |
@@ -554,7 +527,6 @@ Erdrick's Cave
  | Stone | Brick | Stone | Brick | Stone | Brick | Brick | Brick | Stone | Down  |
 
 Erdrick's Cave Lv 2
-------------------
  | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick | Brick |
  | Brick | Stone | Stone | Stone | Stone | Stone | Brick | Stone | Stone | Stone |
  | Brick | Brick | Brick | Brick | Brick | Stone | Brick | Stone | Brick | Brick |
