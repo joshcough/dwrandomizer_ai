@@ -3,7 +3,8 @@ require 'controller'
 require 'enemies'
 require 'helpers'
 require 'hud'
-require 'maps'
+require 'overworld'
+require 'static_maps'
 
 function openChest ()
   print("======opening chest=======")
@@ -151,9 +152,14 @@ function main()
   -- i run this each time to make sure nothing has changed.
   -- if anything changes, git will tell me.
   saveStaticMaps(mem)
+
   -- i print this out just to make sure things look sane when i start the script.
---   print("path: ", bfs(loadStaticMapFromFile(TantegelThroneRoom):mkGraph(true), 10,
---     Point3D(TantegelThroneRoom, 7,2), Point3D(TantegelThroneRoom, 5,7)))
+  local maps = readAllStaticMaps(mem)
+  local graphs = readAllGraphs(true, maps)
+  print_r(bfs(Point3D(TantegelThroneRoom, 1,1), Point3D(TantegelThroneRoom, 1,8), true, graphs))
+  -- can also do this, which loads the maps from files instead of memory:
+  -- print_r(bfs(Point3D(TantegelThroneRoom, 1,1), Point3D(TantegelThroneRoom, 1,8), true))
+
 --   runGameStartScript()
 
   emu.speedmode("normal")
