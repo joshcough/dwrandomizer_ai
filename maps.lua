@@ -393,7 +393,6 @@ Graph = class(function(a, graph, haveKeys, staticMap)
   a.staticMap = staticMap
 end)
 
--- this second argument just makes the map easier to see when i print it out
 function StaticMap:mkGraph (haveKeys)
   local tileSet = self:getTileSet()
 
@@ -433,7 +432,7 @@ function StaticMap:mkGraph (haveKeys)
   return Graph(res, haveKeys, self)
 end
 
-function Graph:graphToString ()
+function Graph:__tostring ()
 
   function contains(list, x)
     return table.contains(list, x, function(v1, v2) return v1:equals(v2) end)
@@ -459,7 +458,7 @@ function Graph:graphToString ()
   for y = 0,self.staticMap.height-1 do
     local row = ""
     for x = 0,self.staticMap.width-1 do
-      row = row .. "|" .. printTile(x, y, graph[y][x])
+      row = row .. "|" .. printTile(x, y, self.graph[y][x])
     end
     res = res .. row .. " |\n"
   end
