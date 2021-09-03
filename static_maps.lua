@@ -1,5 +1,6 @@
 require 'helpers'
 require 'Class'
+require 'controller'
 
 Charlock = 2
 Hauksness = 3
@@ -30,177 +31,167 @@ GarinsGraveLv4 = 27
 ErdricksCaveLv1 = 28
 ErdricksCaveLv2 = 29
 
-FORWARD_WARPS = {
-  {["srcMapId"] = 2, ["srcX"] = 10, ["srcY"] = 1, ["destMapId"] = 15, ["destX"] = 9, ["destY"] = 0}
-, {["srcMapId"] = 2, ["srcX"] = 4, ["srcY"] = 14, ["destMapId"] = 15, ["destX"] = 8, ["destY"] = 13}
-, {["srcMapId"] = 2, ["srcX"] = 15, ["srcY"] = 14, ["destMapId"] = 15, ["destX"] = 17, ["destY"] = 15}
--- TODO: this one is bad because it isn't 12,0,4
--- really, we can only actually fill this in once we discover where it goes
--- by taking the stairs downwards.
--- TODO: this is also true with garin's grave.
-, {["srcMapId"] = 4, ["srcX"] = 29, ["srcY"] = 29, ["destMapId"] = 12, ["destX"] = 0, ["destY"] = 4}
-, {["srcMapId"] = 5, ["srcX"] = 1, ["srcY"] = 8, ["destMapId"] = 4, ["destX"] = 1, ["destY"] = 7}
-, {["srcMapId"] = 5, ["srcX"] = 8, ["srcY"] = 8, ["destMapId"] = 4, ["destX"] = 7, ["destY"] = 7}
--- 9 = garinham, 24 = GarinsGrave
-, {["srcMapId"] = 9, ["srcX"] = 19, ["srcY"] = 0, ["destMapId"] = 24, ["destX"] = 6, ["destY"] = 11}
-, {["srcMapId"] = 15, ["srcX"] = 15, ["srcY"] = 1, ["destMapId"] = 16, ["destX"] = 8, ["destY"] = 0}
-, {["srcMapId"] = 15, ["srcX"] = 13, ["srcY"] = 7, ["destMapId"] = 16, ["destX"] = 4, ["destY"] = 4}
-, {["srcMapId"] = 15, ["srcX"] = 19, ["srcY"] = 7, ["destMapId"] = 16, ["destX"] = 9, ["destY"] = 8}
-, {["srcMapId"] = 15, ["srcX"] = 14, ["srcY"] = 9, ["destMapId"] = 16, ["destX"] = 8, ["destY"] = 9}
-, {["srcMapId"] = 15, ["srcX"] = 2, ["srcY"] = 14, ["destMapId"] = 16, ["destX"] = 0, ["destY"] = 1}
-, {["srcMapId"] = 15, ["srcX"] = 2, ["srcY"] = 4, ["destMapId"] = 16, ["destX"] = 0, ["destY"] = 0}
-, {["srcMapId"] = 15, ["srcX"] = 8, ["srcY"] = 19, ["destMapId"] = 16, ["destX"] = 5, ["destY"] = 0}
-, {["srcMapId"] = 16, ["srcX"] = 3, ["srcY"] = 0, ["destMapId"] = 17, ["destX"] = 7, ["destY"] = 0}
-, {["srcMapId"] = 16, ["srcX"] = 9, ["srcY"] = 1, ["destMapId"] = 17, ["destX"] = 2, ["destY"] = 2}
-, {["srcMapId"] = 16, ["srcX"] = 0, ["srcY"] = 8, ["destMapId"] = 17, ["destX"] = 5, ["destY"] = 4}
-, {["srcMapId"] = 16, ["srcX"] = 1, ["srcY"] = 9, ["destMapId"] = 17, ["destX"] = 0, ["destY"] = 9}
-, {["srcMapId"] = 17, ["srcX"] = 1, ["srcY"] = 6, ["destMapId"] = 18, ["destX"] = 0, ["destY"] = 9}
-, {["srcMapId"] = 17, ["srcX"] = 7, ["srcY"] = 7, ["destMapId"] = 18, ["destX"] = 7, ["destY"] = 7}
-, {["srcMapId"] = 18, ["srcX"] = 2, ["srcY"] = 2, ["destMapId"] = 19, ["destX"] = 9, ["destY"] = 0}
-, {["srcMapId"] = 18, ["srcX"] = 8, ["srcY"] = 1, ["destMapId"] = 19, ["destX"] = 4, ["destY"] = 0}
-, {["srcMapId"] = 19, ["srcX"] = 5, ["srcY"] = 5, ["destMapId"] = 20, ["destX"] = 0, ["destY"] = 0}
-, {["srcMapId"] = 19, ["srcX"] = 0, ["srcY"] = 0, ["destMapId"] = 20, ["destX"] = 0, ["destY"] = 6}
-, {["srcMapId"] = 20, ["srcX"] = 9, ["srcY"] = 0, ["destMapId"] = 20, ["destX"] = 0, ["destY"] = 0}
-, {["srcMapId"] = 20, ["srcX"] = 9, ["srcY"] = 6, ["destMapId"] = 6, ["destX"] = 10, ["destY"] = 29}
-, {["srcMapId"] = 22, ["srcX"] = 0, ["srcY"] = 0, ["destMapId"] = 23, ["destX"] = 0, ["destY"] = 0}
-, {["srcMapId"] = 22, ["srcX"] = 6, ["srcY"] = 5, ["destMapId"] = 23, ["destX"] = 6, ["destY"] = 5}
-, {["srcMapId"] = 22, ["srcX"] = 12, ["srcY"] = 12, ["destMapId"] = 23, ["destX"] = 12, ["destY"] = 12}
-, {["srcMapId"] = 24, ["srcX"] = 1, ["srcY"] = 18, ["destMapId"] = 25, ["destX"] = 11, ["destY"] = 2}
-, {["srcMapId"] = 25, ["srcX"] = 1, ["srcY"] = 1, ["destMapId"] = 26, ["destX"] = 1, ["destY"] = 26}
-, {["srcMapId"] = 25, ["srcX"] = 12, ["srcY"] = 1, ["destMapId"] = 26, ["destX"] = 18, ["destY"] = 1}
-, {["srcMapId"] = 25, ["srcX"] = 5, ["srcY"] = 6, ["destMapId"] = 26, ["destX"] = 6, ["destY"] = 11}
-, {["srcMapId"] = 25, ["srcX"] = 1, ["srcY"] = 10, ["destMapId"] = 26, ["destX"] = 2, ["destY"] = 17}
-, {["srcMapId"] = 25, ["srcX"] = 12, ["srcY"] = 10, ["destMapId"] = 26, ["destX"] = 18, ["destY"] = 13}
-, {["srcMapId"] = 26, ["srcX"] = 9, ["srcY"] = 5, ["destMapId"] = 27, ["destX"] = 0, ["destY"] = 4}
-, {["srcMapId"] = 26, ["srcX"] = 10, ["srcY"] = 9, ["destMapId"] = 27, ["destX"] = 5, ["destY"] = 4}
-, {["srcMapId"] = 28, ["srcX"] = 9, ["srcY"] = 9, ["destMapId"] = 29, ["destX"] = 8, ["destY"] = 9}
+TantagelBasementStairs = Point3D(Tantegel, 29, 29)
+
+Warp = class(function(a, src, dest)
+  a.src = src
+  a.dest = dest
+end)
+
+function Warp:swap()
+  return Warp(self.dest, self.src)
+end
+
+WARPS = {
+  Warp(Point3D(2, 10, 1), Point3D(15, 9, 0))
+, Warp(Point3D(2, 4, 14), Point3D(15, 8, 13))
+, Warp(Point3D(2, 15, 14), Point3D(15, 17, 15))
+, Warp(Point3D(5, 1, 8), Point3D(4, 1, 7))
+, Warp(Point3D(5, 8, 8), Point3D(4, 7, 7))
+-- 9 = garinham, 24 = GarinsGrave -- this one has to be discovered, like the basement
+-- , Warp(Point3D(9, 19, 0), Point3D(24, 6, 11))
+, Warp(Point3D(15, 15, 1), Point3D(16, 8, 0))
+, Warp(Point3D(15, 13, 7), Point3D(16, 4, 4))
+, Warp(Point3D(15, 19, 7), Point3D(16, 9, 8))
+, Warp(Point3D(15, 14, 9), Point3D(16, 8, 9))
+, Warp(Point3D(15, 2, 14), Point3D(16, 0, 1))
+, Warp(Point3D(15, 2, 4), Point3D(16, 0, 0))
+, Warp(Point3D(15, 8, 19), Point3D(16, 5, 0))
+, Warp(Point3D(16, 3, 0), Point3D(17, 7, 0))
+, Warp(Point3D(16, 9, 1), Point3D(17, 2, 2))
+, Warp(Point3D(16, 0, 8), Point3D(17, 5, 4))
+, Warp(Point3D(16, 1, 9), Point3D(17, 0, 9))
+, Warp(Point3D(17, 1, 6), Point3D(18, 0, 9))
+, Warp(Point3D(17, 7, 7), Point3D(18, 7, 7))
+, Warp(Point3D(18, 2, 2), Point3D(19, 9, 0))
+, Warp(Point3D(18, 8, 1), Point3D(19, 4, 0))
+, Warp(Point3D(19, 5, 5), Point3D(20, 0, 0))
+, Warp(Point3D(19, 0, 0), Point3D(20, 0, 6))
+, Warp(Point3D(20, 9, 0), Point3D(20, 0, 0))
+, Warp(Point3D(20, 9, 6), Point3D(6, 10, 29))
+, Warp(Point3D(22, 0, 0), Point3D(23, 0, 0))
+, Warp(Point3D(22, 6, 5), Point3D(23, 6, 5))
+, Warp(Point3D(22, 12, 12), Point3D(23, 12, 12))
+, Warp(Point3D(24, 1, 18), Point3D(25, 11, 2))
+, Warp(Point3D(25, 1, 1), Point3D(26, 1, 26))
+, Warp(Point3D(25, 12, 1), Point3D(26, 18, 1))
+, Warp(Point3D(25, 5, 6), Point3D(26, 6, 11))
+, Warp(Point3D(25, 1, 10), Point3D(26, 2, 17))
+, Warp(Point3D(25, 12, 10), Point3D(26, 18, 13))
+, Warp(Point3D(26, 9, 5), Point3D(27, 0, 4))
+, Warp(Point3D(26, 10, 9), Point3D(27, 5, 4))
+, Warp(Point3D(28, 9, 9), Point3D(29, 8, 9))
 }
 
-REVERSE_WARPS = {
-  {["srcMapId"] = 15, ["srcX"] = 9, ["srcY"] = 0, ["destMapId"] = 2, ["destX"] = 10, ["destY"] = 1}
-, {["srcMapId"] = 15, ["srcX"] = 8, ["srcY"] = 13, ["destMapId"] = 2, ["destX"] = 4, ["destY"] = 14}
-, {["srcMapId"] = 15, ["srcX"] = 17, ["srcY"] = 15, ["destMapId"] = 2, ["destX"] = 15, ["destY"] = 14}
--- TODO: this one is bad because it isn't 12,0,4
-, {["srcMapId"] = 12, ["srcX"] = 0, ["srcY"] = 4, ["destMapId"] = 4, ["destX"] = 29, ["destY"] = 29}
-, {["srcMapId"] = 4, ["srcX"] = 7, ["srcY"] = 7, ["destMapId"] = 5, ["destX"] = 8, ["destY"] = 8}
--- 9 = garinham, 24 = GarinsGrave
-, {["srcMapId"] = 24, ["srcX"] = 6, ["srcY"] = 11, ["destMapId"] = 9, ["destX"] = 19, ["destY"] = 0}
-, {["srcMapId"] = 16, ["srcX"] = 8, ["srcY"] = 0, ["destMapId"] = 15, ["destX"] = 15, ["destY"] = 1}
-, {["srcMapId"] = 16, ["srcX"] = 4, ["srcY"] = 4, ["destMapId"] = 15, ["destX"] = 13, ["destY"] = 7}
-, {["srcMapId"] = 16, ["srcX"] = 9, ["srcY"] = 8, ["destMapId"] = 15, ["destX"] = 19, ["destY"] = 7}
-, {["srcMapId"] = 16, ["srcX"] = 8, ["srcY"] = 9, ["destMapId"] = 15, ["destX"] = 14, ["destY"] = 9}
-, {["srcMapId"] = 16, ["srcX"] = 0, ["srcY"] = 1, ["destMapId"] = 15, ["destX"] = 2, ["destY"] = 14}
-, {["srcMapId"] = 16, ["srcX"] = 0, ["srcY"] = 0, ["destMapId"] = 15, ["destX"] = 2, ["destY"] = 4}
-, {["srcMapId"] = 16, ["srcX"] = 5, ["srcY"] = 0, ["destMapId"] = 15, ["destX"] = 8, ["destY"] = 19}
-, {["srcMapId"] = 17, ["srcX"] = 7, ["srcY"] = 0, ["destMapId"] = 16, ["destX"] = 3, ["destY"] = 0}
-, {["srcMapId"] = 17, ["srcX"] = 2, ["srcY"] = 2, ["destMapId"] = 16, ["destX"] = 9, ["destY"] = 1}
-, {["srcMapId"] = 17, ["srcX"] = 5, ["srcY"] = 4, ["destMapId"] = 16, ["destX"] = 0, ["destY"] = 8}
-, {["srcMapId"] = 17, ["srcX"] = 0, ["srcY"] = 9, ["destMapId"] = 16, ["destX"] = 1, ["destY"] = 9}
-, {["srcMapId"] = 18, ["srcX"] = 0, ["srcY"] = 9, ["destMapId"] = 17, ["destX"] = 1, ["destY"] = 6}
-, {["srcMapId"] = 18, ["srcX"] = 7, ["srcY"] = 7, ["destMapId"] = 17, ["destX"] = 7, ["destY"] = 7}
-, {["srcMapId"] = 19, ["srcX"] = 9, ["srcY"] = 0, ["destMapId"] = 18, ["destX"] = 2, ["destY"] = 2}
-, {["srcMapId"] = 19, ["srcX"] = 4, ["srcY"] = 0, ["destMapId"] = 18, ["destX"] = 8, ["destY"] = 1}
-, {["srcMapId"] = 20, ["srcX"] = 0, ["srcY"] = 0, ["destMapId"] = 19, ["destX"] = 5, ["destY"] = 5}
-, {["srcMapId"] = 20, ["srcX"] = 0, ["srcY"] = 6, ["destMapId"] = 19, ["destX"] = 0, ["destY"] = 0}
-, {["srcMapId"] = 20, ["srcX"] = 0, ["srcY"] = 0, ["destMapId"] = 20, ["destX"] = 9, ["destY"] = 0}
-, {["srcMapId"] = 6, ["srcX"] = 10, ["srcY"] = 29, ["destMapId"] = 20, ["destX"] = 9, ["destY"] = 6}
-, {["srcMapId"] = 23, ["srcX"] = 0, ["srcY"] = 0, ["destMapId"] = 22, ["destX"] = 0, ["destY"] = 0}
-, {["srcMapId"] = 23, ["srcX"] = 6, ["srcY"] = 5, ["destMapId"] = 22, ["destX"] = 6, ["destY"] = 5}
-, {["srcMapId"] = 23, ["srcX"] = 12, ["srcY"] = 12, ["destMapId"] = 22, ["destX"] = 12, ["destY"] = 12}
-, {["srcMapId"] = 25, ["srcX"] = 11, ["srcY"] = 2, ["destMapId"] = 24, ["destX"] = 1, ["destY"] = 18}
-, {["srcMapId"] = 26, ["srcX"] = 1, ["srcY"] = 26, ["destMapId"] = 25, ["destX"] = 1, ["destY"] = 1}
-, {["srcMapId"] = 26, ["srcX"] = 18, ["srcY"] = 1, ["destMapId"] = 25, ["destX"] = 12, ["destY"] = 1}
-, {["srcMapId"] = 26, ["srcX"] = 6, ["srcY"] = 11, ["destMapId"] = 25, ["destX"] = 5, ["destY"] = 6}
-, {["srcMapId"] = 26, ["srcX"] = 2, ["srcY"] = 17, ["destMapId"] = 25, ["destX"] = 1, ["destY"] = 10}
-, {["srcMapId"] = 26, ["srcX"] = 18, ["srcY"] = 13, ["destMapId"] = 25, ["destX"] = 12, ["destY"] = 10}
-, {["srcMapId"] = 27, ["srcX"] = 0, ["srcY"] = 4, ["destMapId"] = 26, ["destX"] = 9, ["destY"] = 5}
-, {["srcMapId"] = 27, ["srcX"] = 5, ["srcY"] = 4, ["destMapId"] = 26, ["destX"] = 10, ["destY"] = 9}
-, {["srcMapId"] = 29, ["srcX"] = 8, ["srcY"] = 9, ["destMapId"] = 28, ["destX"] = 9, ["destY"] = 9}
-}
-
-WARPS = table.concat(FORWARD_WARPS, REVERSE_WARPS)
-
-function getWarpsForMap(mapId)
+function getWarpsForMap(mapId, allWarps)
   local res = {}
-  for _,v in ipairs(WARPS) do
-    if(v["srcMapId"] == mapId) then
-      if res[v["srcX"]] == nil then  res[v["srcX"]] = {} end
-      if res[v["srcX"]][v["srcY"]] == nil then res[v["srcX"]][v["srcY"]] = {} end
-      table.insert(res[v["srcX"]][v["srcY"]], Point3D(v["destMapId"], v["destX"], v["destY"]))
-    end
+  local warpsForMapId = list.filter(allWarps, function(w)
+    return w.src.mapId == mapId
+  end)
+  for _,w in ipairs(warpsForMapId) do
+    if res[w.src.x] == nil then res[w.src.x] = {} end
+    if res[w.src.x][w.src.y] == nil then res[w.src.x][w.src.y] = {} end
+    table.insert(res[w.src.x][w.src.y], w.dest)
   end
   return res
 end
 
+MapSize = class(function(a,width,height)
+  a.width = width
+  a.height = height
+end)
+
+StaticMapMetadata = class(function(a,name,size,romAddr)
+  a.name = name
+  a.size = size
+  a.romAddr = romAddr
+end)
+
 MAP_DATA = {
-  [1] = {["name"] = "Overworld", ["size"] = {["w"]=120,["h"]=120}, ["romAddr"] = 0x1D6D},
-  [2] = {["name"] = "Charlock", ["size"] = {["w"]=20,["h"]=20}, ["romAddr"] = 0xC0},
-  [3] = {["name"] = "Hauksness", ["size"] = {["w"]=20,["h"]=20}, ["romAddr"] = 0x188},
-  [4] = {["name"] = "Tantegel", ["size"] = {["w"]=30,["h"]=30}, ["romAddr"] = 0x250},
-  [5] = {["name"] = "Tantegel Throne Room", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0x412},
-  [6] = {["name"] = "Charlock Throne Room", ["size"] = {["w"]=30,["h"]=30}, ["romAddr"] = 0x444},
-  [7] = {["name"] = "Kol", ["size"] = {["w"]=24,["h"]=24}, ["romAddr"] = 0x606},
-  [8] = {["name"] = "Brecconary", ["size"] = {["w"]=30,["h"]=30}, ["romAddr"] = 0x726},
-  [9] = {["name"] = "Garinham", ["size"] = {["w"]=20,["h"]=20}, ["romAddr"] = 0xAAA},
-  [10]= {["name"] = "Cantlin", ["size"] = {["w"]=30,["h"]=30}, ["romAddr"] = 0x8E8},
-  [11]= {["name"] = "Rimuldar", ["size"] = {["w"]=30,["h"]=30}, ["romAddr"] = 0xB72},
-  [12]= {["name"] = "Tantegel Basement", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0xD34},
-  [13]= {["name"] = "Northern Shrine", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0xD66},
-  [14]= {["name"] = "Southern Shrine", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0xD98},
-  [15]= {["name"] = "Charlock Cave Lv 1", ["size"] = {["w"]=20,["h"]=20}, ["romAddr"] = 0xDCA},
-  [16]= {["name"] = "Charlock Cave Lv 2", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0xE92},
-  [17]= {["name"] = "Charlock Cave Lv 3", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0xEC4},
-  [18]= {["name"] = "Charlock Cave Lv 4", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0xEF6},
-  [19]= {["name"] = "Charlock Cave Lv 5", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0xF28},
-  [20]= {["name"] = "Charlock Cave Lv 6", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0xF5A},
-  [21]= {["name"] = "Swamp Cave", ["size"] = {["w"]=6,["h"]=30}, ["romAddr"] = 0xF8C},
-  [22]= {["name"] = "Mountain Cave", ["size"] = {["w"]=14,["h"]=14}, ["romAddr"] = 0xFE6},
-  [23]= {["name"] = "Mountain Cave Lv 2", ["size"] = {["w"]=14,["h"]=14}, ["romAddr"] = 0x1048},
-  [24]= {["name"] = "Garin's Grave Lv 1", ["size"] = {["w"]=20,["h"]=20}, ["romAddr"] = 0x10AA},
-  [25]= {["name"] = "Garin's Grave Lv 2", ["size"] = {["w"]=14,["h"]=12}, ["romAddr"] = 0x126C},
-  [26]= {["name"] = "Garin's Grave Lv 3", ["size"] = {["w"]=20,["h"]=20}, ["romAddr"] = 0x1172},
-  [27]= {["name"] = "Garin's Grave Lv 4", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0x123A},
-  [28]= {["name"] = "Erdrick's Cave", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0x12C0},
-  [29]= {["name"] = "Erdrick's Cave Lv 2", ["size"] = {["w"]=10,["h"]=10}, ["romAddr"] = 0x12F2},
+  [2] = StaticMapMetadata("Charlock", MapSize(20, 20), 0xC0),
+  [3] = StaticMapMetadata("Hauksness", MapSize(20, 20), 0x188),
+  [4] = StaticMapMetadata("Tantegel", MapSize(30, 30), 0x250),
+  [5] = StaticMapMetadata("Tantegel Throne Room", MapSize(10, 10), 0x412),
+  [6] = StaticMapMetadata("Charlock Throne Room", MapSize(30, 30), 0x444),
+  [7] = StaticMapMetadata("Kol", MapSize(24, 24), 0x606),
+  [8] = StaticMapMetadata("Brecconary", MapSize(30, 30), 0x726),
+  [9] = StaticMapMetadata("Garinham", MapSize(20, 20), 0xAAA),
+  [10]= StaticMapMetadata("Cantlin", MapSize(30, 30), 0x8E8),
+  [11]= StaticMapMetadata("Rimuldar", MapSize(30, 30), 0xB72),
+  [12]= StaticMapMetadata("Tantegel Basement", MapSize(10, 10), 0xD34),
+  [13]= StaticMapMetadata("Northern Shrine", MapSize(10, 10), 0xD66),
+  [14]= StaticMapMetadata("Southern Shrine", MapSize(10, 10), 0xD98),
+  [15]= StaticMapMetadata("Charlock Cave Lv 1", MapSize(20, 20), 0xDCA),
+  [16]= StaticMapMetadata("Charlock Cave Lv 2", MapSize(10, 10), 0xE92),
+  [17]= StaticMapMetadata("Charlock Cave Lv 3", MapSize(10, 10), 0xEC4),
+  [18]= StaticMapMetadata("Charlock Cave Lv 4", MapSize(10, 10), 0xEF6),
+  [19]= StaticMapMetadata("Charlock Cave Lv 5", MapSize(10, 10), 0xF28),
+  [20]= StaticMapMetadata("Charlock Cave Lv 6", MapSize(10, 10), 0xF5A),
+  [21]= StaticMapMetadata("Swamp Cave", MapSize(6, 30), 0xF8C),
+  [22]= StaticMapMetadata("Mountain Cave", MapSize(14, 14), 0xFE6),
+  [23]= StaticMapMetadata("Mountain Cave Lv 2", MapSize(14, 14), 0x1048),
+  [24]= StaticMapMetadata("Garin's Grave Lv 1", MapSize(20, 20), 0x10AA),
+  [25]= StaticMapMetadata("Garin's Grave Lv 2", MapSize(14, 12), 0x126C),
+  [26]= StaticMapMetadata("Garin's Grave Lv 3", MapSize(20, 20), 0x1172),
+  [27]= StaticMapMetadata("Garin's Grave Lv 4", MapSize(10, 10), 0x123A),
+  [28]= StaticMapMetadata("Erdrick's Cave", MapSize(10, 10), 0x12C0),
+  [29]= StaticMapMetadata("Erdrick's Cave Lv 2", MapSize(10, 10), 0x12F2),
 }
 
+StaticMapTile = class(function(a,name,walkable,walkableWithKeys)
+  a.name = name
+  a.walkable = walkable
+  a.walkableWithKeys = walkableWithKeys and true or false
+end)
+
 NON_DUNGEON_TILES = {
-  [0]   = {["name"] = "Grass ", ["walkable"] = true },
-  [1]   = {["name"] = "Sand  ", ["walkable"] = true },
-  [2]   = {["name"] = "Water ", ["walkable"] = false },
-  [3]   = {["name"] = "Chest ", ["walkable"] = true },
-  [4]   = {["name"] = "Stone ", ["walkable"] = false },
-  [5]   = {["name"] = "Up    ", ["walkable"] = true },
-  [6]   = {["name"] = "Brick ", ["walkable"] = true },
-  [7]   = {["name"] = "Down  ", ["walkable"] = true },
-  [8]   = {["name"] = "Trees ", ["walkable"] = true },
-  [9]   = {["name"] = "Swamp ", ["walkable"] = true },
-  [0xA] = {["name"] = "Field ", ["walkable"] = true },
-  [0xB] = {["name"] = "Door  ", ["walkable"] = false, ["walkableWithKeys"] = true },
-  [0xC] = {["name"] = "Weapon", ["walkable"] = false },
-  [0xD] = {["name"] = "Inn   ", ["walkable"] = false },
-  [0xE] = {["name"] = "Bridge", ["walkable"] = true },
-  [0xF] = {["name"] = "Tile  ", ["walkable"] = false },
+  [0]   = StaticMapTile("Grass " , true),
+  [1]   = StaticMapTile("Sand  " , true),
+  [2]   = StaticMapTile("Water " , false),
+  [3]   = StaticMapTile("Chest " , true),
+  [4]   = StaticMapTile("Stone " , false),
+  [5]   = StaticMapTile("Up    " , true),
+  [6]   = StaticMapTile("Brick " , true),
+  [7]   = StaticMapTile("Down  " , true),
+  [8]   = StaticMapTile("Trees " , true),
+  [9]   = StaticMapTile("Swamp " , true),
+  [0xA] = StaticMapTile("Field " , true),
+  [0xB] = StaticMapTile("Door  " , false , true), -- walkableWithKeys
+  [0xC] = StaticMapTile("Weapon" , false),
+  [0xD] = StaticMapTile("Inn   " , false),
+  [0xE] = StaticMapTile("Bridge" , true),
+  [0xF] = StaticMapTile("Tile  " , false),
 }
 
 DUNGEON_TILES = {
-  [0]   = {["name"] = "Stone", ["walkable"] = false },
-  [1]   = {["name"] = "Up   ", ["walkable"] = true },
-  [2]   = {["name"] = "Brick", ["walkable"] = true },
-  [3]   = {["name"] = "Down ", ["walkable"] = true },
-  [4]   = {["name"] = "Chest", ["walkable"] = true },
-  [5]   = {["name"] = "Door ", ["walkable"] = false, ["walkableWithKeys"] = true },
+  [0]   = StaticMapTile("Stone" , false),
+  [1]   = StaticMapTile("Up   " , true),
+  [2]   = StaticMapTile("Brick" , true),
+  [3]   = StaticMapTile("Down " , true),
+  [4]   = StaticMapTile("Chest" , true),
+  [5]   = StaticMapTile("Door  ", false, true), -- walkableWithKeys
   -- in swamp cave, we get id six where the princess is. its the only 6 we get in any dungeon.
-  [6]   = {["name"] = "Brick",  ["walkable"] = true },
+  [6]   = StaticMapTile("Brick  ", true),
 }
 
-StaticMap = class(function(a, mapId, mapName, width, height, rows)
+IMMOBILE_NPCS = {
+  [Tantegel] = {{2,8}, {8,6}, {8,8}, {27,5}, {26,15}, {9,27}, {12,27}, {15, 20}},
+  [TantegelThroneRoom] = {{3,6}, {5,6}}
+}
+
+function getImmobileNPCsForMap(mapId)
+  if IMMOBILE_NPCS[mapId] == nil then return {} end
+  return list.map(IMMOBILE_NPCS[mapId], function(xy) return Point3D(mapId, xy[1], xy[2]) end)
+end
+
+StaticMap = class(function(a, mapId, mapName, width, height, rows, allWarps)
   a.mapId = mapId
   a.mapName = mapName
   a.width = width
   a.height = height
   a.rows = rows
-  a.warps = getWarpsForMap(mapId)
+  a.warps = getWarpsForMap(mapId, allWarps)
+  a.immobileScps = getImmobileNPCsForMap(mapId)
 end)
 
 function StaticMap:getTileSet ()
@@ -214,11 +205,11 @@ PRINT_TILE_KEYS = 3
 function StaticMap:__tostring (printStrat)
   function printTile(t)
     if printStrat == PRINT_TILE_NAME or printStrat == nil
-      then return t["name"]
+      then return t.name
       else
         if printStrat == PRINT_TILE_NO_KEYS
-          then return t["walkable"] and "O" or " "
-          else return (t["walkableWithKeys"] or t["walkable"]) and "O" or " "
+          then return t.walkable and "O" or " "
+          else return (t.walkableWithKeys or t.walkable) and "O" or " "
         end
     end
   end
@@ -247,7 +238,10 @@ function StaticMap:mkGraph (haveKeys)
 
   function isWalkable(x,y)
     local t = tileSet[self.rows[y][x]]
-    return haveKeys and (t["walkableWithKeys"] or t["walkable"]) or t["walkable"]
+    if table.containsUsingDotEquals(self.immobileScps, Point3D(self.mapId, x, y))
+      then return false
+      else return haveKeys and (t.walkableWithKeys or t.walkable) or t.walkable
+    end
   end
 
   --         x,y-1
@@ -264,7 +258,7 @@ function StaticMap:mkGraph (haveKeys)
 
     if self.warps[x] ~= nil then
       if self.warps[x][y] ~= nil then
-        for _, v in pairs(self.warps[x][y]) do table.insert(res, v)  end
+        for _, w in pairs(self.warps[x][y]) do table.insert(res, w)  end
       end
     end
 
@@ -283,9 +277,7 @@ end
 
 function Graph:__tostring ()
 
-  function contains(list, x)
-    return table.contains(list, x, function(v1, v2) return v1:equals(v2) end)
-  end
+  local contains = table.containsUsingDotEquals
 
   function printTile(x,y,neighbors)
     if neighbors == nil then return "   " end
@@ -333,30 +325,30 @@ function StaticMap:saveGraphToFile ()
   table.save(self:mkGraph(true), graphWithKeysFileName)
 end
 
-function quickPrintGraph(mapId)
-  print(loadStaticMapFromFile(mapId):mkGraph(false))
-  print(loadStaticMapFromFile(mapId):mkGraph(true))
+function quickPrintGraph(mapId, allWarps)
+  print(loadStaticMapFromFile(mapId, allWarps):mkGraph(false))
+  print(loadStaticMapFromFile(mapId, allWarps):mkGraph(true))
 end
 
-function loadStaticMapFromFile (mapId)
+function loadStaticMapFromFile (mapId, allWarps)
   if mapId < 2 then return nil end
   local mapData = MAP_DATA[mapId]
   local mapName = mapData["name"]
   local mapFileName = MAP_DIRECTORY .. mapName
-  return StaticMap(mapId, mapName, mapData["size"]["w"], mapData["size"]["h"], table.load(mapFileName))
+  return StaticMap(mapId, mapName, mapData["size"]["w"], mapData["size"]["h"], table.load(mapFileName), allWarps)
 end
 
-function readAllStaticMaps(memory)
-  res = {}
+function readAllStaticMaps(memory, allWarps)
+  local res = {}
   for i = 2, 29 do
-    res[i] = memory == nil and loadStaticMapFromFile(i) or readStaticMapFromRom(memory, i)
+    res[i] = memory == nil and loadStaticMapFromFile(i, allWarps) or readStaticMapFromRom(memory, i, allWarps)
   end
   return res
 end
 
-function readAllGraphs(haveKeys, maps)
-  if maps == nil then maps = readAllStaticMaps() end
-  res = {}
+function readAllGraphs(memory, haveKeys, maps, allWarps)
+  if maps == nil then maps = readAllStaticMaps(memory, allWarps) end
+  local res = {}
   for i = 2, 29 do
     local g = maps[i]:mkGraph(haveKeys)
     res[i] = g
@@ -364,9 +356,9 @@ function readAllGraphs(haveKeys, maps)
   return res
 end
 
-function saveStaticMaps(memory)
+function saveStaticMaps(memory, allWarps)
   local file = io.open(STATIC_MAPS_FILE, "w")
-  local maps = readAllStaticMaps(memory)
+  local maps = readAllStaticMaps(memory, allWarps)
   for i = 2, 29 do
     maps[i]:writeTileNamesToFile(file)
     maps[i]:saveIdsToFile()
@@ -375,17 +367,13 @@ function saveStaticMaps(memory)
   file:close()
 end
 
-function readStaticMapFromRom(memory, mapId)
+function readStaticMapFromRom(memory, mapId, allWarps)
   local mapData = MAP_DATA[mapId]
-  local mapSize = mapData["size"]
-  local width = mapSize["w"]
-  local height = mapSize["h"]
-  local startAddr = mapData["romAddr"]
 
   -- returns the tile id for the given (x,y) for the current map
   function getMapTileIdAt(x, y)
-    local offset = (y*width) + x
-    local addr = startAddr + math.floor(offset/2)
+    local offset = (y*mapData.size.width) + x
+    local addr = mapData.romAddr + math.floor(offset/2)
     local val = memory:readROM(addr)
     local tile = isEven(offset) and hiNibble(val) or loNibble(val)
     -- TODO: i tried to use 0x111 but it went insane... so just using 7 instead.
@@ -395,72 +383,70 @@ function readStaticMapFromRom(memory, mapId)
   -- returns a two dimensional grid of tile ids for the current map
   function getMapTileIds ()
     local res = {}
-    for y = 0, height-1 do
+    for y = 0, mapData.size.height-1 do
       res[y] = {}
-      for x = 0, width-1 do
+      for x = 0, mapData.size.width-1 do
         res[y][x]=getMapTileIdAt(x,y)
       end
     end
     return res
   end
 
-  return StaticMap(mapId, mapData["name"], width, height, getMapTileIds())
+  return StaticMap(mapId, mapData.name, mapData.size.width, mapData.size.height, getMapTileIds(), allWarps)
 end
 
-ALL_GRAPHS_ASSUMING_KEYS = readAllGraphs(true)
-ALL_GRAPHS_ASSUMING_NO_KEYS = readAllGraphs(false)
+MovementCommand = class(function(a,direction,from,to)
+  a.direction = direction
+  a.from = from
+  a.to = to
+end)
 
-function bfs(startNode, endNode, haveKeys, allGraphs)
-  if allGraphs == nil then
-    allGraphs = haveKeys and ALL_GRAPHS_ASSUMING_KEYS or ALL_GRAPHS_ASSUMING_NO_KEYS
-  end
+function up    (f, t) return MovementCommand(UP, f, t) end
+function down  (f, t) return MovementCommand(DOWN, f, t) end
+function right (f, t) return MovementCommand(LEFT, f, t) end
+function left  (f, t) return MovementCommand(RIGHT, f, t) end
+function stairs  (f, t) return MovementCommand("Stairs", f, t) end
+-- function assume(p) return { ["Assume"] = c, ["start"] = p } end
 
-  function solve(s)
-    local q = Queue()
-    q:push(s)
+function directionFromP1ToP2(p1, p2)
+  if p1.mapId ~= p2.mapId then return stairs(p1, p2) end
+  if p2.y < p1.y then return up(p1, p2) end
+  if p2.y > p1.y then return down(p1, p2) end
+  if p2.x < p1.x then return right(p1, p2) end
+  if p2.x > p1.x then return left(p1, p2) end
+end
 
-    local visited = {}
-    for m = 2, 29 do
-      visited[m] = {}
-      for y = 0, allGraphs[m].staticMap.height-1 do visited[m][y] = {} end
+function sameDirection (c1, c2)
+  return c1.direction == c2.direction
+end
+
+-- i want to turn a path into a set of commands like so, assuming the start is (4,4)
+-- { direction = "Assume", x = 4, y = 4 }
+-- { direction = "Up", until y = 7 }
+-- { direction = "Assume", x = 4, y = 7 }
+-- { direction = "Right", until x = 9 }
+-- todo can we get rid of this? just have the algo check that we are always in the expected places?:
+-- -- -- { direction = "Assume", x = 9, y = 7 }
+-- { direction = "Down", y = 4 }
+function convertPathToCommands(pathIn)
+  local path = table.copy(pathIn)
+
+  -- todo: consider if we should just throw an error here.
+  -- an empty path would be really weird
+  if(#(path) == 0) then return {} end
+--   if(#(path) == 1) then return assume(path[1]) end
+
+  local commands = list.zipWith(directionFromP1ToP2, path, list.drop(1, path))
+
+  return list.foldLeft(commands, {}, function(acc, c)
+    if c.direction == "Stairs"
+      then table.insert(acc, c)
+      else
+        if #(acc) > 0 and sameDirection(acc[#(acc)], c)
+        then acc[#(acc)].to = c.to
+        else table.insert(acc, c)
+        end
     end
-
-    visited[s.mapId][s.y][s.x] = true
-
-    local prev = {}
-
-    for m = 2, 29 do
-      prev[m] = {}
-      for y = 0, allGraphs[m].staticMap.height-1 do prev[m][y] = {} end
-    end
-
-    while not q:isEmpty() do
-      local node = q:pop()
-      local neighbors = allGraphs[node.mapId].graph[node.y][node.x]
-
-      for _, neighbor in ipairs(neighbors) do
-        if not visited[neighbor.mapId][neighbor.y][neighbor.x] then
-      	  q:push(neighbor)
-      	  visited[neighbor.mapId][neighbor.y][neighbor.x] = true
-      	  prev[neighbor.mapId][neighbor.y][neighbor.x] = node
-      	end
-      end
-    end
-
-    return prev
-  end
-
-  function reconstruct(s, e, prev)
-    local path = {}
-    local at = e
-    while not (at == nil) do
-      table.insert(path, at)
-      at = prev[at.mapId][at.y][at.x]
-    end
-    local pathR = table.reverse(path)
-    return pathR[1]:equals(s) and pathR or {}
-  end
-
-  local prev = solve(startNode)
-  return reconstruct(startNode, endNode, prev)
+    return acc
+  end)
 end

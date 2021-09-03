@@ -23,7 +23,7 @@ function waitFrames (n)
 end
 
 function pressButton (button, wait)
-  print("Pressing " .. button)
+  -- print("Pressing " .. button)
   e = table.shallow_copy(emptyInputs)
   e[button] = true
   joypad.write(1, e)
@@ -33,13 +33,34 @@ function pressButton (button, wait)
 end
 
 function holdButton (button, frames)
-  print("Holding " .. button)
+  -- print("Holding " .. button)
   e = table.shallow_copy(emptyInputs)
   e[button] = true
   for i = 1,frames do
     joypad.write(1, e)
     emu.frameadvance();
   end
+  joypad.write(1, emptyInputs)
+  emu.frameadvance();
+end
+
+function holdButton2 (button, frames)
+  local nrFrames = 0
+  holdButtonUntil(button, function()
+    nrFrames = nrFrames + 1
+    return nrFrames >= frames
+  end)
+end
+
+function holdButtonUntil(button, conditionFunction)
+  -- print("Holding " .. button)
+  e = table.shallow_copy(emptyInputs)
+  e[button] = true
+  while not conditionFunction() do
+    joypad.write(1, e)
+    emu.frameadvance();
+  end
+  -- print("Done holding " .. button)
   joypad.write(1, emptyInputs)
   emu.frameadvance();
 end

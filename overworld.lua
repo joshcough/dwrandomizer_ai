@@ -1,30 +1,29 @@
 require 'helpers'
 require 'Class'
 
-Overworld = 1
-
-MAP_DATA = {
-  [1] = {["name"] = "Overworld", ["size"] = {["w"]=120,["h"]=120}, ["romAddr"] = 0x1D6D},
-}
+OverworldTile = class(function(a,name,walkable)
+  a.name = name
+  a.walkable = walkable
+end)
 
 OVERWORLD_TILES = {
-  [0]   = {["name"] = "Grass   ", ["walkable"] = true },
-  [1]   = {["name"] = "Desert  ", ["walkable"] = true },
-  [2]   = {["name"] = "Hills   ", ["walkable"] = true },
-  [3]   = {["name"] = "Mountain", ["walkable"] = false },
-  [4]   = {["name"] = "Water   ", ["walkable"] = false },
-  [5]   = {["name"] = "Stone   ", ["walkable"] = false },
-  [6]   = {["name"] = "Forest  ", ["walkable"] = true },
-  [7]   = {["name"] = "Swamp   ", ["walkable"] = true },
-  [8]   = {["name"] = "Town    ", ["walkable"] = true },
-  [9]   = {["name"] = "Cave    ", ["walkable"] = true },
-  [0xA] = {["name"] = "Castle  ", ["walkable"] = true },
-  [0xB] = {["name"] = "Bridge  ", ["walkable"] = true },
-  [0xC] = {["name"] = "Stairs  ", ["walkable"] = true },
+  [0]   = OverworldTile("Grass   ", true),  -- "🟩",
+  [1]   = OverworldTile("Desert  ", true),  -- "🏜",
+  [2]   = OverworldTile("Hills   ", true),  -- "🏞"
+  [3]   = OverworldTile("Mountain", false), -- "⛰",
+  [4]   = OverworldTile("Water   ", false), -- "🌊",
+  [5]   = OverworldTile("Stone   ", false), -- "⬛",
+  [6]   = OverworldTile("Forest  ", true),  -- "🌳",
+  [7]   = OverworldTile("Swamp   ", true),
+  [8]   = OverworldTile("Town    ", true),
+  [9]   = OverworldTile("Cave    ", true),
+  [0xA] = OverworldTile("Castle  ", true),  -- "🏰"
+  [0xB] = OverworldTile("Bridge  ", true),  -- "🌉",
+  [0xC] = OverworldTile("Stairs  ", true),
 }
 
 function getOverworldTileName(tileId)
-  return OVERWORLD_TILES[tileId] and OVERWORLD_TILES[tileId] or "unknown"
+  return OVERWORLD_TILES[tileId] and OVERWORLD_TILES[tileId].name or "unknown"
 end
 
 MAX_TILES=14400
@@ -85,7 +84,7 @@ function readOverworldFromROM (memory)
 end
 
 function emptyWorldGrid()
-  res = {}
+  local res = {}
   for y = 1, 120 do
     res[y] = {}
     for x = 1, 120 do
@@ -115,7 +114,7 @@ function OverWorld:updateKnownWorld(x, y, tileId)
       self.knownWorld[y+1][x+1] = tileId
       self.nrTilesSeen=self.nrTilesSeen+1
       local tileName = getOverworldTileName(tileId)
-      print ("discovered new tile at (x: " .. x .. ", y: " .. y .. "), tile is: " .. tileName)
+      print ("discovered new tile at (x: " .. x .. ", y: " .. y .. ")" .. " tile is: " .. tileName)
   end
 end
 

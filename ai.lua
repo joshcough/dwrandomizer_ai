@@ -25,14 +25,6 @@ function openDoor ()
   pressA(20)
 end
 
-function takeStairs ()
-  print("======taking stairs=======")
-  holdA(30)
-  waitFrames(10)
-  pressDown(2)
-  pressDown(2)
-  pressA(20)
-end
 
 function menuScript ()
   print("======executing menu script=======")
@@ -118,52 +110,197 @@ function runGameStartScript ()
   end
 end
 
+in_battle2 = false
+
 -- A thing draws near!
-function onEncounter(address)
-  local mapId = getMapId()
-  if (mapId > 0) then
-    print ("entering battle vs a " .. Enemies[getEnemyId()])
+function onEncounter2(memory)
+  return function(address)
+    if (memory:getMapId() > 0) then
+      enemyId = memory:getEnemyId()
+      print ("entering battle vs a " .. Enemies[enemyId])
+      -- actually, set every encounter to a red slime. lol!
+      memory:setEnemyId(0)
+      in_battle2 = true
+    end
+  end
+end
+
+function executeBattle()
+ if (emu.framecount() % 15 == 0) then
+    -- print("in_battle2: ", in_battle2)
+    if(in_battle2) then
+      holdA(240)
+      waitFrames(60)
+      pressA(10)
+      in_battle2 = false
+    end
   end
 end
 
 function onPlayerMove(memory, overworld)
   return function(address)
-    print("x: " .. memory:getX() .. " y: " .. memory:getY())
-    if memory:getMapId() == 0
-      then overworld:printVisibleGrid(memory:getX(), memory:getY())
+--     print("current location", memory:getLocation())
+    if memory:getMapId() == 1
+      then
+        overworld:printVisibleGrid(memory:getX(), memory:getY())
+        print("percentageOfWorldSeen: " .. overworld:percentageOfWorldSeen())
     end
-    print("percentageOfWorldSeen: " .. overworld:percentageOfWorldSeen())
   end
 end
+
+Game = class(function(a, mem, warps)
+  a.mem = mem
+  a.maps = readAllStaticMaps(mem, warps)
+  a.warps = warps
+  a.graphsWithKeys = readAllGraphs(mem, true, a.maps, warps)
+  a.graphsWithoutKeys = readAllGraphs(mem, false, a.maps, warps)
+end)
+
+function Game:goTo(dest)
+  local path = self:shortestPath(self.mem:getLocation(), dest, true)
+  local commands = convertPathToCommands(path)
+  -- for i,c in pairs(commands) do print(i, c) end
+  for i,c in pairs(commands) do
+    -- print(i, c)
+    if c["direction"] == "Stairs"
+      then self:takeStairs(c["from"], c["to"])
+      else
+        holdButtonUntil(c["direction"], function ()
+          local p = self.mem:getLocation()
+          -- print("current point: ", mem:getLocation(), "c.to: ", c.to, "equal?: ", p.equals(c.to))
+          return p:equals(c.to)
+        end
+        )
+    end
+  end
+end
+
+-- TODO: looks like the to argument here isn't really needed.
+function Game:takeStairs (from, to)
+  -- print("======taking stairs=======")
+  holdA(30)
+  waitFrames(30)
+  pressDown(2)
+  pressDown(2)
+  pressA(60)
+
+  if from:equals(TantagelBasementStairs)
+  then
+    print("discovered what's in the tantagel basement!")
+    self:addWarp(Warp(TantagelBasementStairs, self.mem:getLocation()))
+  end
+end
+
+-- TODO: this whole function needs to get redone completely. this is just a hack.
+function Game:addWarp(warp)
+  table.insert(self.warps, warp)
+  table.insert(self.warps, warp)
+
+  -- TODO: this is just terrible....
+  self.warps = table.concat(self.warps, list.map(self.warps, swapSrcAndDest))
+
+  -- TODO: these three lines just reload absolutely everything.
+  -- this is really not ideal, but, its probably fine for now.
+  -- eventually we will want to do the minimal amount of work possible here.
+  self.maps = readAllStaticMaps(self.mem, self.warps)
+  self.graphsWithKeys = readAllGraphs(self.mem, true, self.maps, self.warps)
+  self.graphsWithoutKeys = readAllGraphs(self.mem, false, self.maps, self.warps)
+end
+
+function Game:shortestPath(startNode, endNode, haveKeys, allGraphs)
+  if allGraphs == nil then
+    allGraphs = haveKeys and self.graphsWithKeys or self.graphsWithoutKeys
+  end
+
+  function solve(s)
+    local q = Queue()
+    q:push(s)
+
+    local visited = {}
+    for m = 2, 29 do
+      visited[m] = {}
+      for y = 0, allGraphs[m].staticMap.height-1 do visited[m][y] = {} end
+    end
+
+    visited[s.mapId][s.y][s.x] = true
+
+    local prev = {}
+
+    for m = 2, 29 do
+      prev[m] = {}
+      for y = 0, allGraphs[m].staticMap.height-1 do prev[m][y] = {} end
+    end
+
+    while not q:isEmpty() do
+      local node = q:pop()
+      local neighbors = allGraphs[node.mapId].graph[node.y][node.x]
+
+      for _, neighbor in ipairs(neighbors) do
+        if not visited[neighbor.mapId][neighbor.y][neighbor.x] then
+      	  q:push(neighbor)
+      	  visited[neighbor.mapId][neighbor.y][neighbor.x] = true
+      	  prev[neighbor.mapId][neighbor.y][neighbor.x] = node
+      	end
+      end
+    end
+
+    return prev
+  end
+
+  function reconstruct(s, e, prev)
+    local path = {}
+    local at = e
+    while not (at == nil) do
+      table.insert(path, at)
+      at = prev[at.mapId][at.y][at.x]
+    end
+    local pathR = table.reverse(path)
+    return pathR[1]:equals(s) and pathR or {}
+  end
+
+  local prev = solve(startNode)
+  return reconstruct(startNode, endNode, prev)
+end
+
+function swapSrcAndDest(w) return w:swap() end
 
 -------------------
 ---- MAIN LOOP ----
 -------------------
 
 function main()
+  hud_main()
+
   mem = Memory(memory, rom)
   overworld = OverWorld(readOverworldFromROM(mem))
-  memory.registerexecute(0xcf44, onEncounter)
+  memory.registerexecute(0xcf44, onEncounter2(mem))
   memory.registerwrite(0x3a, onPlayerMove(mem, overworld))
   memory.registerwrite(0x3b, onPlayerMove(mem, overworld))
 
-  hud_main()
+  local warps = table.concat(WARPS, list.map(WARPS, swapSrcAndDest))
 
   -- i run this each time to make sure nothing has changed.
   -- if anything changes, git will tell me.
-  saveStaticMaps(mem)
+--   saveStaticMaps(mem, warps)
+
+  local game = Game(mem, warps)
 
   -- i print this out just to make sure things look sane when i start the script.
-  local maps = readAllStaticMaps(mem)
-  local graphs = readAllGraphs(true, maps)
-  print_r(bfs(Point3D(TantegelThroneRoom, 1,1), Point3D(TantegelThroneRoom, 1,8), true, graphs))
+  -- table.print(shortestPath(Point3D(TantegelThroneRoom, 1,1), Point3D(TantegelThroneRoom, 1,8), true, graphs))
   -- can also do this, which loads the maps from files instead of memory:
-  -- print_r(bfs(Point3D(TantegelThroneRoom, 1,1), Point3D(TantegelThroneRoom, 1,8), true))
+  -- table.print(shortestPath(Point3D(TantegelThroneRoom, 1,1), Point3D(TantegelThroneRoom, 1,8), true))
+  -- table.print(shortestPath(Point3D(Charlock, 10,19), Point3D(CharlockThroneRoom, 17,24), true))
 
---   runGameStartScript()
+  -- runGameStartScript()
+
+--   game:goTo(Point3D(Tantegel, 29,29))
+--   game:takeStairs(Point3D(Tantegel, 29,29))
+--   game:goTo(Point3D(TantegelThroneRoom, 3,4))
 
   emu.speedmode("normal")
   while true do
+    -- this only happens if we are actually in battle.
+    executeBattle()
     emu.frameadvance()
   end
 end

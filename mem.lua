@@ -1,4 +1,5 @@
 require 'Class'
+require 'helpers'
 
 -- Some constant memory locations
 MAP_ADDR = 0x45
@@ -31,13 +32,17 @@ function Memory:writeROM(addr, value) self.rom.writebyte(addr, value) end
 function Memory:getX () return self:readRAM(X_ADDR) end
 -- get the y coordinate of the player in the current map
 function Memory:getY () return self:readRAM(Y_ADDR) end
--- get the x,y coordinates of the player in the current map
-function Memory:getXY () return {["x"]=self:getX(), ["y"]=self:getY()} end
 -- get the id of the current map
 function Memory:getMapId () return self:readRAM(MAP_ADDR) end
+
+function Memory:getLocation ()
+  return Point3D(self:getMapId(), self:getX(), self:getY())
+end
+
 -- get the id of the current enemy, if it exists
 -- no idea what gets returned if not in battle
-function getEnemyId ()  return memory.readbyte(ENEMY_ID_ADDR)+1 end
+function Memory:getEnemyId () return self.ram.readbyte(ENEMY_ID_ADDR)+1 end
+function Memory:setEnemyId (enemyId) return memory.writebyte(ENEMY_ID_ADDR, enemyId) end
 
 function setReturnWarpLocation(x, y)
   mem:writeROM(RETURN_WARP_X_ADDR, x)

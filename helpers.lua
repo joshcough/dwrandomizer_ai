@@ -169,6 +169,10 @@ function table.contains(list, x, equalityOp)
   return false
 end
 
+function table.containsUsingDotEquals(t, x)
+  return table.contains(t, x, function(v1, v2) return v1:equals(v2) end)
+end
+
 function table.copy(tbl)
   local t = {}
   for _, v in pairs(tbl) do table.insert(t, v)  end
@@ -191,12 +195,73 @@ function table.concat(tbl1, tbl2)
   return res
 end
 
-function print_r(arr, indentLevel)
+list = {}
+
+function list.drop(n, t)
+  local res = {}
+  if n > #(t) then return {} end
+  for i = n+1, #(t) do
+    table.insert(res, t[i])
+  end
+  return res
+end
+
+function list.zip(t1, t2)
+  return list.zipWith(t1, t2, function(l,r) return {l,r} end)
+end
+
+function list.zipWith(f, t1, t2)
+  local res = {}
+  for i = 1, math.min(#(t1), #(t2)) do
+    table.insert(res, f(t1[i], t2[i]))
+  end
+  return res
+end
+
+function list.foldLeft(t, initialValue, op)
+  local res = initialValue
+  for i = 1, #(t) do res = op(res, t[i]) end
+  return res
+end
+
+function list.map(t, f)
+  local res = {}
+  for i = 1, #(t) do table.insert(res, f(t[i])) end
+  return res
+end
+
+function list.filter(t, f)
+  local res = {}
+  for i = 1, #(t) do
+    if f(t[i]) then table.insert(res, t[i]) end
+  end
+  return res
+end
+
+function list.span(t, pred)
+  local resL = {}
+  local resR = {}
+  if #(t) == 0 then return {{}, {}} end
+
+  local b = pred(t[1])
+  local doneWithL =  false
+  for i = 1, #(t) do
+    if pred(t[i]) == b and not doneWithL then
+      table.insert(resL, t[i])
+    else
+      doneWithL = true
+      table.insert(resR, t[i])
+    end
+  end
+  return {resL, resR}
+end
+
+function table.print(arr, indentLevel)
     local str = ""
     local indentStr = "#"
 
     if(indentLevel == nil) then
-        print(print_r(arr, 0))
+        print(table.print(arr, 0))
         return
     end
 
@@ -206,26 +271,12 @@ function print_r(arr, indentLevel)
 
     for index,value in pairs(arr) do
         if type(value) == "table" then
-            str = str..indentStr..index..": \n"..print_r(value, (indentLevel + 1))
+            str = str..indentStr..index..": \n"..table.print(value, (indentLevel + 1))
         else
             str = str..indentStr..index..": "..tostring(value).."\n"
         end
     end
     return str
-end
-
-Point2D = class(function(a, x, y)
-  a.x = x
-  a.y = y
-end)
-
-function Point2D:__tostring()
-  return "{x:" .. self.x .. ", y:" .. self.y .. "}"
-end
-
-function Point2D:equals(p2)
-  if p2 == nil then return false end
-  return self.x == p2.x and self.y == p2.y
 end
 
 Point3D = class(function(a, mapId, x, y)
