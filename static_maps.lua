@@ -31,7 +31,7 @@ GarinsGraveLv4 = 27
 ErdricksCaveLv1 = 28
 ErdricksCaveLv2 = 29
 
-TantagelBasementStairs = Point3D(Tantegel, 29, 29)
+TantegelBasementStairs = Point3D(Tantegel, 29, 29)
 
 Warp = class(function(a, src, dest)
   a.src = src
@@ -42,45 +42,49 @@ function Warp:swap()
   return Warp(self.dest, self.src)
 end
 
+function Warp:__tostring()
+  return "{src: " .. tostring(self.src) .. ", dest: " .. tostring(self.dest) .. "}"
+end
+
 WARPS = {
-  Warp(Point3D(2, 10, 1), Point3D(15, 9, 0))
-, Warp(Point3D(2, 4, 14), Point3D(15, 8, 13))
-, Warp(Point3D(2, 15, 14), Point3D(15, 17, 15))
-, Warp(Point3D(5, 1, 8), Point3D(4, 1, 7))
-, Warp(Point3D(5, 8, 8), Point3D(4, 7, 7))
+  Warp(Point3D(Charlock, 10, 1), Point3D(CharlockCaveLv1, 9, 0))
+, Warp(Point3D(Charlock, 4, 14), Point3D(CharlockCaveLv1, 8, 13))
+, Warp(Point3D(Charlock, 15, 14), Point3D(CharlockCaveLv1, 17, 15))
+, Warp(Point3D(TantegelThroneRoom, 1, 8), Point3D(Tantegel, 1, 7))
+, Warp(Point3D(TantegelThroneRoom, 8, 8), Point3D(Tantegel, 7, 7))
 -- 9 = garinham, 24 = GarinsGrave -- this one has to be discovered, like the basement
 -- , Warp(Point3D(9, 19, 0), Point3D(24, 6, 11))
-, Warp(Point3D(15, 15, 1), Point3D(16, 8, 0))
-, Warp(Point3D(15, 13, 7), Point3D(16, 4, 4))
-, Warp(Point3D(15, 19, 7), Point3D(16, 9, 8))
-, Warp(Point3D(15, 14, 9), Point3D(16, 8, 9))
-, Warp(Point3D(15, 2, 14), Point3D(16, 0, 1))
-, Warp(Point3D(15, 2, 4), Point3D(16, 0, 0))
-, Warp(Point3D(15, 8, 19), Point3D(16, 5, 0))
-, Warp(Point3D(16, 3, 0), Point3D(17, 7, 0))
-, Warp(Point3D(16, 9, 1), Point3D(17, 2, 2))
-, Warp(Point3D(16, 0, 8), Point3D(17, 5, 4))
-, Warp(Point3D(16, 1, 9), Point3D(17, 0, 9))
-, Warp(Point3D(17, 1, 6), Point3D(18, 0, 9))
-, Warp(Point3D(17, 7, 7), Point3D(18, 7, 7))
-, Warp(Point3D(18, 2, 2), Point3D(19, 9, 0))
-, Warp(Point3D(18, 8, 1), Point3D(19, 4, 0))
-, Warp(Point3D(19, 5, 5), Point3D(20, 0, 0))
-, Warp(Point3D(19, 0, 0), Point3D(20, 0, 6))
-, Warp(Point3D(20, 9, 0), Point3D(20, 0, 0))
-, Warp(Point3D(20, 9, 6), Point3D(6, 10, 29))
-, Warp(Point3D(22, 0, 0), Point3D(23, 0, 0))
-, Warp(Point3D(22, 6, 5), Point3D(23, 6, 5))
-, Warp(Point3D(22, 12, 12), Point3D(23, 12, 12))
-, Warp(Point3D(24, 1, 18), Point3D(25, 11, 2))
-, Warp(Point3D(25, 1, 1), Point3D(26, 1, 26))
-, Warp(Point3D(25, 12, 1), Point3D(26, 18, 1))
-, Warp(Point3D(25, 5, 6), Point3D(26, 6, 11))
-, Warp(Point3D(25, 1, 10), Point3D(26, 2, 17))
-, Warp(Point3D(25, 12, 10), Point3D(26, 18, 13))
-, Warp(Point3D(26, 9, 5), Point3D(27, 0, 4))
-, Warp(Point3D(26, 10, 9), Point3D(27, 5, 4))
-, Warp(Point3D(28, 9, 9), Point3D(29, 8, 9))
+, Warp(Point3D(CharlockCaveLv1, 15, 1), Point3D(CharlockCaveLv2, 8, 0))
+, Warp(Point3D(CharlockCaveLv1, 13, 7), Point3D(CharlockCaveLv2, 4, 4))
+, Warp(Point3D(CharlockCaveLv1, 19, 7), Point3D(CharlockCaveLv2, 9, 8))
+, Warp(Point3D(CharlockCaveLv1, 14, 9), Point3D(CharlockCaveLv2, 8, 9))
+, Warp(Point3D(CharlockCaveLv1, 2, 14), Point3D(CharlockCaveLv2, 0, 1))
+, Warp(Point3D(CharlockCaveLv1, 2, 4), Point3D(CharlockCaveLv2, 0, 0))
+, Warp(Point3D(CharlockCaveLv1, 8, 19), Point3D(CharlockCaveLv2, 5, 0))
+, Warp(Point3D(CharlockCaveLv2, 3, 0), Point3D(CharlockCaveLv3, 7, 0))
+, Warp(Point3D(CharlockCaveLv2, 9, 1), Point3D(CharlockCaveLv3, 2, 2))
+, Warp(Point3D(CharlockCaveLv2, 0, 8), Point3D(CharlockCaveLv3, 5, 4))
+, Warp(Point3D(CharlockCaveLv2, 1, 9), Point3D(CharlockCaveLv3, 0, 9))
+, Warp(Point3D(CharlockCaveLv3, 1, 6), Point3D(CharlockCaveLv4, 0, 9))
+, Warp(Point3D(CharlockCaveLv3, 7, 7), Point3D(CharlockCaveLv4, 7, 7))
+, Warp(Point3D(CharlockCaveLv4, 2, 2), Point3D(CharlockCaveLv5, 9, 0))
+, Warp(Point3D(CharlockCaveLv4, 8, 1), Point3D(CharlockCaveLv5, 4, 0))
+, Warp(Point3D(CharlockCaveLv5, 5, 5), Point3D(CharlockCaveLv6, 0, 0))
+, Warp(Point3D(CharlockCaveLv5, 0, 0), Point3D(CharlockCaveLv6, 0, 6))
+, Warp(Point3D(CharlockCaveLv6, 9, 0), Point3D(CharlockCaveLv6, 0, 0))
+, Warp(Point3D(CharlockCaveLv6, 9, 6), Point3D(CharlockThroneRoom, 10, 29))
+, Warp(Point3D(MountainCaveLv1, 0, 0), Point3D(MountainCaveLv2, 0, 0))
+, Warp(Point3D(MountainCaveLv1, 6, 5), Point3D(MountainCaveLv2, 6, 5))
+, Warp(Point3D(MountainCaveLv1, 12, 12), Point3D(MountainCaveLv2, 12, 12))
+, Warp(Point3D(GarinsGraveLv1, 1, 18), Point3D(GarinsGraveLv2, 11, 2))
+, Warp(Point3D(GarinsGraveLv2, 1, 1), Point3D(GarinsGraveLv3, 1, 26))
+, Warp(Point3D(GarinsGraveLv2, 12, 1), Point3D(GarinsGraveLv3, 18, 1))
+, Warp(Point3D(GarinsGraveLv2, 5, 6), Point3D(GarinsGraveLv3, 6, 11))
+, Warp(Point3D(GarinsGraveLv2, 1, 10), Point3D(GarinsGraveLv3, 2, 17))
+, Warp(Point3D(GarinsGraveLv2, 12, 10), Point3D(GarinsGraveLv3, 18, 13))
+, Warp(Point3D(GarinsGraveLv3, 9, 5), Point3D(GarinsGraveLv4, 0, 4))
+, Warp(Point3D(GarinsGraveLv3, 10, 9), Point3D(GarinsGraveLv4, 5, 4))
+, Warp(Point3D(ErdricksCaveLv1, 9, 9), Point3D(ErdricksCaveLv2, 8, 9))
 }
 
 function getWarpsForMap(mapId, allWarps)
@@ -401,40 +405,24 @@ MovementCommand = class(function(a,direction,from,to)
   a.to = to
 end)
 
-function up    (f, t) return MovementCommand(UP, f, t) end
-function down  (f, t) return MovementCommand(DOWN, f, t) end
-function right (f, t) return MovementCommand(LEFT, f, t) end
-function left  (f, t) return MovementCommand(RIGHT, f, t) end
-function stairs  (f, t) return MovementCommand("Stairs", f, t) end
--- function assume(p) return { ["Assume"] = c, ["start"] = p } end
+function MovementCommand:sameDirection (other)
+  return self.direction == other.direction
+end
 
 function directionFromP1ToP2(p1, p2)
-  if p1.mapId ~= p2.mapId then return stairs(p1, p2) end
-  if p2.y < p1.y then return up(p1, p2) end
-  if p2.y > p1.y then return down(p1, p2) end
-  if p2.x < p1.x then return right(p1, p2) end
-  if p2.x > p1.x then return left(p1, p2) end
+  if p1.mapId ~= p2.mapId then return MovementCommand("Stairs", p1, p2) end
+  if p2.y < p1.y then return MovementCommand(UP, p1, p2) end
+  if p2.y > p1.y then return MovementCommand(DOWN, p1, p2) end
+  if p2.x < p1.x then return MovementCommand(LEFT, p1, p2) end
+  if p2.x > p1.x then return MovementCommand(RIGHT, p1, p2) end
 end
 
-function sameDirection (c1, c2)
-  return c1.direction == c2.direction
-end
-
--- i want to turn a path into a set of commands like so, assuming the start is (4,4)
--- { direction = "Assume", x = 4, y = 4 }
--- { direction = "Up", until y = 7 }
--- { direction = "Assume", x = 4, y = 7 }
--- { direction = "Right", until x = 9 }
--- todo can we get rid of this? just have the algo check that we are always in the expected places?:
--- -- -- { direction = "Assume", x = 9, y = 7 }
--- { direction = "Down", y = 4 }
 function convertPathToCommands(pathIn)
   local path = table.copy(pathIn)
 
   -- todo: consider if we should just throw an error here.
   -- an empty path would be really weird
   if(#(path) == 0) then return {} end
---   if(#(path) == 1) then return assume(path[1]) end
 
   local commands = list.zipWith(directionFromP1ToP2, path, list.drop(1, path))
 
@@ -442,7 +430,7 @@ function convertPathToCommands(pathIn)
     if c.direction == "Stairs"
       then table.insert(acc, c)
       else
-        if #(acc) > 0 and sameDirection(acc[#(acc)], c)
+        if #(acc) > 0 and acc[#(acc)]:sameDirection(c)
         then acc[#(acc)].to = c.to
         else table.insert(acc, c)
         end

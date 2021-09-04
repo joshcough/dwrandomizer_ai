@@ -17,9 +17,7 @@ emptyInputs = {
 }
 
 function waitFrames (n)
-  for i = 1,n do
-    emu.frameadvance();
-  end
+  for i = 1,n do emu.frameadvance() end
 end
 
 function pressButton (button, wait)
@@ -33,18 +31,6 @@ function pressButton (button, wait)
 end
 
 function holdButton (button, frames)
-  -- print("Holding " .. button)
-  e = table.shallow_copy(emptyInputs)
-  e[button] = true
-  for i = 1,frames do
-    joypad.write(1, e)
-    emu.frameadvance();
-  end
-  joypad.write(1, emptyInputs)
-  emu.frameadvance();
-end
-
-function holdButton2 (button, frames)
   local nrFrames = 0
   holdButtonUntil(button, function()
     nrFrames = nrFrames + 1
