@@ -1,0 +1,10 @@
+notes on encounter rates.
+
+desert is 1/8,
+grass is 1/16 or 1/32 (effectively 1/24 but it's weird, probably the same way chests/stairs work),
+Swamp is 1/16,
+not sure what a bridge is
+Brick is supposed to be 1/16.  Same with Barrier tiles.
+Chests/stairs are 1/24
+Bridge (and stairs) is same as grass.
+If x and y are both even or both odd, it's 1/32 if one is even and the other odd, it's 1/16.
