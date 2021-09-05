@@ -12,8 +12,8 @@ in_battle2 = false
 -- A thing draws near!
 function onEncounter2(game)
   return function(address)
-    if (game.memory:getMapId() > 0) then
-      enemyId = game.memory:getEnemyId()
+    if (game:getMapId() > 0) then
+      enemyId = game:getEnemyId()
       print ("entering battle vs a " .. Enemies[enemyId])
       -- actually, set every encounter to a red slime. lol!
       game.memory:setEnemyId(0)
@@ -37,10 +37,10 @@ end
 function onPlayerMove(game)
   return function(address)
 --     print("current location", memory:getLocation())
-    if game.memory:getMapId() == 1
+    if game:getMapId() == 1
       then
-        game.overworld:printVisibleGrid(game.memory:getX(), game.memory:getY())
-        print("percentageOfWorldSeen: " .. game.overworld:percentageOfWorldSeen())
+        game:printVisibleGrid()
+        print("percentageOfWorldSeen: " .. game:percentageOfWorldSeen())
     end
   end
 end
@@ -53,7 +53,7 @@ function main()
   hud_main()
 
   local game = newGame(Memory(memory, rom))
-  print(game.memory:readPlayerData())
+  print(game:readPlayerData())
 
   memory.registerexecute(0xcf44, onEncounter2(game))
   memory.registerwrite(0x3a, onPlayerMove(game))

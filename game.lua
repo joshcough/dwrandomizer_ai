@@ -22,6 +22,38 @@ function newGame(memory)
   return Game(memory, warps, overworld, maps, graphsWithKeys, graphsWithoutKeys)
 end
 
+function Game:readPlayerData()
+  return self.memory:readPlayerData()
+end
+
+function Game:getMapId()
+  return self.memory:getMapId()
+end
+
+function Game:getEnemyId()
+  return self.memory:getEnemyId()
+end
+
+function Game:getX()
+  return self.memory:getX()
+end
+
+function Game:getY()
+  return self.memory:getY()
+end
+
+function Game:getLocation()
+  return self.memory:getLocation()
+end
+
+function Game:percentageOfWorldSeen()
+  return self.overworld:percentageOfWorldSeen()
+end
+
+function Game:printVisibleGrid()
+  return self.overworld:printVisibleGrid(self:getX(), self:getY())
+end
+
 function Game:goTo(dest)
   local path = self:shortestPath(self.memory:getLocation(), dest, true)
   local commands = convertPathToCommands(path, self.maps)
