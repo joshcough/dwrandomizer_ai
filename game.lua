@@ -4,16 +4,26 @@ require 'helpers'
 require 'overworld'
 require 'static_maps'
 
-Game = class(function(a, mem, warps)
-  a.mem = mem
+Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsWithoutKeys)
+  a.memory = memory
   a.warps = warps
-  a.maps = readAllStaticMaps(mem, warps)
-  a.graphsWithKeys = readAllGraphs(mem, true, a.maps, warps)
-  a.graphsWithoutKeys = readAllGraphs(mem, false, a.maps, warps)
+  a.overworld = overworld
+  a.maps = maps
+  a.graphsWithKeys = graphsWithKeys
+  a.graphsWithoutKeys = graphsWithoutKeys
 end)
 
+function newGame(memory)
+  local overworld = OverWorld(readOverworldFromROM(memory))
+  local warps = table.concat(WARPS, list.map(WARPS, swapSrcAndDest))
+  local maps = readAllStaticMaps(memory, warps)
+  local graphsWithKeys = readAllGraphs(memory, true, maps, warps)
+  local graphsWithoutKeys = readAllGraphs(memory, false, maps, warps)
+  return Game(memory, warps, overworld, maps, graphsWithKeys, graphsWithoutKeys)
+end
+
 function Game:goTo(dest)
-  local path = self:shortestPath(self.mem:getLocation(), dest, true)
+  local path = self:shortestPath(self.memory:getLocation(), dest, true)
   local commands = convertPathToCommands(path, self.maps)
   -- for i,c in pairs(commands) do print(i, c) end
   for i,c in pairs(commands) do
@@ -21,8 +31,8 @@ function Game:goTo(dest)
     if c.direction == "Door" then self:openDoorScript()
     elseif c.direction == "Stairs" then self:takeStairs(c.from, c.to)
     else holdButtonUntil(c.direction, function ()
-          local p = self.mem:getLocation()
-          -- print("current point: ", mem:getLocation(), "c.to: ", c.to, "equal?: ", p.equals(c.to))
+          local p = self.memory:getLocation()
+          -- print("current point: ", memory:getLocation(), "c.to: ", c.to, "equal?: ", p.equals(c.to))
           return p:equals(c.to)
         end
         )
@@ -65,7 +75,7 @@ function Game:takeStairs (from, to)
 
   if from:equals(TantegelBasementStairs)
   then
-    local loc = self.mem:getLocation()
+    local loc = self.memory:getLocation()
     print("Discovered what's in Tantegel's basement ... it's " .. self.maps[loc.mapId].mapName .. "!!!")
     self:addWarp(Warp(TantegelBasementStairs, loc))
   end
@@ -142,9 +152,9 @@ function Game:addWarp(warp)
   -- TODO: these three lines just reload absolutely everything.
   -- this is really not ideal, but, its probably fine for now.
   -- eventually we will want to do the minimal amount of work possible here.
-  self.maps = readAllStaticMaps(self.mem, self.warps)
-  self.graphsWithKeys = readAllGraphs(self.mem, true, self.maps, self.warps)
-  self.graphsWithoutKeys = readAllGraphs(self.mem, false, self.maps, self.warps)
+  self.maps = readAllStaticMaps(self.memory, self.warps)
+  self.graphsWithKeys = readAllGraphs(self.memory, true, self.maps, self.warps)
+  self.graphsWithoutKeys = readAllGraphs(self.memory, false, self.maps, self.warps)
 end
 
 function Game:shortestPath(startNode, endNode, haveKeys, allGraphs)

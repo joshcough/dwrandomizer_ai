@@ -1,6 +1,12 @@
 require 'helpers'
 require 'Class'
 
+-- Overworld = 1
+--
+-- MAP_DATA = {
+--   [1] = {["name"] = "Overworld", ["size"] = {["w"]=120,["h"]=120}, ["romAddr"] = 0x1D6D},
+-- }
+
 OverworldTile = class(function(a,name,walkable)
   a.name = name
   a.walkable = walkable
