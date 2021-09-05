@@ -18,7 +18,7 @@ function Game:goTo(dest)
   -- for i,c in pairs(commands) do print(i, c) end
   for i,c in pairs(commands) do
     -- print(i, c)
-    if c.direction == "Door" then self:openDoor()
+    if c.direction == "Door" then self:openDoorScript()
     elseif c.direction == "Stairs" then self:takeStairs(c.from, c.to)
     else holdButtonUntil(c.direction, function ()
           local p = self.mem:getLocation()
@@ -30,7 +30,12 @@ function Game:goTo(dest)
   end
 end
 
-function Game:openChest ()
+function Game:openChestAt (loc)
+  self:goTo(loc)
+  self:openChestScript()
+end
+
+function Game:openChestScript ()
   print("======opening chest=======")
   holdA(30)
   waitFrames(10)
@@ -39,7 +44,7 @@ function Game:openChest ()
   pressA(20)
 end
 
-function Game:openDoor ()
+function Game:openDoorScript ()
   print("======opening door=======")
   holdA(30)
   waitFrames(10)
@@ -68,12 +73,9 @@ end
 
 function Game:openThroneRoomChests ()
   print("======opening throne room chests=======")
-  self:goTo(Point3D(TantegelThroneRoom, 4, 4))
-  self:openChest()
-  self:goTo(Point3D(TantegelThroneRoom, 5, 4))
-  self:openChest()
-  self:goTo(Point3D(TantegelThroneRoom, 6, 1))
-  self:openChest()
+  self:openChestAt(Point3D(TantegelThroneRoom, 4, 4))
+  self:openChestAt(Point3D(TantegelThroneRoom, 5, 4))
+  self:openChestAt(Point3D(TantegelThroneRoom, 6, 1))
 end
 
 function Game:leaveThroneRoom()
