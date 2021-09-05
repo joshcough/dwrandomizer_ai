@@ -290,17 +290,17 @@ function table.print(arr, indentLevel)
     return str
 end
 
-Point3D = class(function(a, mapId, x, y)
+Point = class(function(a, mapId, x, y)
   a.mapId = mapId
   a.x = x
   a.y = y
 end)
 
-function Point3D:__tostring()
+function Point:__tostring()
   return "{mapId:" .. self.mapId .. ", x:" .. self.x .. ", y:" .. self.y .. "}"
 end
 
-function Point3D:equals(p2)
+function Point:equals(p2)
   if p2 == nil then return false end
   return self.mapId == p2.mapId and self.x == p2.x and self.y == p2.y
 end

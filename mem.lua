@@ -36,7 +36,7 @@ function Memory:getY () return self:readRAM(Y_ADDR) end
 function Memory:getMapId () return self:readRAM(MAP_ADDR) end
 
 function Memory:getLocation ()
-  return Point3D(self:getMapId(), self:getX(), self:getY())
+  return Point(self:getMapId(), self:getX(), self:getY())
 end
 
 -- get the id of the current enemy, if it exists

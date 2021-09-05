@@ -73,14 +73,14 @@ end
 
 function Game:openThroneRoomChests ()
   print("======opening throne room chests=======")
-  self:openChestAt(Point3D(TantegelThroneRoom, 4, 4))
-  self:openChestAt(Point3D(TantegelThroneRoom, 5, 4))
-  self:openChestAt(Point3D(TantegelThroneRoom, 6, 1))
+  self:openChestAt(Point(TantegelThroneRoom, 4, 4))
+  self:openChestAt(Point(TantegelThroneRoom, 5, 4))
+  self:openChestAt(Point(TantegelThroneRoom, 6, 1))
 end
 
 function Game:leaveThroneRoom()
   print("======leaving throne room=====")
-  self:goTo(Point3D(Tantegel, 0, 9))
+  self:goTo(Point(Tantegel, 0, 9))
 end
 
 function Game:menuScript ()

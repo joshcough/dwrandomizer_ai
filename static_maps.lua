@@ -31,7 +31,7 @@ GarinsGraveLv4 = 27
 ErdricksCaveLv1 = 28
 ErdricksCaveLv2 = 29
 
-TantegelBasementStairs = Point3D(Tantegel, 29, 29)
+TantegelBasementStairs = Point(Tantegel, 29, 29)
 
 Warp = class(function(a, src, dest)
   a.src = src
@@ -47,44 +47,44 @@ function Warp:__tostring()
 end
 
 WARPS = {
-  Warp(Point3D(Charlock, 10, 1), Point3D(CharlockCaveLv1, 9, 0))
-, Warp(Point3D(Charlock, 4, 14), Point3D(CharlockCaveLv1, 8, 13))
-, Warp(Point3D(Charlock, 15, 14), Point3D(CharlockCaveLv1, 17, 15))
-, Warp(Point3D(TantegelThroneRoom, 1, 8), Point3D(Tantegel, 1, 7))
-, Warp(Point3D(TantegelThroneRoom, 8, 8), Point3D(Tantegel, 7, 7))
+  Warp(Point(Charlock, 10, 1), Point(CharlockCaveLv1, 9, 0))
+, Warp(Point(Charlock, 4, 14), Point(CharlockCaveLv1, 8, 13))
+, Warp(Point(Charlock, 15, 14), Point(CharlockCaveLv1, 17, 15))
+, Warp(Point(TantegelThroneRoom, 1, 8), Point(Tantegel, 1, 7))
+, Warp(Point(TantegelThroneRoom, 8, 8), Point(Tantegel, 7, 7))
 -- 9 = garinham, 24 = GarinsGrave -- this one has to be discovered, like the basement
--- , Warp(Point3D(9, 19, 0), Point3D(24, 6, 11))
-, Warp(Point3D(CharlockCaveLv1, 15, 1), Point3D(CharlockCaveLv2, 8, 0))
-, Warp(Point3D(CharlockCaveLv1, 13, 7), Point3D(CharlockCaveLv2, 4, 4))
-, Warp(Point3D(CharlockCaveLv1, 19, 7), Point3D(CharlockCaveLv2, 9, 8))
-, Warp(Point3D(CharlockCaveLv1, 14, 9), Point3D(CharlockCaveLv2, 8, 9))
-, Warp(Point3D(CharlockCaveLv1, 2, 14), Point3D(CharlockCaveLv2, 0, 1))
-, Warp(Point3D(CharlockCaveLv1, 2, 4), Point3D(CharlockCaveLv2, 0, 0))
-, Warp(Point3D(CharlockCaveLv1, 8, 19), Point3D(CharlockCaveLv2, 5, 0))
-, Warp(Point3D(CharlockCaveLv2, 3, 0), Point3D(CharlockCaveLv3, 7, 0))
-, Warp(Point3D(CharlockCaveLv2, 9, 1), Point3D(CharlockCaveLv3, 2, 2))
-, Warp(Point3D(CharlockCaveLv2, 0, 8), Point3D(CharlockCaveLv3, 5, 4))
-, Warp(Point3D(CharlockCaveLv2, 1, 9), Point3D(CharlockCaveLv3, 0, 9))
-, Warp(Point3D(CharlockCaveLv3, 1, 6), Point3D(CharlockCaveLv4, 0, 9))
-, Warp(Point3D(CharlockCaveLv3, 7, 7), Point3D(CharlockCaveLv4, 7, 7))
-, Warp(Point3D(CharlockCaveLv4, 2, 2), Point3D(CharlockCaveLv5, 9, 0))
-, Warp(Point3D(CharlockCaveLv4, 8, 1), Point3D(CharlockCaveLv5, 4, 0))
-, Warp(Point3D(CharlockCaveLv5, 5, 5), Point3D(CharlockCaveLv6, 0, 0))
-, Warp(Point3D(CharlockCaveLv5, 0, 0), Point3D(CharlockCaveLv6, 0, 6))
-, Warp(Point3D(CharlockCaveLv6, 9, 0), Point3D(CharlockCaveLv6, 0, 0))
-, Warp(Point3D(CharlockCaveLv6, 9, 6), Point3D(CharlockThroneRoom, 10, 29))
-, Warp(Point3D(MountainCaveLv1, 0, 0), Point3D(MountainCaveLv2, 0, 0))
-, Warp(Point3D(MountainCaveLv1, 6, 5), Point3D(MountainCaveLv2, 6, 5))
-, Warp(Point3D(MountainCaveLv1, 12, 12), Point3D(MountainCaveLv2, 12, 12))
-, Warp(Point3D(GarinsGraveLv1, 1, 18), Point3D(GarinsGraveLv2, 11, 2))
-, Warp(Point3D(GarinsGraveLv2, 1, 1), Point3D(GarinsGraveLv3, 1, 26))
-, Warp(Point3D(GarinsGraveLv2, 12, 1), Point3D(GarinsGraveLv3, 18, 1))
-, Warp(Point3D(GarinsGraveLv2, 5, 6), Point3D(GarinsGraveLv3, 6, 11))
-, Warp(Point3D(GarinsGraveLv2, 1, 10), Point3D(GarinsGraveLv3, 2, 17))
-, Warp(Point3D(GarinsGraveLv2, 12, 10), Point3D(GarinsGraveLv3, 18, 13))
-, Warp(Point3D(GarinsGraveLv3, 9, 5), Point3D(GarinsGraveLv4, 0, 4))
-, Warp(Point3D(GarinsGraveLv3, 10, 9), Point3D(GarinsGraveLv4, 5, 4))
-, Warp(Point3D(ErdricksCaveLv1, 9, 9), Point3D(ErdricksCaveLv2, 8, 9))
+-- , Warp(Point(9, 19, 0), Point(24, 6, 11))
+, Warp(Point(CharlockCaveLv1, 15, 1), Point(CharlockCaveLv2, 8, 0))
+, Warp(Point(CharlockCaveLv1, 13, 7), Point(CharlockCaveLv2, 4, 4))
+, Warp(Point(CharlockCaveLv1, 19, 7), Point(CharlockCaveLv2, 9, 8))
+, Warp(Point(CharlockCaveLv1, 14, 9), Point(CharlockCaveLv2, 8, 9))
+, Warp(Point(CharlockCaveLv1, 2, 14), Point(CharlockCaveLv2, 0, 1))
+, Warp(Point(CharlockCaveLv1, 2, 4), Point(CharlockCaveLv2, 0, 0))
+, Warp(Point(CharlockCaveLv1, 8, 19), Point(CharlockCaveLv2, 5, 0))
+, Warp(Point(CharlockCaveLv2, 3, 0), Point(CharlockCaveLv3, 7, 0))
+, Warp(Point(CharlockCaveLv2, 9, 1), Point(CharlockCaveLv3, 2, 2))
+, Warp(Point(CharlockCaveLv2, 0, 8), Point(CharlockCaveLv3, 5, 4))
+, Warp(Point(CharlockCaveLv2, 1, 9), Point(CharlockCaveLv3, 0, 9))
+, Warp(Point(CharlockCaveLv3, 1, 6), Point(CharlockCaveLv4, 0, 9))
+, Warp(Point(CharlockCaveLv3, 7, 7), Point(CharlockCaveLv4, 7, 7))
+, Warp(Point(CharlockCaveLv4, 2, 2), Point(CharlockCaveLv5, 9, 0))
+, Warp(Point(CharlockCaveLv4, 8, 1), Point(CharlockCaveLv5, 4, 0))
+, Warp(Point(CharlockCaveLv5, 5, 5), Point(CharlockCaveLv6, 0, 0))
+, Warp(Point(CharlockCaveLv5, 0, 0), Point(CharlockCaveLv6, 0, 6))
+, Warp(Point(CharlockCaveLv6, 9, 0), Point(CharlockCaveLv6, 0, 0))
+, Warp(Point(CharlockCaveLv6, 9, 6), Point(CharlockThroneRoom, 10, 29))
+, Warp(Point(MountainCaveLv1, 0, 0), Point(MountainCaveLv2, 0, 0))
+, Warp(Point(MountainCaveLv1, 6, 5), Point(MountainCaveLv2, 6, 5))
+, Warp(Point(MountainCaveLv1, 12, 12), Point(MountainCaveLv2, 12, 12))
+, Warp(Point(GarinsGraveLv1, 1, 18), Point(GarinsGraveLv2, 11, 2))
+, Warp(Point(GarinsGraveLv2, 1, 1), Point(GarinsGraveLv3, 1, 26))
+, Warp(Point(GarinsGraveLv2, 12, 1), Point(GarinsGraveLv3, 18, 1))
+, Warp(Point(GarinsGraveLv2, 5, 6), Point(GarinsGraveLv3, 6, 11))
+, Warp(Point(GarinsGraveLv2, 1, 10), Point(GarinsGraveLv3, 2, 17))
+, Warp(Point(GarinsGraveLv2, 12, 10), Point(GarinsGraveLv3, 18, 13))
+, Warp(Point(GarinsGraveLv3, 9, 5), Point(GarinsGraveLv4, 0, 4))
+, Warp(Point(GarinsGraveLv3, 10, 9), Point(GarinsGraveLv4, 5, 4))
+, Warp(Point(ErdricksCaveLv1, 9, 9), Point(ErdricksCaveLv2, 8, 9))
 }
 
 function getWarpsForMap(mapId, allWarps)
@@ -196,7 +196,7 @@ IMMOBILE_NPCS = {
 
 function getImmobileNPCsForMap(mapId)
   if IMMOBILE_NPCS[mapId] == nil then return {} end
-  return list.map(IMMOBILE_NPCS[mapId], function(xy) return Point3D(mapId, xy[1], xy[2]) end)
+  return list.map(IMMOBILE_NPCS[mapId], function(xy) return Point(mapId, xy[1], xy[2]) end)
 end
 
 StaticMap = class(function(a, mapId, mapName, width, height, rows, allWarps)
@@ -253,7 +253,7 @@ function StaticMap:mkGraph (haveKeys)
 
   function isWalkable(x,y)
     local t = tileSet[self.rows[y][x]]
-    if table.containsUsingDotEquals(self.immobileScps, Point3D(self.mapId, x, y))
+    if table.containsUsingDotEquals(self.immobileScps, Point(self.mapId, x, y))
       then return false
       else return haveKeys and (t.walkableWithKeys or t.walkable) or t.walkable
     end
@@ -266,10 +266,10 @@ function StaticMap:mkGraph (haveKeys)
     -- if we can't walk to the node, dont bother including the node in the graph at all
     if not isWalkable(x,y) then return {} end
     local res = {}
-    if x > 0 and isWalkable(x-1, y) then table.insert(res, Point3D(self.mapId, x-1, y)) end
-    if x < self.width - 1 and isWalkable(x+1, y) then table.insert(res, Point3D(self.mapId, x+1, y)) end
-    if y > 0 and isWalkable(x, y-1) then table.insert(res, Point3D(self.mapId, x, y-1)) end
-    if y < self.height - 1 and isWalkable(x, y+1) then table.insert(res, Point3D(self.mapId, x, y+1)) end
+    if x > 0 and isWalkable(x-1, y) then table.insert(res, Point(self.mapId, x-1, y)) end
+    if x < self.width - 1 and isWalkable(x+1, y) then table.insert(res, Point(self.mapId, x+1, y)) end
+    if y > 0 and isWalkable(x, y-1) then table.insert(res, Point(self.mapId, x, y-1)) end
+    if y < self.height - 1 and isWalkable(x, y+1) then table.insert(res, Point(self.mapId, x, y+1)) end
 
     if self.warps[x] ~= nil then
       if self.warps[x][y] ~= nil then
@@ -297,14 +297,14 @@ function Graph:__tostring ()
   function printTile(x,y,neighbors)
     if neighbors == nil then return "   " end
     local res = ""
-    if contains(neighbors, Point3D(self.staticMap.mapId, x-1, y)) then res = res .. "←" else res = res .. " " end
-    if contains(neighbors, Point3D(self.staticMap.mapId, x, y-1)) and contains(neighbors, Point3D(self.staticMap.mapId, x, y+1))
+    if contains(neighbors, Point(self.staticMap.mapId, x-1, y)) then res = res .. "←" else res = res .. " " end
+    if contains(neighbors, Point(self.staticMap.mapId, x, y-1)) and contains(neighbors, Point(self.staticMap.mapId, x, y+1))
       then res = res .. "↕"
-      elseif contains(neighbors, Point3D(self.staticMap.mapId, x, y-1)) then res = res .. "↑"
-      elseif contains(neighbors, Point3D(self.staticMap.mapId, x, y+1)) then res = res .. "↓"
+      elseif contains(neighbors, Point(self.staticMap.mapId, x, y-1)) then res = res .. "↑"
+      elseif contains(neighbors, Point(self.staticMap.mapId, x, y+1)) then res = res .. "↓"
       else res = res .. " "
     end
-    if contains(neighbors, Point3D(self.staticMap.mapId, x+1, y)) then res = res .. "→" else res = res .. " " end
+    if contains(neighbors, Point(self.staticMap.mapId, x+1, y)) then res = res .. "→" else res = res .. " " end
     return res
   end
 

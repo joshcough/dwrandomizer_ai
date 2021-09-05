@@ -66,9 +66,9 @@ function main()
   -- saveStaticMaps(mem, warps)
 
   -- game:gameStartScript()
---   game:goTo(Point3D(Tantegel, 29,29))
---   game:takeStairs(Point3D(Tantegel, 29,29))
---   game:goTo(Point3D(TantegelThroneRoom, 3,4))
+--   game:goTo(Point(Tantegel, 29,29))
+--   game:takeStairs(Point(Tantegel, 29,29))
+--   game:goTo(Point(TantegelThroneRoom, 3,4))
 
   emu.speedmode("normal")
   while true do
@@ -82,8 +82,8 @@ main()
 
 -- oldish stuff that i need to evaluate if i really want to keep
 -- i print this out just to make sure things look sane when i start the script.
--- table.print(shortestPath(Point3D(TantegelThroneRoom, 1,1), Point3D(TantegelThroneRoom, 1,8), true, graphs))
+-- table.print(shortestPath(Point(TantegelThroneRoom, 1,1), Point(TantegelThroneRoom, 1,8), true, graphs))
 -- can also do this, which loads the maps from files instead of memory:
--- table.print(shortestPath(Point3D(TantegelThroneRoom, 1,1), Point3D(TantegelThroneRoom, 1,8), true))
--- table.print(shortestPath(Point3D(Charlock, 10,19), Point3D(CharlockThroneRoom, 17,24), true))
+-- table.print(shortestPath(Point(TantegelThroneRoom, 1,1), Point(TantegelThroneRoom, 1,8), true))
+-- table.print(shortestPath(Point(Charlock, 10,19), Point(CharlockThroneRoom, 17,24), true))
 
