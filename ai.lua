@@ -62,6 +62,7 @@ function main()
 --   game:goTo(Point(Tantegel, 29,29))
 --   game:takeStairs(Point(Tantegel, 29,29))
 --   game:goTo(Point(TantegelThroneRoom, 3,4))
+  print(game.memory:readPlayerData())
 
   emu.speedmode("normal")
   while true do
