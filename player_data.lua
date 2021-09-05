@@ -1,18 +1,33 @@
+Torch = 0x1
+FairyWater = 0x2
+Wings = 0x3
+DragonScale = 0x4
+FairyFlute = 0x5
+FightersRing = 0x6
+ErdricksToken = 0x7
+GwaelinsLove = 0x8
+CursedBelt = 0x9
+SilverHarp = 0xa
+DeathNecklace = 0xb
+StonesOfSunlight = 0xc
+StaffOfRain = 0xd
+RainbowDrop = 0xe
+
 ITEMS = {
-  [0x1] = "Torch",
-  [0x2] = "Fairy Water",
-  [0x3] = "Wings",
-  [0x4] = "Dragon's Scale",
-  [0x5] = "Fairy Flute",
-  [0x6] = "Fighter's Ring",
-  [0x7] = "Erdrick's Token",
-  [0x8] = "Gwaelin's Love",
-  [0x9] = "Cursed Belt",
-  [0xa] = "Silver Harp",
-  [0xb] = "Death Necklace",
-  [0xc] = "Stones of Sunlight",
-  [0xd] = "Staff of Rain",
-  [0xe] = "Rainbow Drop",
+  [Torch] = "Torch",
+  [FairyWater] = "Fairy Water",
+  [Wings] = "Wings",
+  [DragonScale] = "Dragon's Scale",
+  [FairyFlute] = "Fairy Flute",
+  [FightersRing] = "Fighter's Ring",
+  [ErdricksToken] = "Erdrick's Token",
+  [GwaelinsLove] = "Gwaelin's Love",
+  [CursedBelt] = "Cursed Belt",
+  [SilverHarp] = "Silver Harp",
+  [DeathNecklace] = "Death Necklace",
+  [StonesOfSunlight] = "Stones of Sunlight",
+  [StaffOfRain] = "Staff of Rain",
+  [RainbowDrop] = "Rainbow Drop",
   -- i dont think this is actually used, especially since it says (glitched)
   -- [0xf] = "Herb (glitched)"
 }
@@ -36,30 +51,110 @@ function Items:__tostring()
   return res
 end
 
+function Items:contains(itemId)
+  return table.contains(self.slots, itemId)
+end
+
+function Items:numberOfTorches()
+  return table.count(self.slots, Torch)
+end
+
+function Items:numberOfFairyWaters()
+  return table.count(self.slots, FairyWater)
+end
+
+function Items:numberOfWings()
+  return table.count(self.slots, Wings)
+end
+
+function Items:hasDragonScale()
+  return self:contains(DragonScale)
+end
+
+function Items:hasFairyFlute()
+  return self:contains(FairyFlute)
+end
+
+function Items:hasFightersRing()
+  return self:contains(FightersRing)
+end
+
+function Items:hasErdricksToken()
+  return self:contains(ErdricksToken)
+end
+
+function Items:hasGwaelinsLove()
+  return self:contains(GwaelinsLove)
+end
+
+function Items:numberOfCursedBelts()
+  return table.count(self.slots, CursedBelt)
+end
+
+function Items:hasSilverHarp()
+  return self:contains(SilverHarp)
+end
+
+function Items:hasDeathNecklace()
+  return self:contains(DeathNecklace)
+end
+
+function Items:hasStonesOfSunlight()
+  return self:contains(StonesOfSunlight)
+end
+
+function Items:hasStaffOfRain()
+  return self:contains(StaffOfRain)
+end
+
+function Items:hasRainbowDrop()
+  return self:contains(RainbowDrop)
+end
+
+BambooPole    = 0x20 --  = 32  = 00100000
+Club          = 0x40 --  = 64  = 01000000
+CopperSword   = 0x60 --  = 96  = 01100000
+HandAxe       = 0x80 --  = 128 = 10000000
+BroadSword    = 0xa0 --  = 160 = 10100000
+FlameSword    = 0xc0 --  = 192 = 11000000
+ErdricksSword = 0xe0 --  = 224 = 11100000
+
 WEAPONS = {
-  [0x20] = "Bamboo Pole",     --  = 32  = 00100000
-  [0x40] = "Club",            --  = 64  = 01000000
-  [0x60] = "Copper Sword",    --  = 96  = 01100000
-  [0x80] = "Hand Axe",        --  = 128 = 10000000
-  [0xa0] = "Broad Sword",     --  = 160 = 10100000
-  [0xc0] = "Flame Sword",     --  = 192 = 11000000
-  [0xe0] = "Erdrick's Sword", --  = 224 = 11100000 
+  [BambooPole]    = "Bamboo Pole",
+  [Club]          = "Club",
+  [CopperSword]   = "Copper Sword",
+  [HandAxe]       = "Hand Axe",
+  [BroadSword]    = "Broad Sword",
+  [FlameSword]    = "Flame Sword",
+  [ErdricksSword] = "Erdrick's Sword",
 }
+
+Clothes        = 0x4  --  = 4  = 00000100
+LeatherArmor   = 0x8  --  = 8  = 00001000
+ChainMail      = 0xc  --  = 12 = 00001100
+HalfPlateArmor = 0x10 --  = 16 = 00010000
+FullPlateArmor = 0x14 --  = 20 = 00010100
+MagicArmor     = 0x18 --  = 24 = 00011000
+ErdricksArmor  = 0x1c --  = 28 = 00011100
 
 ARMOR = {
-  [0x4]  = "Clothes",          --  = 4  = 00000100
-  [0x8]  = "Leather Armor",    --  = 8  = 00001000
-  [0xc]  = "Chain Mail",       --  = 12 = 00001100
-  [0x10] = "Half Plate Armor", --  = 16 = 00010000
-  [0x14] = "Full Plate Armor", --  = 20 = 00010100
-  [0x18] = "Magic Armor",      --  = 24 = 00011000
-  [0x1c] = "Erdrick's Armor",  --  = 28 = 00011100
+  [Clothes]        = "Clothes",
+  [LeatherArmor]   = "Leather Armor",
+  [ChainMail]      = "Chain Mail",
+  [HalfPlateArmor] = "Half Plate Armor",
+  [FullPlateArmor] = "Full Plate Armor",
+  [MagicArmor]     = "Magic Armor",
+  [ErdricksArmor]  = "Erdrick's Armor",
 }
 
+SmallShield  = 0x1 -- = 1 = 00000001
+LargeShield  = 0x2 -- = 2 = 00000010
+SilverShield = 0x3 -- = 3 = 00000011
+
 SHIELDS = {
-  [0x1] = "Small Shield",  -- = 1 = 00000001
-  [0x2] = "Large Shield",  -- = 2 = 00000010
-  [0x3] = "Silver Shield", -- = 3 = 00000011
+  [SmallShield]  = "Small Shield",
+  [LargeShield]  = "Large Shield",
+  [SilverShield] = "Silver Shield",
 }
 
 Equipment = class(function(a,swordId,armorId,shieldId)
@@ -70,9 +165,9 @@ end)
 
 function Equipment:__tostring()
   local res = "=== Equipment ===\n"
-  res = res .. "Sword: " .. (self.swordId == 0 and "Nothing" or WEAPONS[self.swordId]) .. "\n"
-  res = res .. "Armor: " .. (self.armorId == 0 and "Nothing" or ARMOR[self.armorId]) .. "\n"
-  res = res .. "Shield: " ..(self.shieldId == 0 and "Nothing" or SHIELDS[self.shieldId]) .. "\n"
+  res = res .. "Sword: "  .. (self.swordId == 0 and "Nothing" or WEAPONS[self.swordId]) .. "\n"
+  res = res .. "Armor: "  .. (self.armorId == 0 and "Nothing" or ARMOR[self.armorId]) .. "\n"
+  res = res .. "Shield: " .. (self.shieldId == 0 and "Nothing" or SHIELDS[self.shieldId]) .. "\n"
   return res
 end
 
@@ -119,5 +214,3 @@ function PlayerData:__tostring()
   res = res .. tostring(self.items)
   return res
 end
-
-

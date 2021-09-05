@@ -53,16 +53,13 @@ function main()
   hud_main()
 
   local game = newGame(Memory(memory, rom))
+  print(game.memory:readPlayerData())
 
   memory.registerexecute(0xcf44, onEncounter2(game))
   memory.registerwrite(0x3a, onPlayerMove(game))
   memory.registerwrite(0x3b, onPlayerMove(game))
 
   -- game:gameStartScript()
---   game:goTo(Point(Tantegel, 29,29))
---   game:takeStairs(Point(Tantegel, 29,29))
---   game:goTo(Point(TantegelThroneRoom, 3,4))
-  print(game.memory:readPlayerData())
 
   emu.speedmode("normal")
   while true do
@@ -75,6 +72,12 @@ end
 main()
 
 -- oldish stuff that i need to evaluate if i really want to keep
+
+--   game:goTo(Point(Tantegel, 29,29))
+--   game:takeStairs(Point(Tantegel, 29,29))
+--   game:goTo(Point(TantegelThroneRoom, 3,4))
+
+--   print(game.memory:readPlayerData().items:hasFairyFlute())
 
 -- i run this each time to make sure nothing has changed.
 -- if anything changes, git will tell me.
