@@ -14,14 +14,13 @@ end)
 
 function Game:goTo(dest)
   local path = self:shortestPath(self.mem:getLocation(), dest, true)
-  local commands = convertPathToCommands(path)
+  local commands = convertPathToCommands(path, self.maps)
   -- for i,c in pairs(commands) do print(i, c) end
   for i,c in pairs(commands) do
     -- print(i, c)
-    if c.direction == "Stairs"
-      then self:takeStairs(c.from, c.to)
-      else
-        holdButtonUntil(c.direction, function ()
+    if c.direction == "Door" then self:openDoor()
+    elseif c.direction == "Stairs" then self:takeStairs(c.from, c.to)
+    else holdButtonUntil(c.direction, function ()
           local p = self.mem:getLocation()
           -- print("current point: ", mem:getLocation(), "c.to: ", c.to, "equal?: ", p.equals(c.to))
           return p:equals(c.to)
@@ -61,8 +60,9 @@ function Game:takeStairs (from, to)
 
   if from:equals(TantegelBasementStairs)
   then
-    print("discovered what's in the tantegel basement!")
-    self:addWarp(Warp(TantegelBasementStairs, self.mem:getLocation()))
+    local loc = self.mem:getLocation()
+    print("Discovered what's in Tantegel's basement ... it's " .. self.maps[loc.mapId].mapName .. "!!!")
+    self:addWarp(Warp(TantegelBasementStairs, loc))
   end
 end
 
@@ -78,8 +78,6 @@ end
 
 function Game:leaveThroneRoom()
   print("======leaving throne room=====")
-  self:goTo(Point3D(TantegelThroneRoom, 4, 6))
-  self:openDoor()
   self:goTo(Point3D(Tantegel, 0, 9))
 end
 

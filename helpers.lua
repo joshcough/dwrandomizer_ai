@@ -230,6 +230,17 @@ function list.map(t, f)
   return res
 end
 
+function list.join(t)
+  local res = {}
+  for i = 1, #(t) do
+    for j = 1, #(t[i]) do
+      table.insert(res, t[i][j])
+    end
+  end
+  return res
+end
+
+
 function list.filter(t, f)
   local res = {}
   for i = 1, #(t) do

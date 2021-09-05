@@ -105,77 +105,88 @@ MapSize = class(function(a,width,height)
   a.height = height
 end)
 
-StaticMapMetadata = class(function(a,name,size,romAddr)
+StaticMapMetadata = class(function(a,mapId, name,size,romAddr)
+  a.mapId = mapId
   a.name = name
   a.size = size
   a.romAddr = romAddr
 end)
 
 MAP_DATA = {
-  [2] = StaticMapMetadata("Charlock", MapSize(20, 20), 0xC0),
-  [3] = StaticMapMetadata("Hauksness", MapSize(20, 20), 0x188),
-  [4] = StaticMapMetadata("Tantegel", MapSize(30, 30), 0x250),
-  [5] = StaticMapMetadata("Tantegel Throne Room", MapSize(10, 10), 0x412),
-  [6] = StaticMapMetadata("Charlock Throne Room", MapSize(30, 30), 0x444),
-  [7] = StaticMapMetadata("Kol", MapSize(24, 24), 0x606),
-  [8] = StaticMapMetadata("Brecconary", MapSize(30, 30), 0x726),
-  [9] = StaticMapMetadata("Garinham", MapSize(20, 20), 0xAAA),
-  [10]= StaticMapMetadata("Cantlin", MapSize(30, 30), 0x8E8),
-  [11]= StaticMapMetadata("Rimuldar", MapSize(30, 30), 0xB72),
-  [12]= StaticMapMetadata("Tantegel Basement", MapSize(10, 10), 0xD34),
-  [13]= StaticMapMetadata("Northern Shrine", MapSize(10, 10), 0xD66),
-  [14]= StaticMapMetadata("Southern Shrine", MapSize(10, 10), 0xD98),
-  [15]= StaticMapMetadata("Charlock Cave Lv 1", MapSize(20, 20), 0xDCA),
-  [16]= StaticMapMetadata("Charlock Cave Lv 2", MapSize(10, 10), 0xE92),
-  [17]= StaticMapMetadata("Charlock Cave Lv 3", MapSize(10, 10), 0xEC4),
-  [18]= StaticMapMetadata("Charlock Cave Lv 4", MapSize(10, 10), 0xEF6),
-  [19]= StaticMapMetadata("Charlock Cave Lv 5", MapSize(10, 10), 0xF28),
-  [20]= StaticMapMetadata("Charlock Cave Lv 6", MapSize(10, 10), 0xF5A),
-  [21]= StaticMapMetadata("Swamp Cave", MapSize(6, 30), 0xF8C),
-  [22]= StaticMapMetadata("Mountain Cave", MapSize(14, 14), 0xFE6),
-  [23]= StaticMapMetadata("Mountain Cave Lv 2", MapSize(14, 14), 0x1048),
-  [24]= StaticMapMetadata("Garin's Grave Lv 1", MapSize(20, 20), 0x10AA),
-  [25]= StaticMapMetadata("Garin's Grave Lv 2", MapSize(14, 12), 0x126C),
-  [26]= StaticMapMetadata("Garin's Grave Lv 3", MapSize(20, 20), 0x1172),
-  [27]= StaticMapMetadata("Garin's Grave Lv 4", MapSize(10, 10), 0x123A),
-  [28]= StaticMapMetadata("Erdrick's Cave", MapSize(10, 10), 0x12C0),
-  [29]= StaticMapMetadata("Erdrick's Cave Lv 2", MapSize(10, 10), 0x12F2),
+  [2] = StaticMapMetadata(2, "Charlock", MapSize(20, 20), 0xC0),
+  [3] = StaticMapMetadata(3, "Hauksness", MapSize(20, 20), 0x188),
+  [4] = StaticMapMetadata(4, "Tantegel", MapSize(30, 30), 0x250),
+  [5] = StaticMapMetadata(5, "Tantegel Throne Room", MapSize(10, 10), 0x412),
+  [6] = StaticMapMetadata(6, "Charlock Throne Room", MapSize(30, 30), 0x444),
+  [7] = StaticMapMetadata(7, "Kol", MapSize(24, 24), 0x606),
+  [8] = StaticMapMetadata(8, "Brecconary", MapSize(30, 30), 0x726),
+  [9] = StaticMapMetadata(9, "Garinham", MapSize(20, 20), 0xAAA),
+  [10]= StaticMapMetadata(10, "Cantlin", MapSize(30, 30), 0x8E8),
+  [11]= StaticMapMetadata(11, "Rimuldar", MapSize(30, 30), 0xB72),
+  [12]= StaticMapMetadata(12, "Tantegel Basement", MapSize(10, 10), 0xD34),
+  [13]= StaticMapMetadata(13, "Northern Shrine", MapSize(10, 10), 0xD66),
+  [14]= StaticMapMetadata(14, "Southern Shrine", MapSize(10, 10), 0xD98),
+  [15]= StaticMapMetadata(15, "Charlock Cave Lv 1", MapSize(20, 20), 0xDCA),
+  [16]= StaticMapMetadata(16, "Charlock Cave Lv 2", MapSize(10, 10), 0xE92),
+  [17]= StaticMapMetadata(17, "Charlock Cave Lv 3", MapSize(10, 10), 0xEC4),
+  [18]= StaticMapMetadata(18, "Charlock Cave Lv 4", MapSize(10, 10), 0xEF6),
+  [19]= StaticMapMetadata(19, "Charlock Cave Lv 5", MapSize(10, 10), 0xF28),
+  [20]= StaticMapMetadata(20, "Charlock Cave Lv 6", MapSize(10, 10), 0xF5A),
+  [21]= StaticMapMetadata(21, "Swamp Cave", MapSize(6, 30), 0xF8C),
+  [22]= StaticMapMetadata(22, "Mountain Cave", MapSize(14, 14), 0xFE6),
+  [23]= StaticMapMetadata(23, "Mountain Cave Lv 2", MapSize(14, 14), 0x1048),
+  [24]= StaticMapMetadata(24, "Garin's Grave Lv 1", MapSize(20, 20), 0x10AA),
+  [25]= StaticMapMetadata(25, "Garin's Grave Lv 2", MapSize(14, 12), 0x126C),
+  [26]= StaticMapMetadata(26, "Garin's Grave Lv 3", MapSize(20, 20), 0x1172),
+  [27]= StaticMapMetadata(27, "Garin's Grave Lv 4", MapSize(10, 10), 0x123A),
+  [28]= StaticMapMetadata(28, "Erdrick's Cave", MapSize(10, 10), 0x12C0),
+  [29]= StaticMapMetadata(29, "Erdrick's Cave Lv 2", MapSize(10, 10), 0x12F2),
 }
 
-StaticMapTile = class(function(a,name,walkable,walkableWithKeys)
+StaticMapTile = class(function(a,tileId,name,walkable,walkableWithKeys)
+  a.tileId = tileId
   a.name = name
   a.walkable = walkable
   a.walkableWithKeys = walkableWithKeys and true or false
 end)
 
+function StaticMapTile:__tostring()
+  local w = self.walkable and "true" or "false"
+  -- ok this is weird and might expose a hole in the whole program.
+  -- but then again maybe not
+  local wwk = self.walkableWithKeys and "true" or "true"
+  return "{ tileId: " .. self.tileId .. ", name: " .. self.name ..
+         ", walkable: " .. w .. ", walkableWithKeys: " .. wwk .. "}"
+end
+
 NON_DUNGEON_TILES = {
-  [0]   = StaticMapTile("Grass " , true),
-  [1]   = StaticMapTile("Sand  " , true),
-  [2]   = StaticMapTile("Water " , false),
-  [3]   = StaticMapTile("Chest " , true),
-  [4]   = StaticMapTile("Stone " , false),
-  [5]   = StaticMapTile("Up    " , true),
-  [6]   = StaticMapTile("Brick " , true),
-  [7]   = StaticMapTile("Down  " , true),
-  [8]   = StaticMapTile("Trees " , true),
-  [9]   = StaticMapTile("Swamp " , true),
-  [0xA] = StaticMapTile("Field " , true),
-  [0xB] = StaticMapTile("Door  " , false , true), -- walkableWithKeys
-  [0xC] = StaticMapTile("Weapon" , false),
-  [0xD] = StaticMapTile("Inn   " , false),
-  [0xE] = StaticMapTile("Bridge" , true),
-  [0xF] = StaticMapTile("Tile  " , false),
+  [0]   = StaticMapTile(0,  "Grass" , true),
+  [1]   = StaticMapTile(1,  "Sand" , true),
+  [2]   = StaticMapTile(2,  "Water" , false),
+  [3]   = StaticMapTile(3,  "Chest" , true),
+  [4]   = StaticMapTile(4,  "Stone" , false),
+  [5]   = StaticMapTile(5,  "Up" , true),
+  [6]   = StaticMapTile(6,  "Brick" , true),
+  [7]   = StaticMapTile(7,  "Down" , true),
+  [8]   = StaticMapTile(8,  "Trees" , true),
+  [9]   = StaticMapTile(9,  "Swamp" , true),
+  [0xA] = StaticMapTile(10, "Field" , true),
+  [0xB] = StaticMapTile(11, "Door" , false, true), -- walkableWithKeys
+  [0xC] = StaticMapTile(12, "Weapon" , false),
+  [0xD] = StaticMapTile(13, "Inn" , false),
+  [0xE] = StaticMapTile(14, "Bridge" , true),
+  [0xF] = StaticMapTile(15, "Tile" , false),
 }
 
 DUNGEON_TILES = {
-  [0]   = StaticMapTile("Stone" , false),
-  [1]   = StaticMapTile("Up   " , true),
-  [2]   = StaticMapTile("Brick" , true),
-  [3]   = StaticMapTile("Down " , true),
-  [4]   = StaticMapTile("Chest" , true),
-  [5]   = StaticMapTile("Door  ", false, true), -- walkableWithKeys
+  [0]   = StaticMapTile(0, "Stone" , false),
+  [1]   = StaticMapTile(1, "Up" , true),
+  [2]   = StaticMapTile(2, "Brick" , true),
+  [3]   = StaticMapTile(3, "Down" , true),
+  [4]   = StaticMapTile(4, "Chest" , true),
+  [5]   = StaticMapTile(5, "Door", false, true), -- walkableWithKeys
   -- in swamp cave, we get id six where the princess is. its the only 6 we get in any dungeon.
-  [6]   = StaticMapTile("Brick  ", true),
+  [6]   = StaticMapTile(6, "Brick", true),
 }
 
 IMMOBILE_NPCS = {
@@ -202,19 +213,19 @@ function StaticMap:getTileSet ()
   return self.mapId < 15 and NON_DUNGEON_TILES or DUNGEON_TILES
 end
 
+function StaticMap:getTileAt(x, y)
+  return self:getTileSet()[self.rows[y][x]]
+end
+
 PRINT_TILE_NAME = 1
 PRINT_TILE_NO_KEYS = 2
 PRINT_TILE_KEYS = 3
 
 function StaticMap:__tostring (printStrat)
   function printTile(t)
-    if printStrat == PRINT_TILE_NAME or printStrat == nil
-      then return t.name
-      else
-        if printStrat == PRINT_TILE_NO_KEYS
-          then return t.walkable and "O" or " "
-          else return (t.walkableWithKeys or t.walkable) and "O" or " "
-        end
+    if printStrat == PRINT_TILE_NAME or printStrat == nil then return t.name
+    elseif printStrat == PRINT_TILE_NO_KEYS then return t.walkable and "O" or " "
+    else return (t.walkableWithKeys or t.walkable) and "O" or " "
     end
   end
 
@@ -289,10 +300,9 @@ function Graph:__tostring ()
     if contains(neighbors, Point3D(self.staticMap.mapId, x-1, y)) then res = res .. "←" else res = res .. " " end
     if contains(neighbors, Point3D(self.staticMap.mapId, x, y-1)) and contains(neighbors, Point3D(self.staticMap.mapId, x, y+1))
       then res = res .. "↕"
-      else if contains(neighbors, Point3D(self.staticMap.mapId, x, y-1)) then res = res .. "↑"
-      else if contains(neighbors, Point3D(self.staticMap.mapId, x, y+1)) then res = res .. "↓"
+      elseif contains(neighbors, Point3D(self.staticMap.mapId, x, y-1)) then res = res .. "↑"
+      elseif contains(neighbors, Point3D(self.staticMap.mapId, x, y+1)) then res = res .. "↓"
       else res = res .. " "
-      end end
     end
     if contains(neighbors, Point3D(self.staticMap.mapId, x+1, y)) then res = res .. "→" else res = res .. " " end
     return res
@@ -409,31 +419,45 @@ function MovementCommand:sameDirection (other)
   return self.direction == other.direction
 end
 
-function directionFromP1ToP2(p1, p2)
-  if p1.mapId ~= p2.mapId then return MovementCommand("Stairs", p1, p2) end
-  if p2.y < p1.y then return MovementCommand(UP, p1, p2) end
-  if p2.y > p1.y then return MovementCommand(DOWN, p1, p2) end
-  if p2.x < p1.x then return MovementCommand(LEFT, p1, p2) end
-  if p2.x > p1.x then return MovementCommand(RIGHT, p1, p2) end
-end
+-- TODO: this shit seems to work... but im not sure i understand it. lol
+-- there is definitely a way to do this that is more intuitive.
+function convertPathToCommands(pathIn, maps)
+  function directionFromP1ToP2(p1, p2)
+    local res = {}
 
-function convertPathToCommands(pathIn)
+    function move(next)
+      if p1.mapId ~= p2.mapId then return MovementCommand("Stairs", p1, p2) end
+      if p2.y < p1.y then return MovementCommand(UP, p1, next) end
+      if p2.y > p1.y then return MovementCommand(DOWN, p1, next) end
+      if p2.x < p1.x then return MovementCommand(LEFT, p1, next) end
+      if p2.x > p1.x then return MovementCommand(RIGHT, p1, next) end
+    end
+
+    local nextTileIsDoor = maps[p2.mapId]:getTileAt(p2.x, p2.y).name == "Door"
+
+    if nextTileIsDoor then
+      table.insert(res,move(p1))
+      table.insert(res, MovementCommand("Door", p2, p2))
+      table.insert(res,move(p2))
+    else
+      table.insert(res,move(p2))
+    end
+
+    return res
+  end
+
   local path = table.copy(pathIn)
 
   -- todo: consider if we should just throw an error here.
   -- an empty path would be really weird
   if(#(path) == 0) then return {} end
 
-  local commands = list.zipWith(directionFromP1ToP2, path, list.drop(1, path))
+  local commands = list.join(list.zipWith(directionFromP1ToP2, path, list.drop(1, path)))
 
   return list.foldLeft(commands, {}, function(acc, c)
-    if c.direction == "Stairs"
-      then table.insert(acc, c)
-      else
-        if #(acc) > 0 and acc[#(acc)]:sameDirection(c)
-        then acc[#(acc)].to = c.to
-        else table.insert(acc, c)
-        end
+    if c.direction == "Stairs" then table.insert(acc, c)
+    elseif #(acc) > 0 and acc[#(acc)]:sameDirection(c) then acc[#(acc)].to = c.to
+    else table.insert(acc, c)
     end
     return acc
   end)
