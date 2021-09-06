@@ -1,7 +1,7 @@
 require 'helpers'
 require 'Class'
 
--- Overworld = 1
+Overworld = 1
 --
 -- MAP_DATA = {
 --   [1] = {["name"] = "Overworld", ["size"] = {["w"]=120,["h"]=120}, ["romAddr"] = 0x1D6D},
@@ -58,7 +58,7 @@ function readOverworldFromROM (memory)
   function getOverworldPointers ()
     local res = {}
     for i = 0,119 do
-      res[i+1] = decodeOverworldPointer(0x2663 + i * 2)
+      res[i] = decodeOverworldPointer(0x2663 + i * 2)
     end
     return res
   end
@@ -72,7 +72,7 @@ function readOverworldFromROM (memory)
     do
       tileId = hiNibble(memory:readROM(currentAddr))
       count = loNibble(memory:readROM(currentAddr)) + 1
-      for i = 1,count do
+      for i = 0,count-1 do
         tileIds[totalCount+i] = tileId
       end
       currentAddr = currentAddr + 1
@@ -83,26 +83,15 @@ function readOverworldFromROM (memory)
 
   local pointers = getOverworldPointers()
   local rows = {}
-  for i = 1,120 do
+  for i = 0,119 do
     rows[i] = getOverworldTileRow(pointers[i])
   end
   return rows
 end
 
-function emptyWorldGrid()
-  local res = {}
-  for y = 1, 120 do
-    res[y] = {}
-    for x = 1, 120 do
-      res[y][x]=false
-    end
-  end
-  return res
-end
-
 OverWorld = class(function(a,rows)
   a.overworldRows = rows
-  a.knownWorld = emptyWorldGrid() -- the world the player has seen. maybe this should be in a Player object!
+  a.knownWorld = {}
   a.nrTilesSeen = 0
 end)
 
@@ -115,19 +104,81 @@ function OverWorld:getOverworldMapTileAt(x, y)
 end
 
 function OverWorld:updateKnownWorld(x, y, tileId)
-  if self.knownWorld[y+1][x+1] == false
+  if self.knownWorld[y] == nil then self.knownWorld[y] = {} end
+  if self.knownWorld[y][x] == nil
     then
-      self.knownWorld[y+1][x+1] = tileId
+      self.knownWorld[y][x] = tileId
       self.nrTilesSeen=self.nrTilesSeen+1
       local tileName = getOverworldTileName(tileId)
       print ("discovered new tile at (x: " .. x .. ", y: " .. y .. ")" .. " tile is: " .. tileName)
   end
 end
 
+--         x,y-1
+-- x-1,y   x,y     x+1,y
+--         x,y+1
+function OverWorld:neighbors(x,y)
+  function isWalkable(x,y)
+    if self.overworldRows[y] == nil then return false end
+    if self.overworldRows[y][x] == nil then return false end
+    return OVERWORLD_TILES[self.overworldRows[y][x]].walkable
+  end
+  local res = {}
+  if x > 0 and isWalkable(x-1, y) then table.insert(res, Point(Overworld, x-1, y)) end
+  if x < 119 and isWalkable(x+1, y) then table.insert(res, Point(Overworld, x+1, y)) end
+  if y > 0 and isWalkable(x, y-1) then table.insert(res, Point(Overworld, x, y-1)) end
+  if y < 119 and isWalkable(x, y+1) then table.insert(res, Point(Overworld, x, y+1)) end
+  return res
+end
+
+function OverWorld:getKnownWorldTileAt(x,y)
+  if self.knownWorld[y] == nil then return nil end
+  return self.knownWorld[y][x]
+end
+
+-- TODO: we need to either change this function or create a new function
+-- which returns us the "border + 1" ... that is... all the unseen tiles that surround this border
+-- because we need to pick one of THOSE to walk to. not one of the ones that we've already seen.
+-- returns all the walkable tiles on the border of the known world
+function OverWorld:knownWorldBorder()
+  local res = {}
+  for y,row in pairs(self.knownWorld) do
+    for x,tile in pairs(row) do
+      local overworldTile = OVERWORLD_TILES[self.overworldRows[y][x]]
+      if overworldTile.walkable then
+        local nbrs = self:neighbors(x,y)
+        -- TODO: potentially adding this more than once if more than one neighbor is nil
+        for i = 1, #(nbrs) do
+          local p = nbrs[i]
+          if self:getKnownWorldTileAt(p.x,p.y) == nil then
+            table.insert(res, Point(Overworld, x, y))
+          end
+        end
+      end
+    end
+  end
+  return res
+end
+
+-- returns a graph for all the tiles in the known world.
+function OverWorld:knownWorldGraph()
+  local res = {}
+  for y,row in pairs(self.knownWorld) do
+    for x,tile in pairs(row) do
+      local overworldTile = OVERWORLD_TILES[self.overworldRows[y][x]]
+      if overworldTile.walkable then
+        if res[y] == nil then res[y] = {} end
+        res[y][x] = self:neighbors(x,y)
+      end
+    end
+  end
+  return res
+end
+
 -- returns the tile id for the given (x,y) for the overworld
 -- {["name"] = "Overworld", ["size"] = {120,120}, ["romAddr"] = {0x1D6D, 0x2668}},
 function OverWorld:getOverworldMapTileIdAt(x, y)
-  local tileId = self.overworldRows[y+1][x+1]
+  local tileId = self.overworldRows[y][x]
   -- optimization... each time we get a visible tile, record it in what we have seen
   self:updateKnownWorld(x,y,tileId)
   return tileId
@@ -137,14 +188,14 @@ function OverWorld:getVisibleOverworldGrid(currentX, currentY)
   local upperLeftX = math.max(0, currentX - 8)
   local upperLeftY = math.max(0, currentY - 6)
 
-  local bottomRightX = math.min(120, currentX + 7)
-  local bottomRightY = math.min(120, currentY + 7)
+  local bottomRightX = math.min(119, currentX + 7)
+  local bottomRightY = math.min(119, currentY + 7)
 
   local res = {}
   for y = upperLeftY, bottomRightY do
-    res[y-upperLeftY+1] = {}
+    res[y-upperLeftY] = {}
     for x = upperLeftX, bottomRightX do
-      res[y-upperLeftY+1][x-upperLeftX+1]=self:getOverworldMapTileIdAt(x, y)
+      res[y-upperLeftY][x-upperLeftX]=self:getOverworldMapTileIdAt(x, y)
     end
   end
   return res
@@ -152,12 +203,11 @@ end
 
 function OverWorld:printVisibleGrid (currentX, currentY)
   local grid = self:getVisibleOverworldGrid(currentX, currentY)
-  for y = 1, #(grid) do
+  for y = 0, #(grid) do
     local row = ""
-    for x = 1, #(grid[y]) do
+    for x = 0, #(grid[y]) do
       row = row .. " | " .. getOverworldTileName(grid[y][x])
     end
     print(row .. " |")
   end
-  print("-------------------------")
 end

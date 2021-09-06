@@ -20,6 +20,10 @@ function waitFrames (n)
   for i = 1,n do emu.frameadvance() end
 end
 
+function clearController()
+  joypad.write(1, emptyInputs)
+end
+
 function pressButton (button, wait)
   -- print("Pressing " .. button)
   e = table.shallow_copy(emptyInputs)
