@@ -77,12 +77,11 @@ function main()
   -- right now this gets called when we move
   -- but we need to call it here once before we move, too.
   game.overworld:getVisibleOverworldGrid(game:getX(), game:getY())
-  game.overworld:printVisibleGrid(game:getX(), game:getY())
 
   emu.speedmode("normal")
   while true do
-    ai:stateMachine()
-    emu.frameadvance()
+--     ai:stateMachine()
+--     emu.frameadvance()
   end
 end
 
@@ -93,6 +92,10 @@ math.randomseed(os.time()); math.random()
 main()
 
 -- oldish stuff that i need to evaluate if i really want to keep
+-- game:cast(Repel)
+--     local spells = game.memory:readPlayerData().spells
+--     print(spells:spellIndex(Healmore))
+
 -- game:gameStartScript()
 --   print(game:readPlayerData())
 --   game:goTo(Point(Tantegel, 29,29))
