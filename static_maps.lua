@@ -347,9 +347,9 @@ end
 function loadStaticMapFromFile (mapId, allWarps)
   if mapId < 2 then return nil end
   local mapData = MAP_DATA[mapId]
-  local mapName = mapData["name"]
+  local mapName = mapData.name
   local mapFileName = MAP_DIRECTORY .. mapName
-  return StaticMap(mapId, mapName, mapData["size"]["w"], mapData["size"]["h"], table.load(mapFileName), allWarps)
+  return StaticMap(mapId, mapName, mapData.size.width, mapData.size.height, table.load(mapFileName), allWarps)
 end
 
 function readAllStaticMaps(memory, allWarps)
@@ -419,46 +419,3 @@ function MovementCommand:sameDirection (other)
   return self.direction == other.direction
 end
 
--- TODO: this shit seems to work... but im not sure i understand it. lol
--- there is definitely a way to do this that is more intuitive.
-function convertPathToCommands(pathIn, maps)
-  function directionFromP1ToP2(p1, p2)
-    local res = {}
-
-    function move(next)
-      if p1.mapId ~= p2.mapId then return MovementCommand("Stairs", p1, p2) end
-      if p2.y < p1.y then return MovementCommand(UP, p1, next) end
-      if p2.y > p1.y then return MovementCommand(DOWN, p1, next) end
-      if p2.x < p1.x then return MovementCommand(LEFT, p1, next) end
-      if p2.x > p1.x then return MovementCommand(RIGHT, p1, next) end
-    end
-
-    local nextTileIsDoor = maps[p2.mapId]:getTileAt(p2.x, p2.y).name == "Door"
-
-    if nextTileIsDoor then
-      table.insert(res,move(p1))
-      table.insert(res, MovementCommand("Door", p2, p2))
-      table.insert(res,move(p2))
-    else
-      table.insert(res,move(p2))
-    end
-
-    return res
-  end
-
-  local path = table.copy(pathIn)
-
-  -- todo: consider if we should just throw an error here.
-  -- an empty path would be really weird
-  if(#(path) == 0) then return {} end
-
-  local commands = list.join(list.zipWith(directionFromP1ToP2, path, list.drop(1, path)))
-
-  return list.foldLeft(commands, {}, function(acc, c)
-    if c.direction == "Stairs" then table.insert(acc, c)
-    elseif #(acc) > 0 and acc[#(acc)]:sameDirection(c) then acc[#(acc)].to = c.to
-    else table.insert(acc, c)
-    end
-    return acc
-  end)
-end

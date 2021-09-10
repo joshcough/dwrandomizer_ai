@@ -1,4 +1,5 @@
 require 'mem'
+require 'Class'
 require 'controller'
 require 'enemies'
 require 'game'
@@ -7,42 +8,45 @@ require 'hud'
 require 'overworld'
 require 'static_maps'
 
-in_battle2 = false
+AI = class(function(a, game)
+  a.game = game
+end)
 
 -- A thing draws near!
-function onEncounter2(game)
+function AI:onEncounter()
   return function(address)
-    if (game:getMapId() > 0) then
-      enemyId = game:getEnemyId()
-      print ("entering battle vs a " .. Enemies[enemyId])
-      -- actually, set every encounter to a red slime. lol!
-      game.memory:setEnemyId(0)
-      in_battle2 = true
-    end
+    self.game:startEncounter()
   end
 end
 
-function executeBattle()
+function AI:explore() self.game:explore() end
+
+function AI:stateMachine()
+  if self.game.in_battle then
+    self:executeBattle()
+  else
+    print("not in battle, going to explore")
+    self:explore()
+    print("done with call to explore...")
+  end
+end
+
+function AI:executeBattle()
  if (emu.framecount() % 15 == 0) then
-    -- print("in_battle2: ", in_battle2)
-    if(in_battle2) then
-      holdA(240)
-      waitFrames(60)
-      pressA(10)
-      in_battle2 = false
-    end
+    self.game:executeBattle()
   end
 end
 
-function onPlayerMove(game)
+function AI:onPlayerMove()
   return function(address)
---     print("current location", memory:getLocation())
-    if game:getMapId() == 1
-      then
-        game:printVisibleGrid()
-        print("percentageOfWorldSeen: " .. game:percentageOfWorldSeen())
-    end
+    self.game:onPlayerMove()
   end
+end
+
+function AI:register(memory)
+  memory.registerexecute(0xcf44, self:onEncounter())
+  memory.registerwrite(0x3a, self:onPlayerMove())
+  memory.registerwrite(0x3b, self:onPlayerMove())
 end
 
 -------------------
@@ -52,27 +56,45 @@ end
 function main()
   hud_main()
 
-  local game = newGame(Memory(memory, rom))
-  print(game:readPlayerData())
+  -- give ourself gold, xp, best equipment, etc
+  memory.writebyte(0xbb, 65535 / 256)
+  memory.writebyte(0xba, 65535 % 256)
+  memory.writebyte(0xbe, 255) -- best equipment
+  memory.writebyte(0xbf, 6)   -- 6 herbs
+  memory.writebyte(0xc0, 6)   -- 6 keys
+  memory.writebyte(0xc1, 14)  -- rainbow drop
 
-  memory.registerexecute(0xcf44, onEncounter2(game))
-  memory.registerwrite(0x3a, onPlayerMove(game))
-  memory.registerwrite(0x3b, onPlayerMove(game))
+  local mem = Memory(memory, rom)
+  -- always save the maps man. if we dont do this
+  -- we start getting out of date and bad stuff happens.
+  saveStaticMaps(mem, table.concat(WARPS, list.map(WARPS, swapSrcAndDest)))
 
-  -- game:gameStartScript()
+  local game = newGame(mem)
+  local ai = AI(game)
+  ai:register(memory)
+
+  -- TODO: this is a hack
+  -- right now this gets called when we move
+  -- but we need to call it here once before we move, too.
+  game.overworld:getVisibleOverworldGrid(game:getX(), game:getY())
+  game.overworld:printVisibleGrid(game:getX(), game:getY())
 
   emu.speedmode("normal")
   while true do
-    -- this only happens if we are actually in battle.
-    executeBattle()
+    ai:stateMachine()
     emu.frameadvance()
   end
 end
 
+-- for some reason you have to do this trash before actually getting random numbers
+-- https://stackoverflow.com/questions/20154991/generating-uniform-random-numbers-in-lua
+math.randomseed(os.time()); math.random()
+
 main()
 
 -- oldish stuff that i need to evaluate if i really want to keep
-
+-- game:gameStartScript()
+--   print(game:readPlayerData())
 --   game:goTo(Point(Tantegel, 29,29))
 --   game:takeStairs(Point(Tantegel, 29,29))
 --   game:goTo(Point(TantegelThroneRoom, 3,4))

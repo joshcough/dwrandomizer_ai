@@ -252,6 +252,21 @@ function list.join(t)
   return res
 end
 
+function list.min(t, f)
+  if #(t) == 0 then return nil end
+  return list.foldLeft(t, {false, f(t[1]) + 1}, function(acc, c)
+    local v = f(c)
+    if v < acc[2] then return {c, v} else return acc end
+  end)[1]
+end
+
+function list.max(t, f)
+  if #(t) == 0 then return nil end
+  return list.foldLeft(t, {false, f(t[1]) - 1}, function(acc, c)
+    local v = f(c)
+    if v > acc[2] then return {c, v} else return acc end
+  end)[1]
+end
 
 function list.filter(t, f)
   local res = {}
