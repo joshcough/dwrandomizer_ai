@@ -252,6 +252,16 @@ function list.join(t)
   return res
 end
 
+function list.indexOf(t, v, eqOp)
+  for i = 1, #t do
+    if eqOp == nil
+      then if v == t[i] then return i end
+      elseif eqOp(v,t[i]) then return i
+    end
+  end
+  return nil
+end
+
 function list.min(t, f)
   if #(t) == 0 then return nil end
   return list.foldLeft(t, {false, f(t[1]) + 1}, function(acc, c)
@@ -266,6 +276,20 @@ function list.max(t, f)
     local v = f(c)
     if v > acc[2] then return {c, v} else return acc end
   end)[1]
+end
+
+function list.all(t, f)
+  for i = 1, #t do
+    if not f(t[i]) then return false end
+  end
+  return true
+end
+
+function list.any(t, f)
+  for i = 1, #t do
+    if f(t[i]) then return true end
+  end
+  return false
 end
 
 function list.filter(t, f)

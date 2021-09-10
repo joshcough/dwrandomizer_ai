@@ -11,6 +11,7 @@ Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsW
   a.maps = maps
   a.graphsWithKeys = graphsWithKeys
   a.graphsWithoutKeys = graphsWithoutKeys
+  a.playerData = memory:readPlayerData()
   a.in_battle = false
   a.exploreDest = nil
 end)
@@ -91,10 +92,14 @@ function Game:openChestAt (loc)
   self:openChestScript()
 end
 
-function Game:openChestScript ()
-  print("======opening chest=======")
+function Game:openMenu()
   holdA(30)
   waitFrames(10)
+end
+
+function Game:openChestScript ()
+  print("======opening chest=======")
+  self:openMenu()
   pressUp(2)
   pressRight(2)
   pressA(20)
@@ -102,8 +107,7 @@ end
 
 function Game:openDoorScript ()
   print("======opening door=======")
-  holdA(30)
-  waitFrames(10)
+  self:openMenu()
   pressDown(2)
   pressDown(2)
   pressRight(2)
@@ -113,8 +117,7 @@ end
 -- TODO: looks like the to argument here isn't really needed.
 function Game:takeStairs (from, to)
   -- print("======taking stairs=======")
-  holdA(30)
-  waitFrames(30)
+  self:openMenu()
   pressDown(2)
   pressDown(2)
   pressA(60)
@@ -426,5 +429,25 @@ function Game:onPlayerMove()
       -- self:printVisibleGrid()
       self.overworld:getVisibleOverworldGrid(self:getX(), self:getY())
       print("percentageOfWorldSeen: " .. self:percentageOfWorldSeen())
+  end
+end
+
+function Game:openSpellMenu()
+  self:openMenu()
+  pressRight(2)
+  pressA(2)
+  waitFrames(30)
+end
+
+function Game:cast(spell)
+  local spellIndex = self.playerData.spells:spellIndex(spell)
+  if spellIndex == nil then
+    print("can't cast " .. tostring(spell) .. ", spell hasn't been learned.")
+    return
+  else
+    self:openSpellMenu()
+    for i = 1, spellIndex-1 do pressDown(2) end
+    pressA(120)
+    pressB(2)
   end
 end

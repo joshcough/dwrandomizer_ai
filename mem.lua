@@ -147,6 +147,10 @@ function Memory:readStats()
   )
 end
 
+function Memory:spells()
+  return Spells(self.ram.readbyte(0xce),  self.ram.readbyte(0xcf))
+end
+
 function Memory:readPlayerData()
-  return PlayerData(self:readStats(), self:getEquipment(), self:getItems())
+  return PlayerData(self:readStats(), self:getEquipment(), self:spells(), self:getItems())
 end

@@ -1,3 +1,7 @@
+-- =====================
+-- ======= Items =======
+-- =====================
+
 Torch = 0x1
 FairyWater = 0x2
 Wings = 0x3
@@ -111,6 +115,17 @@ function Items:hasRainbowDrop()
   return self:contains(RainbowDrop)
 end
 
+function Items:equals(i)
+  return self.nrHerbs == i.nrHerbs and
+         self.nrKeys == i.nrKeys and
+         #(self.slots) == #(i.slots) and
+         list.all(list.zipWith(self.slots, i.slots), function (is) return is[1] == is[2] end)
+end
+
+-- =====================
+-- ===== Equipment =====
+-- =====================
+
 BambooPole    = 0x20 --  = 32  = 00100000
 Club          = 0x40 --  = 64  = 01000000
 CopperSword   = 0x60 --  = 96  = 01100000
@@ -171,6 +186,16 @@ function Equipment:__tostring()
   return res
 end
 
+function Equipment:equals(e)
+  return self.swordId == e.swordId and
+         self.armorId == e.armorId and
+         self.shieldId == e.shieldId
+end
+
+-- =========================
+-- === Player statistics ===
+-- =========================
+
 Stats = class(function(a,currentHP,maxHP,currentMP, maxMP, xp, gold, level, strength, agility, attackPower, defensePower)
   a.currentHP = currentHP
   a.maxHP = maxHP
@@ -201,16 +226,160 @@ function Stats:__tostring()
   return res
 end
 
-PlayerData = class(function(a,stats,equipment,items)
+function Stats:equals(stats)
+  return self.currentHP == stats.currentHP and
+         self.maxHP == stats.maxHP and
+         self.currentMP == stats.currentMP and
+         self.maxMP == stats.maxMP and
+         self.xp == stats.xp and
+         self.gold == stats.gold and
+         self.level == stats.level and
+         self.strength == stats.strength and
+         self.agility == stats.agility and
+         self.attackPower == stats.attackPower and
+         self.defensePower == stats.defensePower
+end
+
+-- =====================
+-- ====== Spells! ======
+-- =====================
+
+SpellId = class(function(a,spellByte, spellId)
+  a.spellByte = spellByte
+  a.spellId = spellId
+end)
+
+function SpellId:equals(spellId)
+  return self.spellByte == spellId.spellByte and self.spellId == spellId.spellId
+end
+
+Spell = class(function(a,spellId, spellName)
+  a.spellId = spellId
+  a.spellName = spellName
+end)
+
+function Spell:equals(spell)
+  return self.spellId:equals(spell.spellId) and self.spellName == spell.spellName
+end
+
+function Spell:__tostring()
+  return self.spellName
+end
+
+-- 0xce | Spells unlocked   | 0x80=repel, 0x40=return, 0x20=outside, 0x10=stopspell,
+--      |                   | 0x8=radiant, 0x4=sleep, 0x2=hurt, 0x1=heal
+-- 0xcf | Spells/Quest Prog | 0x80=death necklace equipped, 0x40=cursed belt equipped,
+--      |                   | 0x20=fighters ring equipped, 0x10=dragon's scale equipped,
+--      |                   | 0x8=rainbow bridge, 0x4=stairs in charlock found, 0x2=hurtmore, 0x1=healmore
+
+CE_BYTE = 0xce
+CF_BYTE = 0xcf
+
+-- CE_BYTE
+HealId      = SpellId(CE_BYTE, 0x1)  -- 00000001
+HurtId      = SpellId(CE_BYTE, 0x2)  -- 00000010
+SleepId     = SpellId(CE_BYTE, 0x4)  -- 00000100
+RadiantId   = SpellId(CE_BYTE, 0x8)  -- 00001000
+StopspellId = SpellId(CE_BYTE, 0x10) -- 00010000
+OutsideId   = SpellId(CE_BYTE, 0x20) -- 00100000
+ReturnId    = SpellId(CE_BYTE, 0x40) -- 01000000
+RepelId     = SpellId(CE_BYTE, 0x80) -- 10000000
+-- CF_BYTE
+HealmoreId  = SpellId(CF_BYTE, 0x1)  -- 00000001
+HurtmoreId  = SpellId(CF_BYTE, 0x2)  -- 00000010
+
+Heal      = Spell(HealId,      "Heal")
+Hurt      = Spell(HurtId,      "Hurt")
+Sleep     = Spell(SleepId,     "Sleep")
+Radiant   = Spell(RadiantId,   "Radiant")
+Stopspell = Spell(StopspellId, "Stopspell")
+Outside   = Spell(OutsideId,   "Outside")
+Return    = Spell(ReturnId,    "Return")
+Repel     = Spell(RepelId,     "Repel")
+Healmore  = Spell(HealmoreId,  "Healmore")
+Hurtmore  = Spell(HurtmoreId,  "Hurtmore")
+
+--[[
+=== Spells ===
+  Hurt
+  Sleep
+  Radiant
+  Return
+  Repel
+  Healmore
+  Hurtmore
+ ]]
+-- no heal, stopspell, outside
+
+ALL_SPELLS = {
+  Heal,
+  Hurt,
+  Sleep,
+  Radiant,
+  Stopspell,
+  Outside,
+  Return,
+  Repel,
+  Healmore,
+  Hurtmore,
+}
+
+-- reads all the spells owned by the player by reading ceByte, and cfByte
+Spells = class(function(a,ceByte, cfByte)
+  a.order = {}
+  function f(spell)
+    local byte = spell.spellId.spellByte == CE_BYTE and ceByte or cfByte
+    local res = bitwise_and(byte, spell.spellId.spellId) > 0
+    if res then table.insert(a.order, spell) end
+    return res
+  end
+  for _,s in pairs(ALL_SPELLS) do f(s) end
+end)
+
+function Spells:spellIndex(spell)
+  return list.indexOf(self.order, spell, function(s1, s2) return s1:equals(s2) end)
+end
+
+function Spells:__tostring()
+  local res = "=== Spells ===\n"
+  for ix,s in pairs(self.order) do
+    res = res .. "  " .. tostring(ix) .. ": " .. tostring(s.spellName) .. "\n"
+  end
+  return res
+end
+
+function Spells:equals(spells)
+  if #(self.order) ~= #(spells.order)
+    then return false
+  else
+    return list.all(list.zipWith(self.order, spells.order), function (ss) return ss[1]:equals(ss[2]) end)
+  end
+end
+
+
+-- =======================
+-- === All Player data ===
+-- =======================
+
+PlayerData = class(function(a,stats,equipment,spells,items)
   a.stats = stats
   a.equipment = equipment
+  a.spells = spells
   a.items = items
 end)
+
+function PlayerData:equals(pd)
+  return self.stats:equals(pd.stats) and
+         self.equipment:equals(pd.equipment) and
+         self.spells:equals(pd.spells) and
+         self.items:equals(pd.items)
+end
 
 function PlayerData:__tostring()
   local res = "==== Player Data ====\n"
   res = res .. tostring(self.stats)
   res = res .. tostring(self.equipment)
+  res = res .. tostring(self.spells)
   res = res .. tostring(self.items)
   return res
 end
