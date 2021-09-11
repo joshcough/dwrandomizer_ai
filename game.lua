@@ -2,6 +2,7 @@ require 'mem'
 require 'controller'
 require 'helpers'
 require 'overworld'
+require 'player_data'
 require 'static_maps'
 
 Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsWithoutKeys)
@@ -399,6 +400,7 @@ function Game:exploreMove()
     print("couldn't find a path from player location: ", self:getLocation(), " to ", self.exploreDest)
     self:chooseNewDestination(function (k) return self:chooseRandomBorderTile(k) end)
   else
+    self:cast(Repel)
     self:goTo(self.exploreDest, graphOfKnownWorld)
     -- if we are there, we need to nil this out so we can pick up a new destination
     if self:getLocation().equals(self.exploreDest) then self.exploreDest = nil end
@@ -416,6 +418,7 @@ function Game:startEncounter()
 end
 
 function Game:executeBattle()
+  waitFrames(120)
   clearController()
   holdA(240)
   waitFrames(60)
