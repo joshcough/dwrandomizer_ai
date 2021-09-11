@@ -105,12 +105,20 @@ MapSize = class(function(a,width,height)
   a.height = height
 end)
 
+function MapSize:__tostring()
+  return "MapSize(height: " .. self.height .. ", width: " .. self.width .. ")"
+end
+
 StaticMapMetadata = class(function(a,mapId, name,size,romAddr)
   a.mapId = mapId
   a.name = name
   a.size = size
   a.romAddr = romAddr
 end)
+
+function StaticMapMetadata:__tostring()
+  return "StaticMapMetadata(name: " .. self.name .. ", size: " .. tostring(self.size) .. ", mapId: " .. self.mapId .. ")"
+end
 
 MAP_DATA = {
   [2] = StaticMapMetadata(2, "Charlock", MapSize(20, 20), 0xC0),

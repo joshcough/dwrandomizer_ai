@@ -122,6 +122,10 @@ function Items:equals(i)
          list.all(list.zipWith(self.slots, i.slots), function (is) return is[1] == is[2] end)
 end
 
+function Items:haveKeys()
+  return self.nrKeys > 0
+end
+
 -- =====================
 -- ===== Equipment =====
 -- =====================
