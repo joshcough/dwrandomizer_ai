@@ -253,9 +253,10 @@ function SpellId:equals(spellId)
   return self.spellByte == spellId.spellByte and self.spellId == spellId.spellId
 end
 
-Spell = class(function(a,spellId, spellName)
+Spell = class(function(a,spellId, spellName, mp)
   a.spellId = spellId
   a.spellName = spellName
+  a.mp = mp
 end)
 
 function Spell:equals(spell)
@@ -288,28 +289,16 @@ RepelId     = SpellId(CE_BYTE, 0x80) -- 10000000
 HealmoreId  = SpellId(CF_BYTE, 0x1)  -- 00000001
 HurtmoreId  = SpellId(CF_BYTE, 0x2)  -- 00000010
 
-Heal      = Spell(HealId,      "Heal")
-Hurt      = Spell(HurtId,      "Hurt")
-Sleep     = Spell(SleepId,     "Sleep")
-Radiant   = Spell(RadiantId,   "Radiant")
-Stopspell = Spell(StopspellId, "Stopspell")
-Outside   = Spell(OutsideId,   "Outside")
-Return    = Spell(ReturnId,    "Return")
-Repel     = Spell(RepelId,     "Repel")
-Healmore  = Spell(HealmoreId,  "Healmore")
-Hurtmore  = Spell(HurtmoreId,  "Hurtmore")
-
---[[
-=== Spells ===
-  Hurt
-  Sleep
-  Radiant
-  Return
-  Repel
-  Healmore
-  Hurtmore
- ]]
--- no heal, stopspell, outside
+Heal      = Spell(HealId,      "Heal",      3)
+Hurt      = Spell(HurtId,      "Hurt",      2)
+Sleep     = Spell(SleepId,     "Sleep",     2)
+Radiant   = Spell(RadiantId,   "Radiant",   2)
+Stopspell = Spell(StopspellId, "Stopspell", 2)
+Outside   = Spell(OutsideId,   "Outside",   6)
+Return    = Spell(ReturnId,    "Return",    8)
+Repel     = Spell(RepelId,     "Repel",     2)
+Healmore  = Spell(HealmoreId,  "Healmore",  8)
+Hurtmore  = Spell(HurtmoreId,  "Hurtmore",  5)
 
 ALL_SPELLS = {
   Heal,

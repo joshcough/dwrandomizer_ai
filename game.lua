@@ -418,11 +418,22 @@ function Game:startEncounter()
 end
 
 function Game:executeBattle()
-  waitFrames(120)
-  clearController()
-  holdA(240)
-  waitFrames(60)
+  function battleEnded () return not self.in_battle end
+  waitUntil(battleEnded, 120)
+  clearController() -- TODO is this really needed? double check
+  holdAUntil(battleEnded, 240)
+  waitUntil(battleEnded, 60)
   pressA(10)
+  self.in_battle = false
+end
+
+function Game:enemyRun()
+  print("the enemy is running!")
+  self.in_battle = false
+end
+
+function Game:playerRun()
+  print("you are running!")
   self.in_battle = false
 end
 
@@ -442,14 +453,22 @@ function Game:openSpellMenu()
   waitFrames(30)
 end
 
+-- TODO: does this work in battle as well as on the overworld?
+-- it probably should, but, i have not checked yet.
 function Game:cast(spell)
   local spellIndex = self.playerData.spells:spellIndex(spell)
   if spellIndex == nil then
     print("can't cast " .. tostring(spell) .. ", spell hasn't been learned.")
     return
+  elseif self.playerData.stats.currentMP < spell.mp then
+    print("can't cast " .. tostring(spell) .. ", not enough mp.")
+    return
   else
     self:openSpellMenu()
     for i = 1, spellIndex-1 do pressDown(2) end
+    -- wait 2 seconds for the spell to be done casting.
+    -- TODO: do all spells take the same length to cast?
+    -- or is it possible to get out sooner than 2 seconds?
     pressA(120)
     pressB(2)
   end
