@@ -35,6 +35,18 @@ function AI:executeBattle()
   self.game:executeBattle()
 end
 
+function AI:enemyRun()
+  return function(address)
+    self.game:enemyRun()
+  end
+end
+
+function AI:playerRun()
+  return function(address)
+    self.game:playerRun()
+  end
+end
+
 function AI:onPlayerMove()
   return function(address)
     self.game:onPlayerMove()
@@ -43,6 +55,8 @@ end
 
 function AI:register(memory)
   memory.registerexecute(0xcf44, self:onEncounter())
+  memory.registerexecute(0xefc8, self:enemyRun())
+  memory.registerexecute(0xe8a4, self:playerRun())
   memory.registerwrite(0x3a, self:onPlayerMove())
   memory.registerwrite(0x3b, self:onPlayerMove())
 end
@@ -79,7 +93,7 @@ function main()
   emu.speedmode("normal")
   while true do
     ai:stateMachine()
---     emu.frameadvance()
+    emu.frameadvance()
   end
 end
 
