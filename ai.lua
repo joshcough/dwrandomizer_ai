@@ -32,9 +32,7 @@ function AI:stateMachine()
 end
 
 function AI:executeBattle()
- if (emu.framecount() % 15 == 0) then
-    self.game:executeBattle()
-  end
+  self.game:executeBattle()
 end
 
 function AI:onPlayerMove()
@@ -80,7 +78,7 @@ function main()
 
   emu.speedmode("normal")
   while true do
---     ai:stateMachine()
+    ai:stateMachine()
 --     emu.frameadvance()
   end
 end
