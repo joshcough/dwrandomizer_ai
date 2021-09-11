@@ -15,6 +15,7 @@ Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsW
   a.playerData = memory:readPlayerData()
   a.in_battle = false
   a.exploreDest = nil
+  a.tantegelLoc = nil
 end)
 
 function newGame(memory)
@@ -68,10 +69,20 @@ end
 
 function Game:goTo(dest, allGraphs)
   local loc = self:getLocation()
-  local path = self:shortestPath(loc, dest, true, allGraphs)
-  self:followPath(path)
+  if loc:equals(dest) then
+    print("I was asked to go to: " .. dest .. ", but I am already there!")
+  end
+  local path = self:shortestPath(loc, dest, allGraphs)
+  if path == nil or #path == 0 then
+    print("Could not create path from: " .. tostring(loc) .. " to: " .. tostring(dest))
+  else
+    self:followPath(path)
+  end
 end
 
+-- TODO: we need a way to interrupt this path taking.
+-- if we discover a new location while walking to a path
+-- we immediately want to abandon this path, and walk to the new path.
 function Game:followPath(path)
   local commands = convertPathToCommands(path, self.maps)
   for i,c in pairs(commands) do
@@ -79,14 +90,13 @@ function Game:followPath(path)
     elseif c.direction == "Stairs" then self:takeStairs(c.from, c.to)
     else holdButtonUntil(c.direction, function ()
           local loc = self:getLocation()
-          -- print("current point: ", memory:getLocation(), "c.to: ", c.to, "equal?: ", p.equals(c.to))
+          -- print("current point: ", memory:getLocation(), "c.to: ", c.to, "equal?: ", p:equals(c.to))
           return loc:equals(c.to) or self.in_battle
         end
         )
     end
   end
 end
-
 
 function Game:openChestAt (loc)
   self:goTo(loc)
@@ -175,6 +185,8 @@ end
 function Game:leaveTantegelFromX0Y9()
   print("======leaving tantegel =======")
   holdLeft(30)
+  self.tantegelLoc = self:getLocation()
+  print("self.tantegelLoc: ", self.tantegelLoc)
 end
 
 function Game:throneRoomScript ()
@@ -207,9 +219,9 @@ function Game:addWarp(warp)
   self.graphsWithoutKeys = readAllGraphs(self.memory, false, self.maps, self.warps)
 end
 
-function Game:shortestPath(startNode, endNode, haveKeys, allGraphs)
+function Game:shortestPath(startNode, endNode, allGraphs)
   if allGraphs == nil then
-    allGraphs = haveKeys and self.graphsWithKeys or self.graphsWithoutKeys
+    allGraphs = self:haveKeys() and self.graphsWithKeys or self.graphsWithoutKeys
   end
 
   function insertPoint(tbl, p, value)
@@ -332,32 +344,94 @@ end
 --   no destination
 --   have destination but not moving to it (because just got out of battle, probably)
 --   moving to dest
-function Game:explore()
-  local loc = self:getLocation()
-  -- if we have destination and we aren't at it, move towards it.
-  if self.exploreDest ~= nil and not self.exploreDest:equals(loc) then
-    print("we have a destination. about to move towards it from: ", self:getLocation(), " to ", self.exploreDest)
-    self:exploreMove()
-  else
-    print("no destination yet, about to get one")
-    self:exploreStart()
-    print("done setting destination")
+
+function Game:stateMachine()
+  if self.in_battle then self:executeBattle()
+  else self:explore()
   end
 end
 
--- TODO: here, we need to ask a question:
--- can we see any towns/caves that we haven't been to yet?
--- if so, we probably just want to walk directly to them.
--- if not, we want to pick a random place and walk to it.
---   we will want to avoid walking into towns and caves on the way there though.
+function Game:atFirstImportantLocation()
+  return self.overworld.importantLocations ~= nil and
+         #(self.overworld.importantLocations) > 0 and
+         self.overworld.importantLocations[1]:equals(self:getLocation())
+end
+
+function Game:explore()
+  local loc = self:getLocation()
+  local atDestination = self.exploreDest ~= nil and self.exploreDest:equals(loc)
+
+  if atDestination then
+    print("we are already at our destination...so gonna pick a new one... currently at: " .. tostring(loc))
+    if loc.mapId == Overworld then
+      -- TODO: if the location is in overworld.importantLocations, then we have to remove it.
+      -- TODO: this code is awful
+      if self:atFirstImportantLocation()
+      then
+        print("removing important location")
+        self.overworld.importantLocations = list.delete(self.overworld.importantLocations, 1)
+        self.exploreDest = nil
+        self:exploreStaticMap()
+     else
+        self:exploreStart()
+      end
+    else self:exploreStaticMap()
+    end
+  else
+    if loc.mapId == Overworld then
+      if self.exploreDest ~= nil then self:exploreMove()
+      else self:exploreStart()
+      end
+    else self:exploreStaticMap() end
+  end
+end
+
+function Game:exploreStaticMap()
+  waitUntil(function() return self:onStaticMap() end, 240)
+  local loc = self:getLocation()
+  if loc.mapId == GarinsGraveLv1
+  then self:exploreGrave()
+  else
+    if (emu.framecount() % 60 == 0) then
+      print("i don't yet know how to explore this map: " .. tostring(loc), ", " .. tostring(MAP_DATA[loc.mapId]))
+    end
+  end
+end
+
+function Game:exploreGrave()
+  -- TODO: probably should check if these chests have already been opened.
+  -- if they have, then, no point in going to them.
+  self:openChestAt(Point(GarinsGraveLv1, 13, 0))
+  self:openChestAt(Point(GarinsGraveLv1, 12, 0))
+  self:openChestAt(Point(GarinsGraveLv1, 11, 0))
+  self:openChestAt(Point(GarinsGraveLv3, 13, 6))
+end
+
 function Game:exploreStart()
-  local seeSomethingNew = false -- TODO: write this
+  print("no destination yet, about to get one")
+  local loc = self:getLocation()
+  -- TODO: if there are multiple new locations, we should pick the closest one.
+  local seeSomethingNew = #(self.overworld.importantLocations) > 0
   if seeSomethingNew then
-    -- print("spotted something new... walking to it...etc")
-    -- self.exploreDest = location of the new thing
+    local newImportantLoc = self.overworld.importantLocations[1]
+    -- if the the new location we have spotted on the overworld is tantegel itself, ignore it.
+    if newImportantLoc:equals(self.tantegelLoc) then
+      print("I see a castle, but its just tantegel, so I'm ignoring it")
+      self.overworld.importantLocations = list.delete(self.overworld.importantLocations, 1)
+    else
+      if self.exploreDest == nil or not self.exploreDest:equals(newImportantLoc) then
+        print("I see something new at: ", newImportantLoc)
+        self:chooseNewDestinationDirectly(self.overworld.importantLocations[1])
+        -- TODO: once we make it into the new destination, we have some work to do
+        --   we have to adjust the warps
+        --   record somehow that we have been here
+        --   we have to remove this location from self.overworld.importantLocations
+      end
+    end
   else
     self:chooseNewDestination(function (k) return self:chooseClosestBorderTile(k) end)
   end
+  print("done setting destination: " .. tostring(self.exploreDest))
 end
 
 -- what we really should do here is pick a random walkable border tile
@@ -386,24 +460,28 @@ function Game:chooseNewDestination(tileSelectionStrat)
   -- TODO: this is an error case that i might need to deal with somehow.
   if nrBorderTiles == 0 then return end
 
-  local newDestination = tileSelectionStrat(borderOfKnownWorld)
+  self:chooseNewDestinationDirectly(tileSelectionStrat(borderOfKnownWorld))
+end
+
+function Game:chooseNewDestinationDirectly(newDestination)
   print("new destination", newDestination, self.overworld:getOverworldMapTileAt(newDestination.x, newDestination.y))
   self.exploreDest = newDestination
 end
 
 function Game:exploreMove()
+  print("we have a destination. about to move towards it from: ", self:getLocation(), " to ", self.exploreDest)
   local graphOfKnownWorld = { Graph(self.overworld:knownWorldGraph(), false) }
   -- TODO: we are calculating the shortest path twice... we need to do better than that
   -- here... if we cant find a path to the destination, then we want to just choose a new destination
-  local path = self:shortestPath(self:getLocation(), self.exploreDest, true, graphOfKnownWorld)
+  local path = self:shortestPath(self:getLocation(), self.exploreDest, graphOfKnownWorld)
   if path == nil or #(path) == 0 then
     print("couldn't find a path from player location: ", self:getLocation(), " to ", self.exploreDest)
     self:chooseNewDestination(function (k) return self:chooseRandomBorderTile(k) end)
   else
-    self:cast(Repel)
+--     self:cast(Repel)
     self:goTo(self.exploreDest, graphOfKnownWorld)
     -- if we are there, we need to nil this out so we can pick up a new destination
-    if self:getLocation().equals(self.exploreDest) then self.exploreDest = nil end
+    if self:getLocation():equals(self.exploreDest) then self.exploreDest = nil end
   end
 end
 
@@ -415,6 +493,10 @@ function Game:startEncounter()
     self.memory:setEnemyId(0)
     self.in_battle = true
   end
+end
+
+function Game:onStaticMap()
+  return self:getMapId() > 1 and self:getMapId() < 30
 end
 
 function Game:executeBattle()
@@ -440,10 +522,15 @@ end
 function Game:onPlayerMove()
   if self:getMapId() == 1
     then
+      -- print(self:getLocation())
       -- self:printVisibleGrid()
       self.overworld:getVisibleOverworldGrid(self:getX(), self:getY())
       print("percentageOfWorldSeen: " .. self:percentageOfWorldSeen())
   end
+end
+
+function Game:onMapChange()
+  print("The map has changed! currentLoc: " .. tostring(self:getLocation()))
 end
 
 function Game:openSpellMenu()
@@ -465,6 +552,7 @@ function Game:cast(spell)
     return
   else
     self:openSpellMenu()
+    -- TODO: if it is faster to press UP, we should do that
     for i = 1, spellIndex-1 do pressDown(2) end
     -- wait 2 seconds for the spell to be done casting.
     -- TODO: do all spells take the same length to cast?
@@ -472,4 +560,9 @@ function Game:cast(spell)
     pressA(120)
     pressB(2)
   end
+end
+
+
+function Game:haveKeys()
+  return self.playerData.items:haveKeys()
 end

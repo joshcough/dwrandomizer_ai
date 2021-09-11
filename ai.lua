@@ -8,50 +8,13 @@ require 'hud'
 require 'overworld'
 require 'static_maps'
 
-AI = class(function(a, game)
-  a.game = game
-end)
+AI = class(function(a, game) a.game = game end)
 
--- A thing draws near!
-function AI:onEncounter()
-  return function(address)
-    self.game:startEncounter()
-  end
-end
-
-function AI:explore() self.game:explore() end
-
-function AI:stateMachine()
-  if self.game.in_battle then
-    self:executeBattle()
-  else
-    print("not in battle, going to explore")
-    self:explore()
-    print("done with call to explore...")
-  end
-end
-
-function AI:executeBattle()
-  self.game:executeBattle()
-end
-
-function AI:enemyRun()
-  return function(address)
-    self.game:enemyRun()
-  end
-end
-
-function AI:playerRun()
-  return function(address)
-    self.game:playerRun()
-  end
-end
-
-function AI:onPlayerMove()
-  return function(address)
-    self.game:onPlayerMove()
-  end
-end
+function AI:onEncounter() return function(address) self.game:startEncounter() end end
+function AI:enemyRun() return function(address) self.game:enemyRun() end end
+function AI:playerRun() return function(address) self.game:playerRun() end end
+function AI:onPlayerMove() return function(address) self.game:onPlayerMove() end end
+function AI:onMapChange() return function(address) self.game:onMapChange() end end
 
 function AI:register(memory)
   memory.registerexecute(0xcf44, self:onEncounter())
@@ -59,6 +22,7 @@ function AI:register(memory)
   memory.registerexecute(0xe8a4, self:playerRun())
   memory.registerwrite(0x3a, self:onPlayerMove())
   memory.registerwrite(0x3b, self:onPlayerMove())
+  memory.registerwrite(0x45, self:onMapChange())
 end
 
 -------------------
@@ -68,15 +32,16 @@ end
 function main()
   hud_main()
 
-  -- give ourself gold, xp, best equipment, etc
-  memory.writebyte(0xbb, 65535 / 256)
-  memory.writebyte(0xba, 65535 % 256)
-  memory.writebyte(0xbe, 255) -- best equipment
-  memory.writebyte(0xbf, 6)   -- 6 herbs
-  memory.writebyte(0xc0, 6)   -- 6 keys
-  memory.writebyte(0xc1, 14)  -- rainbow drop
-
   local mem = Memory(memory, rom)
+
+  -- give ourself gold, xp, best equipment, etc
+  mem:writeRAM(0xbb, 65535 / 256)
+  mem:writeRAM(0xba, 65535 % 256)
+  mem:writeRAM(0xbe, 255) -- best equipment
+  mem:writeRAM(0xbf, 6)   -- 6 herbs
+  mem:writeRAM(0xc0, 6)   -- 6 keys
+  mem:writeRAM(0xc1, 14)  -- rainbow drop
+
   -- always save the maps man. if we dont do this
   -- we start getting out of date and bad stuff happens.
   saveStaticMaps(mem, table.concat(WARPS, list.map(WARPS, swapSrcAndDest)))
@@ -85,6 +50,10 @@ function main()
   local ai = AI(game)
   ai:register(memory)
 
+--   game:leaveTantegelFromX0Y9()
+  game.tantegelLoc = game:getLocation()
+  print("game.tantegelLoc", game.tantegelLoc)
+
   -- TODO: this is a hack
   -- right now this gets called when we move
   -- but we need to call it here once before we move, too.
@@ -92,7 +61,7 @@ function main()
 
   emu.speedmode("normal")
   while true do
-    ai:stateMachine()
+    game:stateMachine()
     emu.frameadvance()
   end
 end

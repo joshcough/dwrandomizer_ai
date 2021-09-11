@@ -2,7 +2,7 @@ require 'helpers'
 require 'Class'
 
 Overworld = 1
---
+
 -- MAP_DATA = {
 --   [1] = {["name"] = "Overworld", ["size"] = {["w"]=120,["h"]=120}, ["romAddr"] = 0x1D6D},
 -- }
@@ -93,6 +93,7 @@ OverWorld = class(function(a,rows)
   a.overworldRows = rows
   a.knownWorld = {}
   a.nrTilesSeen = 0
+  a.importantLocations = {}
 end)
 
 function OverWorld:percentageOfWorldSeen()
@@ -110,7 +111,12 @@ function OverWorld:updateKnownWorld(x, y, tileId)
       self.knownWorld[y][x] = tileId
       self.nrTilesSeen=self.nrTilesSeen+1
       local tileName = getOverworldTileName(tileId)
-      print ("discovered new tile at (x: " .. x .. ", y: " .. y .. ")" .. " tile is: " .. tileName)
+      -- this print statement is important... but its so damn noisy.
+      -- print ("discovered new tile at (x: " .. x .. ", y: " .. y .. ")" .. " tile is: " .. tileName .. " tile id is: " .. tileId)
+      if tileId >= 8 and tileId <= 10 then
+        print ("discovered important location at (x: " .. x .. ", y: " .. y .. ")" .. " it is a: " .. tileName)
+        table.insert(self.importantLocations, Point(Overworld, x, y))
+      end
   end
 end
 

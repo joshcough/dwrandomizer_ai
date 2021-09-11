@@ -262,6 +262,14 @@ function list.indexOf(t, v, eqOp)
   return nil
 end
 
+function list.delete(t, index)
+  local res = {}
+  for i = 1, #t do
+    if i ~= index then table.insert(res, t[i]) end
+  end
+  return res
+end
+
 function list.min(t, f)
   if #(t) == 0 then return nil end
   return list.foldLeft(t, {false, f(t[1]) + 1}, function(acc, c)
