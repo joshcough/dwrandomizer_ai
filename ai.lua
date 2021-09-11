@@ -53,12 +53,63 @@ function AI:onPlayerMove()
   end
 end
 
+-- function AI:onMenuTextChange()
+--   return function(address)
+--     self.game:onMenuTextChange()
+--   end
+-- end
+
 function AI:register(memory)
+  -- todo: this could be nice to save state in the event of a crash
+  -- emu.registerexit(function func)
+
   memory.registerexecute(0xcf44, self:onEncounter())
   memory.registerexecute(0xefc8, self:enemyRun())
   memory.registerexecute(0xe8a4, self:playerRun())
   memory.registerwrite(0x3a, self:onPlayerMove())
   memory.registerwrite(0x3b, self:onPlayerMove())
+
+-- these are all useful in figuring out whats going on with the menus. but, eh, just haven't entirely figured it out yet.
+--   memory.registerwrite(0xd2, function(address) print("0xd2 Menu text printed: " .. memory.readbyte(address)) end)
+--   memory.registerwrite(0xd3, function(address) print("0xd3 Menu something else: " .. memory.readbyte(address)) end)
+--   memory.registerwrite(0xd7, function(address) print("0xd7 Menu also something else: " .. memory.readbyte(address)) end)
+--   memory.registerwrite(0xd8, function(address) print("0xd8 cursor x changed: " .. memory.readbyte(address)) end)
+--   memory.registerwrite(0xd9, function(address) print("0xd9 cursor y changed: " .. memory.readbyte(address)) end)
+
+-- These ones seem worthless. At least, I can't tell wtf they are doing.
+--   memory.registerwrite(0xd1, function(address) print("cursor x? changed... maybe" .. memory.readbyte(address)) end)
+--   memory.registerwrite(0xd2, function(address) print("cursor y? changed... maybe" .. memory.readbyte(address)) end)
+
+-- 0xd1            | Cursor X?               |
+-- 0xd2            | Cursor Y?               |
+-- 0xd7            | Last selected menu item | 0x00 - 0x09 (0xFF for none)
+-- 0xd8            | Cursor X pos            |
+-- 0xd9            | Cursor Y pos            |
+
+--   https://github.com/nmikstas/dragon-warrior-disassembly/blob/29481b4c4b3c175342c47769fa79a407cdb181f8/source_files/Bank02.asm#L2609
+-- L801E:  .word TextBlock15       ;($AC61)
+
+-- TextBlock15:
+-- TB15E0:
+-- ;             INDT AMNT  _    t    o    _    t    h    e    _    e    a    s    t    .'  WAIT
+-- LAC61:  .byte $57, $F5, $5F, $1D, $18, $5F, $1D, $11, $0E, $5F, $0E, $0A, $1C, $1D, $52, $FB
+-- ;             END
+-- LAC71:  .byte $FC
+--
+-- ;----------------------------------------------------------------------------------------------------
+--
+-- TB15E1:
+-- ;             INDT AMNT  _    t    o    _    t    h    e    _    w    e    s    t    .'  WAIT
+-- LAC72:  .byte $57, $F5, $5F, $1D, $18, $5F, $1D, $11, $0E, $5F, $20, $0E, $1C, $1D, $52, $FB
+-- ;             END
+-- LAC82:  .byte $FC
+--
+-- ;----------------------------------------------------------------------------------------------------
+--
+-- TB15E2:
+-- ;              A   ENM2  _    d    r    a    w    s    _    n    e    a    r    !   END
+-- LAC83:  .byte $24, $F1, $5F, $0D, $1B, $0A, $20, $1C, $5F, $17, $0E, $0A, $1B, $4C, $FC
+
 end
 
 -------------------
@@ -92,7 +143,7 @@ function main()
 
   emu.speedmode("normal")
   while true do
-    ai:stateMachine()
+--     ai:stateMachine()
     emu.frameadvance()
   end
 end
