@@ -8,21 +8,27 @@ require 'hud'
 require 'overworld'
 require 'static_maps'
 
+-- TODO:
+-- Damage calculation is:
+-- (atkpwr-(enemy agi/2))/4 through (atkpwr-(enemy agi/2))/2
+
 AI = class(function(a, game) a.game = game end)
 
-function AI:onEncounter() return function(address) self.game:startEncounter() end end
-function AI:enemyRun() return function(address) self.game:enemyRun() end end
-function AI:playerRun() return function(address) self.game:playerRun() end end
-function AI:onPlayerMove() return function(address) self.game:onPlayerMove() end end
-function AI:onMapChange() return function(address) self.game:onMapChange() end end
+function AI:onEncounter()   return function(address) self.game:startEncounter() end end
+function AI:enemyRun()      return function(address) self.game:enemyRun() end end
+function AI:playerRun()     return function(address) self.game:playerRun() end end
+function AI:onPlayerMove()  return function(address) self.game:onPlayerMove() end end
+function AI:onMapChange()   return function(address) self.game:onMapChange() end end
+function AI:endRepelTimer() return function(address) self.game:endRepelTimer() end end
 
 function AI:register(memory)
   memory.registerexecute(0xcf44, self:onEncounter())
   memory.registerexecute(0xefc8, self:enemyRun())
   memory.registerexecute(0xe8a4, self:playerRun())
-  memory.registerwrite(0x3a, self:onPlayerMove())
-  memory.registerwrite(0x3b, self:onPlayerMove())
-  memory.registerwrite(0x45, self:onMapChange())
+  memory.registerwrite  (0x3a,   self:onPlayerMove())
+  memory.registerwrite  (0x3b,   self:onPlayerMove())
+  memory.registerwrite  (0x45,   self:onMapChange())
+  memory.registerexecute(0xca83, self:endRepelTimer())
 end
 
 -------------------
@@ -95,3 +101,16 @@ main()
 -- table.print(shortestPath(Point(TantegelThroneRoom, 1,1), Point(TantegelThroneRoom, 1,8), true))
 -- table.print(shortestPath(Point(Charlock, 10,19), Point(CharlockThroneRoom, 17,24), true))
 
+-- These are some cool things, but, I don't think I actually really need them
+-- so just dumping them here.
+
+--   -- .alias RadiantTimer     $DA     ;Remaining time for radiant spell.
+--   memory.registerwrite(0xDA, function(address)
+--     print(self.game.memory:readRAM(0xDA))
+--   end)
+--   -- .alias RepelTimer       $DB     ;Remining repel spell time.
+--   memory.registerwrite(0xDB, function(address)
+--     if self.game.memory:getRepelTimer() > 100 then
+--       self.game.memory:setRepelTimer(10)
+--     end
+--   end)

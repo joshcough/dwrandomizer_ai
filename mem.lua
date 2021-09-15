@@ -40,6 +40,12 @@ function Memory:getLocation ()
   return Point(self:getMapId(), self:getX(), self:getY())
 end
 
+function Memory:getRadiantTimer () return self:readRAM(0xDA) end
+function Memory:setRadiantTimer (n) return self:writeRAM(0xDA, n) end
+
+function Memory:getRepelTimer () return self:readRAM(0xDB) end
+function Memory:setRepelTimer (n) return self:writeRAM(0xDB, n) end
+
 -- get the id of the current enemy, if it exists
 -- no idea what gets returned if not in battle
 function Memory:getEnemyId () return self.ram.readbyte(ENEMY_ID_ADDR)+1 end

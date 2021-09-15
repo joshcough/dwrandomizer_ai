@@ -57,11 +57,11 @@ function holdButtonUntil(button, conditionFunction)
   e[button] = true
   while not conditionFunction() do
     joypad.write(1, e)
-    emu.frameadvance();
+    emu.frameadvance()
   end
   -- print("Done holding " .. button)
   clearController()
-  emu.frameadvance();
+  emu.frameadvance()
 end
 
 function holdButtonUntilOrMaxFrames(button, conditionFunction, maxFrames)

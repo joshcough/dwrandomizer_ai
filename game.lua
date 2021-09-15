@@ -1,6 +1,9 @@
-require 'mem'
+require 'Class'
 require 'controller'
+enum = require("enum")
 require 'helpers'
+require 'map_scripts'
+require 'mem'
 require 'overworld'
 require 'player_data'
 require 'static_maps'
@@ -13,9 +16,13 @@ Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsW
   a.graphsWithKeys = graphsWithKeys
   a.graphsWithoutKeys = graphsWithoutKeys
   a.playerData = memory:readPlayerData()
-  a.in_battle = false
+  a.inBattle = false
   a.exploreDest = nil
   a.tantegelLoc = nil
+  a.repelTimerWindowOpen = false
+  a.unlockedDoors = {}
+  -- TODO: when we get back on the overworld, we need to set this back to {}
+  a.openChests = {}
 end)
 
 function newGame(memory)
@@ -67,16 +74,36 @@ function Game:printVisibleGrid()
   return self.overworld:printVisibleGrid(self:getX(), self:getY())
 end
 
-function Game:goTo(dest, allGraphs)
+-- these are reasons that we have exited the followPath function
+GotoExitValues = enum.new("Follow Path Exit Values", {"AT_LOCATION", "IN_BATTLE", "REPEL_TIMER", "NO_PATH", "BUG"})
+
+function Game:goTo(dest)
   local loc = self:getLocation()
   if loc:equals(dest) then
-    print("I was asked to go to: " .. dest .. ", but I am already there!")
+    print("I was asked to go to: " .. tostring(dest) .. ", but I am already there!")
+    return GotoExitValues.AT_LOCATION
   end
-  local path = self:shortestPath(loc, dest, allGraphs)
+  local path = self:shortestPath(loc, dest)
   if path == nil or #path == 0 then
     print("Could not create path from: " .. tostring(loc) .. " to: " .. tostring(dest))
+    -- something went wrong, we can't get a path there, and we aren't at the destination
+    -- so return false indicating that we didn't make it.
+    return GotoExitValues.NO_PATH
   else
-    self:followPath(path)
+    local res = self:followPath(path)
+    if res == GotoExitValues.REPEL_TIMER
+      then
+        -- we got interruped by repel ending. after closing the window, continue going.
+        self:closeRepelTimerWindow()
+        self:goTo(dest)
+    elseif res == GotoExitValues.IN_BATTLE
+      then
+        -- we got interruped by a battle. after finishing the battle, continue going.
+        self:executeBattle()
+        self:goTo(dest)
+    else
+      return res -- TODO: can we even do anything with the others? NO_PATH, BUG? AT_LOCATION?
+    end
   end
 end
 
@@ -85,22 +112,84 @@ end
 -- we immediately want to abandon this path, and walk to the new path.
 function Game:followPath(path)
   local commands = convertPathToCommands(path, self.maps)
+  if commands == nil or #commands == 0 then return GotoExitValues.NO_PATH end
+  local dest = nil
   for i,c in pairs(commands) do
-    if c.direction == "Door" then self:openDoorScript()
+    -- if we are in battle or the repel window opened, then abort
+    if self.inBattle then return GotoExitValues.IN_BATTLE
+    elseif self.repelTimerWindowOpen then return GotoExitValues.REPEL_TIMER
+    elseif c.direction == "Door" then self:openDoorScript(c.to)
     elseif c.direction == "Stairs" then self:takeStairs(c.from, c.to)
-    else holdButtonUntil(c.direction, function ()
-          local loc = self:getLocation()
-          -- print("current point: ", memory:getLocation(), "c.to: ", c.to, "equal?: ", p:equals(c.to))
-          return loc:equals(c.to) or self.in_battle
-        end
-        )
+    else
+      holdButtonUntil(c.direction, function ()
+        dest = c.to
+        local loc = self:getLocation()
+        -- print("current point: ", memory:getLocation(), "c.to: ", c.to, "equal?: ", p:equals(c.to))
+        return loc:equals(c.to) or self.inBattle or self.repelTimerWindowOpen
+      end)
     end
+  end
+
+  if self.inBattle then return GotoExitValues.IN_BATTLE
+  elseif self.repelTimerWindowOpen then return GotoExitValues.REPEL_TIMER
+  -- we think we have completed the path, and this should always be the case
+  -- but, do a last second double check just in case.
+  elseif self:getLocation():equals(dest) then return GotoExitValues.AT_LOCATION
+  -- we should be at the location, but somehow we werent. this must be a bug.
+  else return GotoExitValues.BUG
+  end
+end
+
+-- todo: what should this function return?
+function Game:interpretScript(s)
+  print(s)
+  if     self.inBattle then self:executeBattle()
+  elseif self.repelTimerWindowOpen then self:closeRepelTimerWindow()
+  elseif s:is_a(ActionScript)
+    then
+      if     s.enum == Actions.DO_NOTHING then return
+      elseif s.enum == Actions.OPEN_CHEST then self:openChestScript()
+      elseif s.enum == Actions.SEARCH     then self:searchGroundScript()
+      elseif s.enum == Actions.EXIT       then self:exitDungeonScript()
+      elseif s.enum == Actions.DEATH_WARP then self:deathWarp()
+      elseif s.enum == Actions.DEATH_WARP then self:savePrincess()
+      elseif s.enum == Actions.DEATH_WARP then self:fightDragonLord()
+      end
+  elseif s:is_a(Goto) then self:goTo(s.location)
+  elseif s:is_a(BranchScript)
+    then
+      local branch = self:evaluateCondition(s.condition) and s.trueBranch or s.falseBranch
+      -- future debugging, i promise: print(branch)
+      self:interpretScript(branch)
+  elseif s:is_a(ListScript)
+    then
+      for i,branch in pairs(s.scripts) do
+        self:interpretScript(branch)
+      end
+  end
+end
+
+function Game:evaluateCondition(s)
+  if s == HaveKeys then return self:haveKeys()
+  elseif s:is_a(IsChestOpen) then
+    print("is the chest open at " .. tostring(s.location), table.containsUsingDotEquals(self.openChests, s.location))
+    return table.containsUsingDotEquals(self.openChests, s.location)
+  else return false
+  end
+end
+
+function Game:closeRepelTimerWindow()
+  if self.repelTimerWindowOpen then
+    waitFrames(30)
+    pressB(2)
+    self.repelTimerWindowOpen = false
   end
 end
 
 function Game:openChestAt (loc)
-  self:goTo(loc)
-  self:openChestScript()
+  local madeItThere = self:goTo(loc)
+  if madeItThere then self:openChestScript() end
+  return madeItThere
 end
 
 function Game:openMenu()
@@ -108,21 +197,57 @@ function Game:openMenu()
   waitFrames(10)
 end
 
+-- TODO: we have to implement this. it might be hard
+-- we can either cast outside (if possible)
+-- or we have to like, lookup the warp point out of this dungeon
+-- (which means we will have to keep track of that better)
+-- and then follow the path out of that.
+-- but lets how we even follow paths in this interpreter first.
+-- for now, doing nothing.
+function Game:exitDungeonScript ()
+end
+
+-- TODO: i have no idea how i am going to do this yet.
+function Game:deathWarp ()
+end
+
+-- TODO: this one should be easy.
+function Game:savePrincess ()
+end
+
+-- todo: this one shouldn't really be that hard either
+function Game:fightDragonLord ()
+end
+
+-- TODO: we could just implement this the same way as `self:searchGroundScript()`
 function Game:openChestScript ()
   print("======opening chest=======")
   self:openMenu()
   pressUp(2)
   pressRight(2)
-  pressA(20)
+  table.insert(self.openChests, self:getLocation())
+  pressA(40)
 end
 
-function Game:openDoorScript ()
-  print("======opening door=======")
+function Game:searchGroundScript ()
+  print("======searching ground=======")
+  self:openMenu()
+  pressUp(2)
+  pressA(40)
+end
+
+function Game:openDoorScript (point)
+  print("======opening door at " .. tostring(point) .. "=======")
+  if self:isDoorOpen(point) then
+    print("actually, that door is already open")
+    return
+  end
   self:openMenu()
   pressDown(2)
   pressDown(2)
   pressRight(2)
   pressA(20)
+  self:saveUnlockedDoor(point)
 end
 
 -- TODO: looks like the to argument here isn't really needed.
@@ -219,21 +344,19 @@ function Game:addWarp(warp)
   self.graphsWithoutKeys = readAllGraphs(self.memory, false, self.maps, self.warps)
 end
 
-function Game:shortestPath(startNode, endNode, allGraphs)
-  if allGraphs == nil then
-    allGraphs = self:haveKeys() and self.graphsWithKeys or self.graphsWithoutKeys
-  end
+function containsPoint(tbl, p)
+  if tbl[p.mapId] == nil then return false end
+  if tbl[p.mapId][p.x] == nil then return false end
+  return tbl[p.mapId][p.x][p.y] ~= nil
+end
+
+function Game:shortestPath(startNode, endNode)
+  local allGraphs = self:getCombinedGraphs()
 
   function insertPoint(tbl, p, value)
     if tbl[p.mapId] == nil then tbl[p.mapId] = {} end
     if tbl[p.mapId][p.x] == nil then tbl[p.mapId][p.x] = {} end
     tbl[p.mapId][p.x][p.y] = value
-  end
-
-  function containsPoint(tbl, p)
-    if tbl[p.mapId] == nil then return false end
-    if tbl[p.mapId][p.x] == nil then return false end
-    return tbl[p.mapId][p.x][p.y] ~= nil
   end
 
   function solve(s)
@@ -285,6 +408,13 @@ end
 
 function swapSrcAndDest(w) return w:swap() end
 
+function Game:isDoorOpen(point)
+  return containsPoint(self.unlockedDoors, point)
+end
+
+function Game:saveUnlockedDoor(point)
+  table.insert(self.unlockedDoors, point)
+end
 
 -- TODO: this shit seems to work... but im not sure i understand it. lol
 -- there is definitely a way to do this that is more intuitive.
@@ -334,21 +464,8 @@ function convertPathToCommands(pathIn, maps)
   end)
 end
 
-
--- TODO: we must pause the state machine (or in this case just exploration)
--- whenever an encounter happens
-
--- === state machine ===
--- in battle
--- not in battle
---   no destination
---   have destination but not moving to it (because just got out of battle, probably)
---   moving to dest
-
 function Game:stateMachine()
-  if self.in_battle then self:executeBattle()
-  else self:explore()
-  end
+  self:explore()
 end
 
 function Game:atFirstImportantLocation()
@@ -364,7 +481,7 @@ function Game:explore()
   if atDestination then
     print("we are already at our destination...so gonna pick a new one... currently at: " .. tostring(loc))
     if loc.mapId == Overworld then
-      -- TODO: if the location is in overworld.importantLocations, then we have to remove it.
+      -- if the location is in overworld.importantLocations, then we have to remove it.
       -- TODO: this code is awful
       if self:atFirstImportantLocation()
       then
@@ -386,25 +503,17 @@ function Game:explore()
   end
 end
 
+-- TODO: the logic here for getting a script for a map should probably belong in map_scripts.lua
 function Game:exploreStaticMap()
   waitUntil(function() return self:onStaticMap() end, 240)
   local loc = self:getLocation()
   if loc.mapId == GarinsGraveLv1
-  then self:exploreGrave()
+  then self:interpretScript(scripts.exploreGraveScript())
   else
     if (emu.framecount() % 60 == 0) then
       print("i don't yet know how to explore this map: " .. tostring(loc), ", " .. tostring(MAP_DATA[loc.mapId]))
     end
   end
-end
-
-function Game:exploreGrave()
-  -- TODO: probably should check if these chests have already been opened.
-  -- if they have, then, no point in going to them.
-  self:openChestAt(Point(GarinsGraveLv1, 13, 0))
-  self:openChestAt(Point(GarinsGraveLv1, 12, 0))
-  self:openChestAt(Point(GarinsGraveLv1, 11, 0))
-  self:openChestAt(Point(GarinsGraveLv3, 13, 6))
 end
 
 function Game:exploreStart()
@@ -468,20 +577,32 @@ function Game:chooseNewDestinationDirectly(newDestination)
   self.exploreDest = newDestination
 end
 
+function Game:getCombinedGraphs()
+  local staticGraphs = self:haveKeys() and self.graphsWithKeys or self.graphsWithoutKeys
+  local graphs = {}
+  graphs[1] = Graph(self.overworld:knownWorldGraph(), self:haveKeys())
+  for i, g in pairs(staticGraphs) do
+    graphs[i] = g
+  end
+
+  return graphs
+end
+
+
 function Game:exploreMove()
   print("we have a destination. about to move towards it from: ", self:getLocation(), " to ", self.exploreDest)
-  local graphOfKnownWorld = { Graph(self.overworld:knownWorldGraph(), false) }
   -- TODO: we are calculating the shortest path twice... we need to do better than that
   -- here... if we cant find a path to the destination, then we want to just choose a new destination
-  local path = self:shortestPath(self:getLocation(), self.exploreDest, graphOfKnownWorld)
+  local path = self:shortestPath(self:getLocation(), self.exploreDest)
   if path == nil or #(path) == 0 then
     print("couldn't find a path from player location: ", self:getLocation(), " to ", self.exploreDest)
     self:chooseNewDestination(function (k) return self:chooseRandomBorderTile(k) end)
   else
---     self:cast(Repel)
-    self:goTo(self.exploreDest, graphOfKnownWorld)
+    self:castRepel()
+    -- TODO: this is no longer a boolean! dafuq
+    local madeItThere = self:goTo(self.exploreDest) == GotoExitValues.AT_LOCATION
     -- if we are there, we need to nil this out so we can pick up a new destination
-    if self:getLocation():equals(self.exploreDest) then self.exploreDest = nil end
+    if madeItThere then self.exploreDest = nil end
   end
 end
 
@@ -491,7 +612,7 @@ function Game:startEncounter()
     print ("entering battle vs a " .. Enemies[enemyId])
     -- actually, set every encounter to a slime. lol!
     self.memory:setEnemyId(0)
-    self.in_battle = true
+    self.inBattle = true
   end
 end
 
@@ -500,23 +621,23 @@ function Game:onStaticMap()
 end
 
 function Game:executeBattle()
-  function battleEnded () return not self.in_battle end
+  function battleEnded () return not self.inBattle end
   waitUntil(battleEnded, 120)
   clearController() -- TODO is this really needed? double check
   holdAUntil(battleEnded, 240)
   waitUntil(battleEnded, 60)
   pressA(10)
-  self.in_battle = false
+  self.inBattle = false
 end
 
 function Game:enemyRun()
   print("the enemy is running!")
-  self.in_battle = false
+  self.inBattle = false
 end
 
 function Game:playerRun()
   print("you are running!")
-  self.in_battle = false
+  self.inBattle = false
 end
 
 function Game:onPlayerMove()
@@ -562,7 +683,22 @@ function Game:cast(spell)
   end
 end
 
+function Game:castRepel(disregardTimer)
+  if disregardTimer then self:cast(Repel)
+  else
+    if self.memory:getRepelTimer() > 1  then
+      print("wanted to cast repel, but it is still on! Won't cast it.")
+    else
+      self:cast(Repel)
+    end
+  end
+end
 
 function Game:haveKeys()
   return self.playerData.items:haveKeys()
+end
+
+function Game:endRepelTimer()
+  print("repel has ended")
+  self.repelTimerWindowOpen = true
 end
