@@ -1,17 +1,7 @@
 require "Class"
 
 function bitwise_and(a, b)
-  local result = 0
-  local bitval = 1
-  while a > 0 and b > 0 do
-    if a % 2 == 1 and b % 2 == 1 then -- test the rightmost bits
-      result = result + bitval -- set the current bit
-    end
-    bitval = bitval * 2 -- shift left
-    a = math.floor(a/2) -- shift right
-    b = math.floor(b/2)
-  end
-  return result
+  return AND(a, b)
 end
 
 function decimalToHex(num)
@@ -260,6 +250,14 @@ function list.indexOf(t, v, eqOp)
     end
   end
   return nil
+end
+
+function list.delete(t, index)
+  local res = {}
+  for i = 1, #t do
+    if i ~= index then table.insert(res, t[i]) end
+  end
+  return res
 end
 
 function list.min(t, f)

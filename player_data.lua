@@ -16,6 +16,8 @@ DeathNecklace = 0xb
 StonesOfSunlight = 0xc
 StaffOfRain = 0xd
 RainbowDrop = 0xe
+Herb = 0xf
+MagicKey = 0x10
 
 ITEMS = {
   [Torch] = "Torch",
@@ -32,8 +34,9 @@ ITEMS = {
   [StonesOfSunlight] = "Stones of Sunlight",
   [StaffOfRain] = "Staff of Rain",
   [RainbowDrop] = "Rainbow Drop",
-  -- i dont think this is actually used, especially since it says (glitched)
-  -- [0xf] = "Herb (glitched)"
+  -- these are not really used:
+  [Herb] = "Herb",
+  [MagicKey] = "Magic Key",
 }
 
 Items = class(function(a,nrHerbs,nrKeys,slots)
@@ -55,8 +58,24 @@ function Items:__tostring()
   return res
 end
 
+function Items:itemIndex(itemId)
+  if not self:contains(itemId) then return nil end
+  local herbOffset = self:haveHerbs() and 1 or 0
+  local keyOffset = self:haveKeys() and 1 + herbOffset or 0
+  local indexOffset = keyOffset
+  if itemId == Herb and self:haveHerbs() then return 1
+  elseif itemId == MagicKey and self:haveKeys() then return keyOffset
+  else
+    local slotIndex = list.indexOf(self.slots, itemId, function(i1, i2) return i1 == i2 end)
+    return indexOffset + slotIndex
+  end
+end
+
 function Items:contains(itemId)
-  return table.contains(self.slots, itemId)
+  if itemId == Herb then return self:haveHerbs()
+  elseif itemId == MagicKey then return self:haveKeys()
+  else return table.contains(self.slots, itemId, function(i1, i2) return i1 == i2 end)
+  end
 end
 
 function Items:numberOfTorches()
@@ -69,6 +88,10 @@ end
 
 function Items:numberOfWings()
   return table.count(self.slots, Wings)
+end
+
+function Items:hasWings()
+  return self:numberOfWings() > 0
 end
 
 function Items:hasDragonScale()
@@ -115,11 +138,69 @@ function Items:hasRainbowDrop()
   return self:contains(RainbowDrop)
 end
 
+function Items:haveKeys()
+  return self.nrKeys > 0
+end
+
+function Items:haveHerbs()
+  return self.nrHerbs > 0
+end
+
 function Items:equals(i)
   return self.nrHerbs == i.nrHerbs and
          self.nrKeys == i.nrKeys and
          #(self.slots) == #(i.slots) and
          list.all(list.zipWith(self.slots, i.slots), function (is) return is[1] == is[2] end)
+end
+
+-- =====================
+-- ===== Statuses! =====
+-- =====================
+
+-- 0xdf | 0x80=Hero asleep, 0x40=Enemy asleep, 0x20=Enemy's spell stopped,
+--      | 0x10=Hero's spell stopped, 0x8=You have left throne room,
+--      | 0x4=Death necklace obtained, 0x2=Returned Gwaelin, 0x1=Carrying Gwaelin
+
+-- 0xcf | Spells/Quest Prog | 0x80=death necklace equipped, 0x40=cursed belt equipped,
+--      |                   | 0x20=fighters ring equipped, 0x10=dragon's scale equipped,
+--      |                   | 0x8=rainbow bridge, 0x4=stairs in charlock found
+
+Statuses = class(function(a, cfByte, dfByte)
+  -- CF
+  a.stairsInCharlock      = bitwise_and(cfByte, 0x4)  > 0
+  a.rainbowBridge         = bitwise_and(cfByte, 0x8)  > 0
+  a.dragonScaleEquipped   = bitwise_and(cfByte, 0x10) > 0
+  a.fightersRingEquipped  = bitwise_and(cfByte, 0x20) > 0
+  a.cursedBeltEquipped    = bitwise_and(cfByte, 0x40) > 0
+  a.deathNecklaceEquipped = bitwise_and(cfByte, 0x80) > 0
+  -- DF
+  a.carryingGwaelin       = bitwise_and(dfByte, 0x1)  > 0
+  a.returnedGwaelin       = bitwise_and(dfByte, 0x2)  > 0
+  a.deathNecklaceObtained = bitwise_and(dfByte, 0x4)  > 0
+  a.leftThroneRoom        = bitwise_and(dfByte, 0x8)  > 0
+  a.heroSpellStopped      = bitwise_and(dfByte, 0x10) > 0
+  a.enemySpellStopped     = bitwise_and(dfByte, 0x20) > 0
+  a.enemyAsleep           = bitwise_and(dfByte, 0x40) > 0
+  a.heroAsleep            = bitwise_and(dfByte, 0x80) > 0
+end)
+
+function Statuses:__tostring()
+  local res = "=== Statuses ===\n"
+  res = res .. "stairsInCharlock: "      .. tostring(self.stairsInCharlock) .. "\n"
+  res = res .. "rainbowBridge: "         .. tostring(self.rainbowBridge) .. "\n"
+  res = res .. "dragonScaleEquipped: "   .. tostring(self.dragonScaleEquipped) .. "\n"
+  res = res .. "fightersRingEquipped: "  .. tostring(self.fightersRingEquipped) .. "\n"
+  res = res .. "cursedBeltEquipped: "    .. tostring(self.cursedBeltEquipped) .. "\n"
+  res = res .. "deathNecklaceEquipped: " .. tostring(self.deathNecklaceEquipped) .. "\n"
+  res = res .. "carryingGwaelin: "       .. tostring(self.carryingGwaelin) .. "\n"
+  res = res .. "returnedGwaelin: "       .. tostring(self.returnedGwaelin) .. "\n"
+  res = res .. "deathNecklaceObtained: " .. tostring(self.deathNecklaceObtained) .. "\n"
+  res = res .. "leftThroneRoom: "        .. tostring(self.leftThroneRoom) .. "\n"
+  res = res .. "heroSpellStopped: "      .. tostring(self.heroSpellStopped) .. "\n"
+  res = res .. "enemySpellStopped: "     .. tostring(self.enemySpellStopped) .. "\n"
+  res = res .. "enemyAsleep: "           .. tostring(self.enemyAsleep) .. "\n"
+  res = res .. "heroAsleep: "            .. tostring(self.heroAsleep) .. "\n"
+  return res
 end
 
 -- =====================
@@ -269,9 +350,7 @@ end
 
 -- 0xce | Spells unlocked   | 0x80=repel, 0x40=return, 0x20=outside, 0x10=stopspell,
 --      |                   | 0x8=radiant, 0x4=sleep, 0x2=hurt, 0x1=heal
--- 0xcf | Spells/Quest Prog | 0x80=death necklace equipped, 0x40=cursed belt equipped,
---      |                   | 0x20=fighters ring equipped, 0x10=dragon's scale equipped,
---      |                   | 0x8=rainbow bridge, 0x4=stairs in charlock found, 0x2=hurtmore, 0x1=healmore
+-- 0xcf | Spells/Quest Prog | 0x2=hurtmore, 0x1=healmore
 
 CE_BYTE = 0xce
 CF_BYTE = 0xcf
@@ -345,23 +424,28 @@ function Spells:equals(spells)
   end
 end
 
+function Spells:haveReturn()
+  return self:spellIndex(Return) ~= nil
+end
 
 -- =======================
 -- === All Player data ===
 -- =======================
 
-PlayerData = class(function(a,stats,equipment,spells,items)
+PlayerData = class(function(a,stats,equipment,spells,items,statuses)
   a.stats = stats
   a.equipment = equipment
   a.spells = spells
   a.items = items
+  a.statuses = statuses
 end)
 
 function PlayerData:equals(pd)
   return self.stats:equals(pd.stats) and
          self.equipment:equals(pd.equipment) and
          self.spells:equals(pd.spells) and
-         self.items:equals(pd.items)
+         self.items:equals(pd.items) and
+         self.statuses:equals(pd.statuses)
 end
 
 function PlayerData:__tostring()
@@ -370,5 +454,6 @@ function PlayerData:__tostring()
   res = res .. tostring(self.equipment)
   res = res .. tostring(self.spells)
   res = res .. tostring(self.items)
+  res = res .. tostring(self.statuses)
   return res
 end

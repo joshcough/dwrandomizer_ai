@@ -5,60 +5,31 @@ require 'enemies'
 require 'game'
 require 'helpers'
 require 'hud'
+require 'map_scripts'
 require 'overworld'
 require 'static_maps'
 
-AI = class(function(a, game)
-  a.game = game
-end)
+-- TODO:
+-- Damage calculation is:
+-- (atkpwr-(enemy agi/2))/4 through (atkpwr-(enemy agi/2))/2
 
--- A thing draws near!
-function AI:onEncounter()
-  return function(address)
-    self.game:startEncounter()
-  end
-end
+AI = class(function(a, game) a.game = game end)
 
-function AI:explore() self.game:explore() end
-
-function AI:stateMachine()
-  if self.game.in_battle then
-    self:executeBattle()
-  else
-    print("not in battle, going to explore")
-    self:explore()
-    print("done with call to explore...")
-  end
-end
-
-function AI:executeBattle()
-  self.game:executeBattle()
-end
-
-function AI:enemyRun()
-  return function(address)
-    self.game:enemyRun()
-  end
-end
-
-function AI:playerRun()
-  return function(address)
-    self.game:playerRun()
-  end
-end
-
-function AI:onPlayerMove()
-  return function(address)
-    self.game:onPlayerMove()
-  end
-end
+function AI:onEncounter()   return function(address) self.game:startEncounter() end end
+function AI:enemyRun()      return function(address) self.game:enemyRun() end end
+function AI:playerRun()     return function(address) self.game:playerRun() end end
+function AI:onPlayerMove()  return function(address) self.game:onPlayerMove() end end
+function AI:onMapChange()   return function(address) self.game:onMapChange() end end
+function AI:endRepelTimer() return function(address) self.game:endRepelTimer() end end
 
 function AI:register(memory)
   memory.registerexecute(0xcf44, self:onEncounter())
   memory.registerexecute(0xefc8, self:enemyRun())
   memory.registerexecute(0xe8a4, self:playerRun())
-  memory.registerwrite(0x3a, self:onPlayerMove())
-  memory.registerwrite(0x3b, self:onPlayerMove())
+  memory.registerwrite  (0x3a,   self:onPlayerMove())
+  memory.registerwrite  (0x3b,   self:onPlayerMove())
+  memory.registerwrite  (0x45,   self:onMapChange())
+  memory.registerexecute(0xca83, self:endRepelTimer())
 end
 
 -------------------
@@ -68,15 +39,16 @@ end
 function main()
   hud_main()
 
-  -- give ourself gold, xp, best equipment, etc
-  memory.writebyte(0xbb, 65535 / 256)
-  memory.writebyte(0xba, 65535 % 256)
-  memory.writebyte(0xbe, 255) -- best equipment
-  memory.writebyte(0xbf, 6)   -- 6 herbs
-  memory.writebyte(0xc0, 6)   -- 6 keys
-  memory.writebyte(0xc1, 14)  -- rainbow drop
-
   local mem = Memory(memory, rom)
+
+  -- give ourself gold, xp, best equipment, etc
+  mem:writeRAM(0xbb, 65535 / 256)
+  mem:writeRAM(0xba, 65535 % 256)
+  mem:writeRAM(0xbe, 255) -- best equipment
+  mem:writeRAM(0xbf, 6)   -- 6 herbs
+  mem:writeRAM(0xc0, 6)   -- 6 keys
+  mem:writeRAM(0xc1, 14)  -- rainbow drop
+
   -- always save the maps man. if we dont do this
   -- we start getting out of date and bad stuff happens.
   saveStaticMaps(mem, table.concat(WARPS, list.map(WARPS, swapSrcAndDest)))
@@ -85,14 +57,18 @@ function main()
   local ai = AI(game)
   ai:register(memory)
 
+  game.tantegelLoc = game:getLocation()
+  print("game.tantegelLoc", game.tantegelLoc)
+
   -- TODO: this is a hack
   -- right now this gets called when we move
   -- but we need to call it here once before we move, too.
   game.overworld:getVisibleOverworldGrid(game:getX(), game:getY())
+  print(game:readPlayerData())
 
   emu.speedmode("normal")
   while true do
-    ai:stateMachine()
+    game:stateMachine()
     emu.frameadvance()
   end
 end
@@ -107,9 +83,9 @@ main()
 -- game:cast(Repel)
 --     local spells = game.memory:readPlayerData().spells
 --     print(spells:spellIndex(Healmore))
+--   game:interpretScript(scripts.throneRoomOpeningGameScript())
 
 -- game:gameStartScript()
---   print(game:readPlayerData())
 --   game:goTo(Point(Tantegel, 29,29))
 --   game:takeStairs(Point(Tantegel, 29,29))
 --   game:goTo(Point(TantegelThroneRoom, 3,4))
@@ -126,3 +102,20 @@ main()
 -- table.print(shortestPath(Point(TantegelThroneRoom, 1,1), Point(TantegelThroneRoom, 1,8), true))
 -- table.print(shortestPath(Point(Charlock, 10,19), Point(CharlockThroneRoom, 17,24), true))
 
+-- These are some cool things, but, I don't think I actually really need them
+-- so just dumping them here.
+
+--   -- .alias RadiantTimer     $DA     ;Remaining time for radiant spell.
+--   memory.registerwrite(0xDA, function(address)
+--     print(self.game.memory:readRAM(0xDA))
+--   end)
+--   -- .alias RepelTimer       $DB     ;Remining repel spell time.
+--   memory.registerwrite(0xDB, function(address)
+--     if self.game.memory:getRepelTimer() > 100 then
+--       self.game.memory:setRepelTimer(10)
+--     end
+--   end)
+
+--   game:useItem(Herb)
+--   game:useItem(MagicKey)
+--   game:useItem(RainbowDrop)

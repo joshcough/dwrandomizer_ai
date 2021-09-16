@@ -40,6 +40,12 @@ function Memory:getLocation ()
   return Point(self:getMapId(), self:getX(), self:getY())
 end
 
+function Memory:getRadiantTimer () return self:readRAM(0xDA) end
+function Memory:setRadiantTimer (n) return self:writeRAM(0xDA, n) end
+
+function Memory:getRepelTimer () return self:readRAM(0xDB) end
+function Memory:setRepelTimer (n) return self:writeRAM(0xDB, n) end
+
 -- get the id of the current enemy, if it exists
 -- no idea what gets returned if not in battle
 function Memory:getEnemyId () return self.ram.readbyte(ENEMY_ID_ADDR)+1 end
@@ -75,6 +81,10 @@ function Memory:getItems()
   return Items(self:getItemNumberOfHerbs(), self:getItemNumberOfKeys(), slots)
 end
 
+function Memory:getStatuses()
+  return Statuses(self.ram.readbyte(0xcf), self.ram.readbyte(0xdf))
+end
+
 function Memory:getEquipment()
   local b = self.ram.readbyte(0xbe)
   local weaponId = bitwise_and(b, 224)
@@ -106,8 +116,9 @@ function Memory:getXP()
 end
 
 function Memory:getGold()
-  local highB = self.ram.readbyte(0xbc)
-  local lowB = self.ram.readbyte(0xbd)
+  -- todo have to check this with values over 256
+  local highB = self.ram.readbyte(0xbd)
+  local lowB = self.ram.readbyte(0xbc)
   return (highB * 2^8 + lowB)
 end
 
@@ -152,5 +163,5 @@ function Memory:spells()
 end
 
 function Memory:readPlayerData()
-  return PlayerData(self:readStats(), self:getEquipment(), self:spells(), self:getItems())
+  return PlayerData(self:readStats(), self:getEquipment(), self:spells(), self:getItems(), self:getStatuses())
 end
