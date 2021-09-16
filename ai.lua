@@ -5,6 +5,7 @@ require 'enemies'
 require 'game'
 require 'helpers'
 require 'hud'
+require 'map_scripts'
 require 'overworld'
 require 'static_maps'
 
@@ -56,7 +57,6 @@ function main()
   local ai = AI(game)
   ai:register(memory)
 
---   game:leaveTantegelFromX0Y9()
   game.tantegelLoc = game:getLocation()
   print("game.tantegelLoc", game.tantegelLoc)
 
@@ -64,6 +64,7 @@ function main()
   -- right now this gets called when we move
   -- but we need to call it here once before we move, too.
   game.overworld:getVisibleOverworldGrid(game:getX(), game:getY())
+  print(game:readPlayerData())
 
   emu.speedmode("normal")
   while true do
@@ -82,9 +83,9 @@ main()
 -- game:cast(Repel)
 --     local spells = game.memory:readPlayerData().spells
 --     print(spells:spellIndex(Healmore))
+--   game:interpretScript(scripts.throneRoomOpeningGameScript())
 
 -- game:gameStartScript()
---   print(game:readPlayerData())
 --   game:goTo(Point(Tantegel, 29,29))
 --   game:takeStairs(Point(Tantegel, 29,29))
 --   game:goTo(Point(TantegelThroneRoom, 3,4))
@@ -114,3 +115,7 @@ main()
 --       self.game.memory:setRepelTimer(10)
 --     end
 --   end)
+
+--   game:useItem(Herb)
+--   game:useItem(MagicKey)
+--   game:useItem(RainbowDrop)
