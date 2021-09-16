@@ -81,6 +81,10 @@ function Memory:getItems()
   return Items(self:getItemNumberOfHerbs(), self:getItemNumberOfKeys(), slots)
 end
 
+function Memory:getStatuses()
+  return Statuses(self.ram.readbyte(0xcf), self.ram.readbyte(0xdf))
+end
+
 function Memory:getEquipment()
   local b = self.ram.readbyte(0xbe)
   local weaponId = bitwise_and(b, 224)
@@ -112,8 +116,9 @@ function Memory:getXP()
 end
 
 function Memory:getGold()
-  local highB = self.ram.readbyte(0xbc)
-  local lowB = self.ram.readbyte(0xbd)
+  -- todo have to check this with values over 256
+  local highB = self.ram.readbyte(0xbd)
+  local lowB = self.ram.readbyte(0xbc)
   return (highB * 2^8 + lowB)
 end
 
@@ -158,5 +163,5 @@ function Memory:spells()
 end
 
 function Memory:readPlayerData()
-  return PlayerData(self:readStats(), self:getEquipment(), self:spells(), self:getItems())
+  return PlayerData(self:readStats(), self:getEquipment(), self:spells(), self:getItems(), self:getStatuses())
 end

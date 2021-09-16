@@ -143,20 +143,26 @@ end
 -- todo: what should this function return?
 function Game:interpretScript(s)
   print(s)
+  -- TODO: im not sure if these first two cases are reeeeallly needed, but they dont hurt.
   if     self.inBattle then self:executeBattle()
   elseif self.repelTimerWindowOpen then self:closeRepelTimerWindow()
   elseif s:is_a(ActionScript)
     then
-      if     s.enum == Actions.DO_NOTHING then return
-      elseif s.enum == Actions.OPEN_CHEST then self:openChestScript()
-      elseif s.enum == Actions.SEARCH     then self:searchGroundScript()
-      elseif s.enum == Actions.EXIT       then self:exitDungeonScript()
-      elseif s.enum == Actions.DEATH_WARP then self:deathWarp()
-      elseif s.enum == Actions.DEATH_WARP then self:savePrincess()
-      elseif s.enum == Actions.DEATH_WARP then self:fightDragonLord()
+      if     s == DoNothing     then return
+      elseif s == KingOpening   then self:kingScript()
+      elseif s == LeaveTantegel then self:leaveTantegelFromX0Y9()
+      elseif s == OpenChest     then self:openChestScript()
+      elseif s == Search        then self:searchGroundScript()
+      elseif s == Exit          then self:exitDungeonScript()
+      elseif s == DeathWarp     then self:deathWarp()
+      elseif s == SavePrincess  then self:savePrincess()
+      elseif s == DragonLord    then self:fightDragonLord()
+      elseif s == Save          then self:saveGame()
+      elseif s == CastReturn    then self:castReturn()
+      elseif s == UseWings      then self:useWings()
       end
   elseif s:is_a(Goto) then self:goTo(s.location)
-  elseif s:is_a(BranchScript)
+  elseif s:is_a(IfScript)
     then
       local branch = self:evaluateCondition(s.condition) and s.trueBranch or s.falseBranch
       -- future debugging, i promise: print(branch)
@@ -170,10 +176,23 @@ function Game:interpretScript(s)
 end
 
 function Game:evaluateCondition(s)
-  if s == HaveKeys then return self:haveKeys()
+  -- base conditions
+  if     s == HaveKeys then return self:haveKeys()
+  elseif s == HaveWings then return self:haveWings()
+  elseif s == HaveReturn then return self:haveReturn()
+  elseif s == LeftThroneRoom then return self:leftThroneRoom()
+  elseif s == HaveHarp then return self.playerData.items:hasSilverHarp()
+
   elseif s:is_a(IsChestOpen) then
     print("is the chest open at " .. tostring(s.location), table.containsUsingDotEquals(self.openChests, s.location))
     return table.containsUsingDotEquals(self.openChests, s.location)
+  -- combinators
+  elseif s:is_a(Any) then
+    return list.any(s.conditions, function(x) return self:evaluateCondition(x) end)
+  elseif s:is_a(All) then
+    return list.all(s.conditions, function(x) return self:evaluateCondition(x) end)
+  elseif s:is_a(Not) then
+    return not self:evaluateCondition(s.condition)
   else return false
   end
 end
@@ -205,6 +224,7 @@ end
 -- but lets how we even follow paths in this interpreter first.
 -- for now, doing nothing.
 function Game:exitDungeonScript ()
+  self:cast(Outside)
 end
 
 -- TODO: i have no idea how i am going to do this yet.
@@ -266,19 +286,7 @@ function Game:takeStairs (from, to)
   end
 end
 
-function Game:openThroneRoomChests ()
-  print("======opening throne room chests=======")
-  self:openChestAt(Point(TantegelThroneRoom, 4, 4))
-  self:openChestAt(Point(TantegelThroneRoom, 5, 4))
-  self:openChestAt(Point(TantegelThroneRoom, 6, 1))
-end
-
-function Game:leaveThroneRoom()
-  print("======leaving throne room=====")
-  self:goTo(Point(Tantegel, 0, 9))
-end
-
-function Game:menuScript ()
+function Game:gameStartMenuScript ()
   print("======executing menu script=======")
   pressStart(30)
   pressStart(30)
@@ -312,20 +320,6 @@ function Game:leaveTantegelFromX0Y9()
   holdLeft(30)
   self.tantegelLoc = self:getLocation()
   print("self.tantegelLoc: ", self.tantegelLoc)
-end
-
-function Game:throneRoomScript ()
-  print("======executing throne room script=======")
-  self:kingScript ()
-  self:openThroneRoomChests()
-  self:leaveThroneRoom()
-end
-
-function Game:gameStartScript ()
-  print("======executing game start script=======")
-  self:menuScript()
-  self:throneRoomScript()
-  self:leaveTantegelFromX0Y9()
 end
 
 -- TODO: this whole function needs to get redone completely. this is just a hack.
@@ -504,11 +498,13 @@ function Game:explore()
 end
 
 -- TODO: the logic here for getting a script for a map should probably belong in map_scripts.lua
+-- we could use a map to store them. but it might be awkward with swamp N?S?
 function Game:exploreStaticMap()
   waitUntil(function() return self:onStaticMap() end, 240)
   local loc = self:getLocation()
-  if loc.mapId == GarinsGraveLv1
-  then self:interpretScript(scripts.exploreGraveScript())
+  local script = scripts.MapScripts[loc.mapId]
+
+  if script ~= nil then self:interpretScript(script)
   else
     if (emu.framecount() % 60 == 0) then
       print("i don't yet know how to explore this map: " .. tostring(loc), ", " .. tostring(MAP_DATA[loc.mapId]))
@@ -588,7 +584,6 @@ function Game:getCombinedGraphs()
   return graphs
 end
 
-
 function Game:exploreMove()
   print("we have a destination. about to move towards it from: ", self:getLocation(), " to ", self.exploreDest)
   -- TODO: we are calculating the shortest path twice... we need to do better than that
@@ -654,11 +649,41 @@ function Game:onMapChange()
   print("The map has changed! currentLoc: " .. tostring(self:getLocation()))
 end
 
+function Game:openItemMenu()
+  self:openMenu()
+  pressRight(2)
+  pressDown(2)
+  pressA(2)
+  waitFrames(30)
+end
+
 function Game:openSpellMenu()
   self:openMenu()
   pressRight(2)
   pressA(2)
   waitFrames(30)
+end
+
+-- TODO: does this work in battle as well as on the overworld?
+-- it probably should, but, i have not checked yet.
+-- TODO: didn't work completely for RainbowDrop
+-- might need to do a little extra work there.
+function Game:useItem(item)
+  local itemIndex = self.playerData.items:itemIndex(item)
+  print("itemIndex", itemIndex)
+  if itemIndex == nil then
+    print("can't use " .. ITEMS[item] .. ", we don't have it.")
+    return
+  else
+    self:openItemMenu()
+    -- TODO: if it is faster to press UP, we should do that
+    for i = 1, itemIndex-1 do pressDown(2) end
+    -- wait 2 seconds for the item to be done being used.
+    -- TODO: do all items take the same length to use?
+    -- or is it possible to get out sooner than 2 seconds?
+    pressA(120)
+    pressB(2)
+  end
 end
 
 -- TODO: does this work in battle as well as on the overworld?
@@ -694,8 +719,34 @@ function Game:castRepel(disregardTimer)
   end
 end
 
+function Game:castReturn()
+  self:cast(Return)
+end
+
+function Game:save()
+  self:openMenu()
+  holdA(180)
+  pressB(2)
+end
+
+function Game:useWings()
+  self:useItem(Wings)
+end
+
 function Game:haveKeys()
   return self.playerData.items:haveKeys()
+end
+
+function Game:haveWings()
+  return self.playerData.items:haveWings()
+end
+
+function Game:haveReturn()
+  return self.playerData.spells:haveReturn()
+end
+
+function Game:leftThroneRoom()
+  return self.playerData.statuses.leftThroneRoom
 end
 
 function Game:endRepelTimer()
