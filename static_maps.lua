@@ -198,8 +198,34 @@ DUNGEON_TILES = {
 }
 
 IMMOBILE_NPCS = {
+  [Charlock] = {},
+  [Hauksness] = {},
   [Tantegel] = {{2,8}, {8,6}, {8,8}, {27,5}, {26,15}, {9,27}, {12,27}, {15, 20}},
-  [TantegelThroneRoom] = {{3,6}, {5,6}}
+  [TantegelThroneRoom] = {{3,6}, {5,6}},
+  [CharlockThroneRoom] = {},
+  [Kol] = {},
+  [Brecconary] = {},
+  [Garinham] = {{2,17}, {9,6}, {14,1}},
+  [Cantlin] = {},
+  [Rimuldar] = {{2,4}, {27,0}},
+  [TantegelBasement] = {},
+  [NorthernShrine] = {},
+  [SouthernShrine] = {},
+  [CharlockCaveLv1] = {},
+  [CharlockCaveLv2] = {},
+  [CharlockCaveLv3] = {},
+  [CharlockCaveLv4] = {},
+  [CharlockCaveLv5] = {},
+  [CharlockCaveLv6] = {},
+  [SwampCave] = {},
+  [MountainCaveLv1] = {},
+  [MountainCaveLv2] = {},
+  [GarinsGraveLv1] = {},
+  [GarinsGraveLv2] = {},
+  [GarinsGraveLv3] = {},
+  [GarinsGraveLv4] = {},
+  [ErdricksCaveLv1] = {},
+  [ErdricksCaveLv2] = {},
 }
 
 function getImmobileNPCsForMap(mapId)
