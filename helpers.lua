@@ -34,6 +34,10 @@ function loNibble(b) return bitwise_and(b, 0x0F) end
 function isEven(n) return n%2 == 0 end
 function isOdd(n) return n%2 == 1 end
 
+function round(n)
+  return n % 1 >= 0.5 and math.ceil(n) or math.floor(n)
+end
+
 function table.shallow_copy(t)
   local t2 = {}
   for k,v in pairs(t) do
@@ -168,7 +172,7 @@ end
 function table.count(list, x, equalityOp)
   local res = 0
   for _, v in pairs(list) do
-    if equalityOp == nil and v == x then res = res + 1
+    if equalityOp == nil then if v == x then res = res + 1 end
     elseif equalityOp(x, v) then res = res + 1
     end
   end
@@ -242,14 +246,43 @@ function list.join(t)
   return res
 end
 
+-- intersperse :: a -> [a] -> [a]
+--The intersperse function takes an element and a list and `intersperses'
+-- that element between the elements of the list. For example,
+-- >>> intersperse ',' "abcde"
+-- "a,b,c,d,e"
+function list.intersperse(a, t)
+  local res = {}
+  for i = 1, #(t) do
+    table.insert(res, t[i])
+    if i < #(t) then table.insert(res, a) end
+  end
+  return res
+end
+
+-- intercalateS :: String -> [String] -> String
+function list.intercalateS(a, t)
+  local res = ""
+  for i = 1, #(t) do
+    res = res .. tostring(t[i])
+    if i < #(t) then res = res .. a end
+  end
+  return res
+end
+
 function list.indexOf(t, v, eqOp)
   for i = 1, #t do
-    if eqOp == nil
-      then if v == t[i] then return i end
-      elseif eqOp(v,t[i]) then return i
+    if eqOp == nil then
+      if v == t[i] then return i end
+    else
+      if eqOp(v,t[i]) then return i end
     end
   end
   return nil
+end
+
+function list.exists(t, v, eqOp)
+  return list.indexOf(t, v, eqOp)
 end
 
 function list.delete(t, index)

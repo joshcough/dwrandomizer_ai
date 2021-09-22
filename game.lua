@@ -21,8 +21,10 @@ Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsW
   a.tantegelLoc = nil
   a.repelTimerWindowOpen = false
   a.unlockedDoors = {}
-  -- TODO: when we get back on the overworld, we need to set this back to {}
-  a.openChests = {}
+  a.weaponAndArmorShops = memory:readWeaponAndArmorShops()
+  a.searchSpots = memory:readSearchSpots()
+  a.chests = memory:readChests()
+  a.lastPrintedPercentage = 0
 end)
 
 function newGame(memory)
@@ -119,11 +121,20 @@ function Game:followPath(path)
     if self.inBattle then return GotoExitValues.IN_BATTLE
     elseif self.repelTimerWindowOpen then return GotoExitValues.REPEL_TIMER
     elseif c.direction == "Door" then self:openDoorScript(c.to)
-    elseif c.direction == "Stairs" then self:takeStairs(c.from, c.to)
+    elseif c.direction == "Stairs" then self:takeStairs(c.from)
     else
+      local startingLoc = self:getLocation()
       holdButtonUntil(c.direction, function ()
         dest = c.to
         local loc = self:getLocation()
+        if loc.mapId == 1 and not loc:equals(startingLoc) then
+          self.overworld:getVisibleOverworldGrid(self:getX(), self:getY())
+          local currentPercentageSeen = round(self:percentageOfWorldSeen())
+          if self.lastPrintedPercentage < currentPercentageSeen then
+            print("percentageOfWorldSeen: " .. currentPercentageSeen)
+            self.lastPrintedPercentage = currentPercentageSeen
+          end
+        end
         -- print("current point: ", memory:getLocation(), "c.to: ", c.to, "equal?: ", p:equals(c.to))
         return loc:equals(c.to) or self.inBattle or self.repelTimerWindowOpen
       end)
@@ -153,39 +164,52 @@ function Game:interpretScript(s)
       elseif s == LeaveTantegel then self:leaveTantegelFromX0Y9()
       elseif s == OpenChest     then self:openChestScript()
       elseif s == Search        then self:searchGroundScript()
+      elseif s == Stairs        then self:takeStairs(self:getLocation())
       elseif s == Exit          then self:exitDungeonScript()
       elseif s == DeathWarp     then self:deathWarp()
       elseif s == SavePrincess  then self:savePrincess()
       elseif s == DragonLord    then self:fightDragonLord()
-      elseif s == Save          then self:saveGame()
+      elseif s == Save          then self:saveWithKing()
       elseif s == CastReturn    then self:castReturn()
       elseif s == UseWings      then self:useWings()
+      elseif s == ShopKeeper    then self:talkToShopKeeper()
+      elseif s == InnKeeper     then self:kingScript() -- TODO
       end
   elseif s:is_a(Goto) then self:goTo(s.location)
   elseif s:is_a(IfScript)
     then
       local branch = self:evaluateCondition(s.condition) and s.trueBranch or s.falseBranch
-      -- future debugging, i promise: print(branch)
       self:interpretScript(branch)
   elseif s:is_a(ListScript)
     then
       for i,branch in pairs(s.scripts) do
         self:interpretScript(branch)
       end
+  elseif s:is_a(PressButtonScript) then pressButton(s.button.name, 2)
+  elseif s:is_a(HoldButtonScript) then holdButton(s.button.name, s.duration)
+  elseif s:is_a(WaitFrames) then waitFrames(s.duration)
+  elseif s:is_a(DebugScript) then print(s.name)
   end
 end
 
 function Game:evaluateCondition(s)
   -- base conditions
-  if     s == HaveKeys then return self:haveKeys()
-  elseif s == HaveWings then return self:haveWings()
-  elseif s == HaveReturn then return self:haveReturn()
+  if     s == HaveKeys       then return self:haveKeys()
+  elseif s == HaveWings      then return self:haveWings()
+  elseif s == HaveReturn     then return self:haveReturn()
   elseif s == LeftThroneRoom then return self:leftThroneRoom()
-  elseif s == HaveHarp then return self.playerData.items:hasSilverHarp()
+  elseif s == HaveHarp       then return self.playerData.items:hasSilverHarp()
+  elseif s == HaveToken      then return self.playerData.items:hasErdricksToken()
+  elseif s == HaveStones     then return self.playerData.items:hasStonesOfSunlight()
+  elseif s == HaveStaff      then return self.playerData.items:hasStaffOfRain()
+  elseif s == NeedKeys       then return self:needKeys()
 
-  elseif s:is_a(IsChestOpen) then
-    print("is the chest open at " .. tostring(s.location), table.containsUsingDotEquals(self.openChests, s.location))
-    return table.containsUsingDotEquals(self.openChests, s.location)
+  elseif s:is_a(HaveGold)    then return self.playerData.stats.gold >= s.minAmountOfGold
+  elseif s:is_a(HaveKeys)    then return self.playerData.items.nrKeys >= s.minAmountOfGold
+  elseif s:is_a(AtLocation)  then return self:getLocation():equals(s.location)
+  elseif s:is_a(IsChestOpen) then return self.chests:isChestOpen(s.location)
+  elseif s:is_a(HasChestEverBeenOpened) then return self.chests:hasChestEverBeenOpened(s.location)
+
   -- combinators
   elseif s:is_a(Any) then
     return list.any(s.conditions, function(x) return self:evaluateCondition(x) end)
@@ -237,6 +261,15 @@ end
 
 -- todo: this one shouldn't really be that hard either
 function Game:fightDragonLord ()
+  print("open menu")
+  self:openMenu()
+  -- TODO: this is all messed up.
+--   pressA(30)
+--   pressA(30)
+--   pressDown(2)
+--   pressA(2)
+--   self.inBattle = true
+--   self:executeDragonLordBattle()
 end
 
 -- TODO: we could just implement this the same way as `self:searchGroundScript()`
@@ -245,7 +278,7 @@ function Game:openChestScript ()
   self:openMenu()
   pressUp(2)
   pressRight(2)
-  table.insert(self.openChests, self:getLocation())
+  self.chests:openChestAt(self:getLocation())
   pressA(40)
 end
 
@@ -254,6 +287,7 @@ function Game:searchGroundScript ()
   self:openMenu()
   pressUp(2)
   pressA(40)
+  self.searchSpots:searchAt(self:getLocation())
 end
 
 function Game:openDoorScript (point)
@@ -270,8 +304,7 @@ function Game:openDoorScript (point)
   self:saveUnlockedDoor(point)
 end
 
--- TODO: looks like the to argument here isn't really needed.
-function Game:takeStairs (from, to)
+function Game:takeStairs (from)
   -- print("======taking stairs=======")
   self:openMenu()
   pressDown(2)
@@ -318,7 +351,9 @@ end
 function Game:leaveTantegelFromX0Y9()
   print("======leaving tantegel =======")
   holdLeft(30)
+  waitFrames(20)
   self.tantegelLoc = self:getLocation()
+  self.overworld:getVisibleOverworldGrid(self:getX(), self:getY())
   print("self.tantegelLoc: ", self.tantegelLoc)
 end
 
@@ -425,7 +460,7 @@ function convertPathToCommands(pathIn, maps)
     end
 
     function nextTileIsDoor()
-      if p2.mapId == Overworld then return false
+      if p2.mapId == OverWorldId then return false
       else return maps[p2.mapId]:getTileAt(p2.x, p2.y).name == "Door"
       end
     end
@@ -465,7 +500,7 @@ end
 function Game:atFirstImportantLocation()
   return self.overworld.importantLocations ~= nil and
          #(self.overworld.importantLocations) > 0 and
-         self.overworld.importantLocations[1]:equals(self:getLocation())
+         self.overworld.importantLocations[1].location:equals(self:getLocation())
 end
 
 function Game:explore()
@@ -474,7 +509,7 @@ function Game:explore()
 
   if atDestination then
     print("we are already at our destination...so gonna pick a new one... currently at: " .. tostring(loc))
-    if loc.mapId == Overworld then
+    if loc.mapId == OverWorldId then
       -- if the location is in overworld.importantLocations, then we have to remove it.
       -- TODO: this code is awful
       if self:atFirstImportantLocation()
@@ -489,11 +524,12 @@ function Game:explore()
     else self:exploreStaticMap()
     end
   else
-    if loc.mapId == Overworld then
+    if loc.mapId == OverWorldId then
       if self.exploreDest ~= nil then self:exploreMove()
       else self:exploreStart()
       end
-    else self:exploreStaticMap() end
+    else self:exploreStaticMap()
+    end
   end
 end
 
@@ -518,7 +554,7 @@ function Game:exploreStart()
   -- TODO: if there are multiple new locations, we should pick the closest one.
   local seeSomethingNew = #(self.overworld.importantLocations) > 0
   if seeSomethingNew then
-    local newImportantLoc = self.overworld.importantLocations[1]
+    local newImportantLoc = self.overworld.importantLocations[1].location
     -- if the the new location we have spotted on the overworld is tantegel itself, ignore it.
     if newImportantLoc:equals(self.tantegelLoc) then
       print("I see a castle, but its just tantegel, so I'm ignoring it")
@@ -526,7 +562,7 @@ function Game:exploreStart()
     else
       if self.exploreDest == nil or not self.exploreDest:equals(newImportantLoc) then
         print("I see something new at: ", newImportantLoc)
-        self:chooseNewDestinationDirectly(self.overworld.importantLocations[1])
+        self:chooseNewDestinationDirectly(self.overworld.importantLocations[1].location)
         -- TODO: once we make it into the new destination, we have some work to do
         --   we have to adjust the warps
         --   record somehow that we have been here
@@ -561,9 +597,13 @@ function Game:chooseNewDestination(tileSelectionStrat)
   -- otherwise, we either dont have a destination so we need to get one
   -- or we are at our destination already, so we need a new one
   local borderOfKnownWorld = self.overworld:knownWorldBorder()
+--   table.print(borderOfKnownWorld)
   local nrBorderTiles = #borderOfKnownWorld
   -- TODO: this is an error case that i might need to deal with somehow.
-  if nrBorderTiles == 0 then return end
+  if nrBorderTiles == 0 then
+    print("NO BORDER TILES!")
+    return
+  end
 
   self:chooseNewDestinationDirectly(tileSelectionStrat(borderOfKnownWorld))
 end
@@ -577,10 +617,7 @@ function Game:getCombinedGraphs()
   local staticGraphs = self:haveKeys() and self.graphsWithKeys or self.graphsWithoutKeys
   local graphs = {}
   graphs[1] = Graph(self.overworld:knownWorldGraph(), self:haveKeys())
-  for i, g in pairs(staticGraphs) do
-    graphs[i] = g
-  end
-
+  for i, g in pairs(staticGraphs) do graphs[i] = g end
   return graphs
 end
 
@@ -625,6 +662,16 @@ function Game:executeBattle()
   self.inBattle = false
 end
 
+-- TODO: this is broken
+function Game:executeDragonLordBattle()
+  function battleEnded () return not self.inBattle end
+  waitUntil(battleEnded, 120)
+  holdAUntil(battleEnded, 240)
+  waitUntil(battleEnded, 60)
+  pressA(10)
+  self.inBattle = false
+end
+
 function Game:enemyRun()
   print("the enemy is running!")
   self.inBattle = false
@@ -636,17 +683,14 @@ function Game:playerRun()
 end
 
 function Game:onPlayerMove()
-  if self:getMapId() == 1
-    then
-      -- print(self:getLocation())
-      -- self:printVisibleGrid()
-      self.overworld:getVisibleOverworldGrid(self:getX(), self:getY())
-      print("percentageOfWorldSeen: " .. self:percentageOfWorldSeen())
-  end
+  -- this wasn't working quite right
+  -- so i just folded it into the followPath algo.
+  -- i think that is a better spot for it anyway
 end
 
 function Game:onMapChange()
   print("The map has changed! currentLoc: " .. tostring(self:getLocation()))
+  if self:getMapId() == OverWorldId then self.chests:closeAll() end
 end
 
 function Game:openItemMenu()
@@ -723,7 +767,7 @@ function Game:castReturn()
   self:cast(Return)
 end
 
-function Game:save()
+function Game:saveWithKing()
   self:openMenu()
   holdA(180)
   pressB(2)
@@ -737,8 +781,15 @@ function Game:haveKeys()
   return self.playerData.items:haveKeys()
 end
 
+-- TODO: obviously we can do better than this
+-- like, do we ever need to open any more doors?
+-- if not, then we dont need keys
+function Game:needKeys()
+  return self.playerData.items.nrKeys < 6
+end
+
 function Game:haveWings()
-  return self.playerData.items:haveWings()
+  return self.playerData.items:hasWings()
 end
 
 function Game:haveReturn()
@@ -752,4 +803,13 @@ end
 function Game:endRepelTimer()
   print("repel has ended")
   self.repelTimerWindowOpen = true
+end
+
+function Game:talkToShopKeeper()
+  self.weaponAndArmorShops:visitShopAt(self:getLocation())
+  -- TODO: here, we just print out things that we know.
+  -- but really, we need to make a decision on if we should buy the upgrade
+  -- and if so, then go ahead and actualy buy it.
+  print(self.weaponAndArmorShops:getAllKnownUpgrades(self.playerData))
+  print(self.weaponAndArmorShops:getAllKnownAffordableUpgrades(self.playerData))
 end

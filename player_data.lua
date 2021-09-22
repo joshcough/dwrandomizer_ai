@@ -1,48 +1,77 @@
+require 'Class'
+enum = require("enum")
+
 -- =====================
 -- ======= Items =======
 -- =====================
 
-Torch = 0x1
-FairyWater = 0x2
-Wings = 0x3
-DragonScale = 0x4
-FairyFlute = 0x5
-FightersRing = 0x6
-ErdricksToken = 0x7
-GwaelinsLove = 0x8
-CursedBelt = 0x9
-SilverHarp = 0xa
-DeathNecklace = 0xb
-StonesOfSunlight = 0xc
-StaffOfRain = 0xd
-RainbowDrop = 0xe
-Herb = 0xf
-MagicKey = 0x10
+TorchByte = 0x1
+FairyWaterByte = 0x2
+WingsByte = 0x3
+DragonScaleByte = 0x4
+FairyFluteByte = 0x5
+FightersRingByte = 0x6
+ErdricksTokenByte = 0x7
+GwaelinsLoveByte = 0x8
+CursedBeltByte = 0x9
+SilverHarpByte = 0xa
+DeathNecklaceByte = 0xb
+StonesOfSunlightByte = 0xc
+StaffOfRainByte = 0xd
+RainbowDropByte = 0xe
+HerbByte = 0xf
+MagicKeyByte = 0x10
+
+Item = class(function(a, byte, name)
+  a.byte = byte
+  a.name = name
+end)
+
+function Item:__tostring()
+  return self.name
+end
+
+Torch = Item(TorchByte, "Torch")
+FairyWater = Item(FairyWaterByte, "Fairy Water")
+Wings = Item(WingsByte, "Wings")
+DragonScale = Item(DragonScaleByte, "Dragon's Scale")
+FairyFlute = Item(FairyFluteByte, "Fairy Flute")
+FightersRing = Item(FightersRingByte, "Fighter's Ring")
+ErdricksToken = Item(ErdricksTokenByte, "Erdrick's Token")
+GwaelinsLove = Item(GwaelinsLoveByte, "Gwaelin's Love")
+CursedBelt = Item(CursedBeltByte, "Cursed Belt")
+SilverHarp = Item(SilverHarpByte, "Silver Harp")
+DeathNecklace = Item(DeathNecklaceByte, "Death Necklace")
+StonesOfSunlight = Item(StonesOfSunlightByte, "Stones of Sunlight")
+StaffOfRain = Item(StaffOfRainByte, "Staff of Rain")
+RainbowDrop = Item(RainbowDropByte, "Rainbow Drop")
+Herb = Item(HerbByte, "Herb")
+MagicKey = Item(MagicKeyByte, "Magic Key")
 
 ITEMS = {
-  [Torch] = "Torch",
-  [FairyWater] = "Fairy Water",
-  [Wings] = "Wings",
-  [DragonScale] = "Dragon's Scale",
-  [FairyFlute] = "Fairy Flute",
-  [FightersRing] = "Fighter's Ring",
-  [ErdricksToken] = "Erdrick's Token",
-  [GwaelinsLove] = "Gwaelin's Love",
-  [CursedBelt] = "Cursed Belt",
-  [SilverHarp] = "Silver Harp",
-  [DeathNecklace] = "Death Necklace",
-  [StonesOfSunlight] = "Stones of Sunlight",
-  [StaffOfRain] = "Staff of Rain",
-  [RainbowDrop] = "Rainbow Drop",
+  [Torch.byte] = Torch,
+  [FairyWater.byte] = FairyWater,
+  [Wings.byte] = Wings,
+  [DragonScale.byte] = DragonScale,
+  [FairyFlute.byte] = FairyFlute,
+  [FightersRing.byte] = FightersRing,
+  [ErdricksToken.byte] = ErdricksToken,
+  [GwaelinsLove.byte] = GwaelinsLove,
+  [CursedBelt.byte] = CursedBelt,
+  [SilverHarp.byte] = SilverHarp,
+  [DeathNecklace.byte] = DeathNecklace,
+  [StonesOfSunlight.byte] = StonesOfSunlight,
+  [StaffOfRain.byte] = StaffOfRain,
+  [RainbowDrop.byte] = RainbowDrop,
   -- these are not really used:
-  [Herb] = "Herb",
-  [MagicKey] = "Magic Key",
+  [Herb.byte] = Herb,
+  [MagicKey.byte] = MagicKey,
 }
 
 Items = class(function(a,nrHerbs,nrKeys,slots)
   a.nrHerbs = nrHerbs
   a.nrKeys = nrKeys
-  a.slots = slots
+  a.slots = list.map(slots, function(slot) return ITEMS[slot] end)
 end)
 
 function Items:__tostring()
@@ -50,10 +79,7 @@ function Items:__tostring()
   res = res .. "Keys: " .. self.nrKeys .. "\n"
   res = res .. "Herbs: " .. self.nrHerbs .. "\n"
   for idx = 1,#(self.slots) do
-    if self.slots[idx] ~= 0
-    then
-      res = res .. idx .. ": " .. ITEMS[self.slots[idx]] .. "\n"
-    end
+    res = res .. idx .. ": " .. tostring(self.slots[idx]) .. "\n"
   end
   return res
 end
@@ -207,63 +233,112 @@ end
 -- ===== Equipment =====
 -- =====================
 
-BambooPole    = 0x20 --  = 32  = 00100000
-Club          = 0x40 --  = 64  = 01000000
-CopperSword   = 0x60 --  = 96  = 01100000
-HandAxe       = 0x80 --  = 128 = 10000000
-BroadSword    = 0xa0 --  = 160 = 10100000
-FlameSword    = 0xc0 --  = 192 = 11000000
-ErdricksSword = 0xe0 --  = 224 = 11100000
+EquipmentItem = class(Item, function(a, byte, name)
+  Item.init(a, byte, name)
+end)
+
+function EquipmentItem:__tostring()
+  return self.name .. " (" .. self.byte .. ")"
+end
+
+NoWeaponByte      = 0x0  --  = 0   = 00000000
+BambooPoleByte    = 0x20 --  = 32  = 00100000
+ClubByte          = 0x40 --  = 64  = 01000000
+CopperSwordByte   = 0x60 --  = 96  = 01100000
+HandAxeByte       = 0x80 --  = 128 = 10000000
+BroadSwordByte    = 0xa0 --  = 160 = 10100000
+FlameSwordByte    = 0xc0 --  = 192 = 11000000
+ErdricksSwordByte = 0xe0 --  = 224 = 11100000
+
+Weapon = class(EquipmentItem, function(a, byte, name)
+  EquipmentItem.init(a, byte, name)
+end)
+
+NoWeapon      = Weapon(NoWeaponByte,      "Nothing")
+BambooPole    = Weapon(BambooPoleByte,    "Bamboo Pole")
+Club          = Weapon(ClubByte,          "Club")
+CopperSword   = Weapon(CopperSwordByte,   "Copper Sword")
+HandAxe       = Weapon(HandAxeByte,       "Hand Axe")
+BroadSword    = Weapon(BroadSwordByte,    "Broad Sword")
+FlameSword    = Weapon(FlameSwordByte,    "Flame Sword")
+ErdricksSword = Weapon(ErdricksSwordByte, "Erdrick's Sword")
 
 WEAPONS = {
-  [BambooPole]    = "Bamboo Pole",
-  [Club]          = "Club",
-  [CopperSword]   = "Copper Sword",
-  [HandAxe]       = "Hand Axe",
-  [BroadSword]    = "Broad Sword",
-  [FlameSword]    = "Flame Sword",
-  [ErdricksSword] = "Erdrick's Sword",
+  [NoWeapon.byte]      = NoWeapon,
+  [BambooPole.byte]    = BambooPole,
+  [Club.byte]          = Club,
+  [CopperSword.byte]   = CopperSword,
+  [HandAxe.byte]       = HandAxe,
+  [BroadSword.byte]    = BroadSword,
+  [FlameSword.byte]    = FlameSword,
+  [ErdricksSword.byte] = ErdricksSword,
 }
 
-Clothes        = 0x4  --  = 4  = 00000100
-LeatherArmor   = 0x8  --  = 8  = 00001000
-ChainMail      = 0xc  --  = 12 = 00001100
-HalfPlateArmor = 0x10 --  = 16 = 00010000
-FullPlateArmor = 0x14 --  = 20 = 00010100
-MagicArmor     = 0x18 --  = 24 = 00011000
-ErdricksArmor  = 0x1c --  = 28 = 00011100
+NoArmorByte        = 0x0  --  = 0  = 00000000
+ClothesByte        = 0x4  --  = 4  = 00000100
+LeatherArmorByte   = 0x8  --  = 8  = 00001000
+ChainMailByte      = 0xc  --  = 12 = 00001100
+HalfPlateArmorByte = 0x10 --  = 16 = 00010000
+FullPlateArmorByte = 0x14 --  = 20 = 00010100
+MagicArmorByte     = 0x18 --  = 24 = 00011000
+ErdricksArmorByte  = 0x1c --  = 28 = 00011100
+
+Armor = class(EquipmentItem, function(a, byte, name)
+  EquipmentItem.init(a, byte, name)
+end)
+
+NoArmor        = Armor(NoArmorByte,        "Nothing")
+Clothes        = Armor(ClothesByte,        "Clothes")
+LeatherArmor   = Armor(LeatherArmorByte,   "Leather Armor")
+ChainMail      = Armor(ChainMailByte,      "Chain Mail")
+HalfPlateArmor = Armor(HalfPlateArmorByte, "Half Plate Armor")
+FullPlateArmor = Armor(FullPlateArmorByte, "Full Plate Armor")
+MagicArmor     = Armor(MagicArmorByte,     "Magic Armor")
+ErdricksArmor  = Armor(ErdricksArmorByte,  "Erdrick's Armor")
 
 ARMOR = {
-  [Clothes]        = "Clothes",
-  [LeatherArmor]   = "Leather Armor",
-  [ChainMail]      = "Chain Mail",
-  [HalfPlateArmor] = "Half Plate Armor",
-  [FullPlateArmor] = "Full Plate Armor",
-  [MagicArmor]     = "Magic Armor",
-  [ErdricksArmor]  = "Erdrick's Armor",
+  [NoArmor.byte]        = NoArmor,
+  [Clothes.byte]        = Clothes,
+  [LeatherArmor.byte]   = LeatherArmor,
+  [ChainMail.byte]      = ChainMail,
+  [HalfPlateArmor.byte] = HalfPlateArmor,
+  [FullPlateArmor.byte] = FullPlateArmor,
+  [MagicArmor.byte]     = MagicArmor,
+  [ErdricksArmor.byte]  = ErdricksArmor,
 }
 
-SmallShield  = 0x1 -- = 1 = 00000001
-LargeShield  = 0x2 -- = 2 = 00000010
-SilverShield = 0x3 -- = 3 = 00000011
+NoShieldByte     = 0x0 -- = 0 = 00000000
+SmallShieldByte  = 0x1 -- = 1 = 00000001
+LargeShieldByte  = 0x2 -- = 2 = 00000010
+SilverShieldByte = 0x3 -- = 3 = 00000011
+
+Shield = class(EquipmentItem, function(a, byte, name)
+  EquipmentItem.init(a, byte, name)
+end)
+
+NoShield     = Shield(NoShieldByte,     "Nothing")
+SmallShield  = Shield(SmallShieldByte,  "Small Shield")
+LargeShield  = Shield(LargeShieldByte,  "Large Shield")
+SilverShield = Shield(SilverShieldByte, "Silver Shield")
 
 SHIELDS = {
-  [SmallShield]  = "Small Shield",
-  [LargeShield]  = "Large Shield",
-  [SilverShield] = "Silver Shield",
+  [NoShield.byte]     = NoShield,
+  [SmallShield.byte]  = SmallShield,
+  [LargeShield.byte]  = LargeShield,
+  [SilverShield.byte] = SilverShield,
 }
 
 Equipment = class(function(a,swordId,armorId,shieldId)
-  a.swordId = swordId
-  a.armorId = armorId
-  a.shieldId = shieldId
+  a.weapon = WEAPONS[swordId]
+  a.armor = ARMOR[armorId]
+  a.shield = SHIELDS[shieldId]
 end)
 
 function Equipment:__tostring()
   local res = "=== Equipment ===\n"
-  res = res .. "Sword: "  .. (self.swordId == 0 and "Nothing" or WEAPONS[self.swordId]) .. "\n"
-  res = res .. "Armor: "  .. (self.armorId == 0 and "Nothing" or ARMOR[self.armorId]) .. "\n"
-  res = res .. "Shield: " .. (self.shieldId == 0 and "Nothing" or SHIELDS[self.shieldId]) .. "\n"
+  res = res .. "Weapon: " .. tostring(self.weapon) .. "\n"
+  res = res .. "Armor: "  .. tostring(self.armor) .. "\n"
+  res = res .. "Shield: " .. tostring(self.shield) .. "\n"
   return res
 end
 

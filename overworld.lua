@@ -1,7 +1,7 @@
 require 'helpers'
 require 'Class'
 
-Overworld = 1
+OverWorldId = 1
 
 -- MAP_DATA = {
 --   [1] = {["name"] = "Overworld", ["size"] = {["w"]=120,["h"]=120}, ["romAddr"] = 0x1D6D},
@@ -104,6 +104,24 @@ function OverWorld:getOverworldMapTileAt(x, y)
   return OVERWORLD_TILES[self:getOverworldMapTileIdAt(x, y)]
 end
 
+ImportantLocationType = enum.new("Tyoes of important locations on the Overworld", {
+  "CHARLOCK", -- Could be CASTLE, but, we already know where Tantegel is, so, it just must be Charlock
+  "TOWN",
+  "CAVE",
+})
+
+function locationTypeFromTile(tileId)
+  if     tileId == 8  then return ImportantLocationType.TOWN
+  elseif tileId == 9  then return ImportantLocationType.CAVE
+  elseif tileId == 10 then return ImportantLocationType.CHARLOCK
+  end
+end
+
+ImportantLocation = class(function(a,x,y,tileId)
+  a.location = Point(OverWorldId, x, y)
+  a.type = locationTypeFromTile(tileId)
+end)
+
 function OverWorld:updateKnownWorld(x, y, tileId)
   if self.knownWorld[y] == nil then self.knownWorld[y] = {} end
   if self.knownWorld[y][x] == nil
@@ -115,7 +133,7 @@ function OverWorld:updateKnownWorld(x, y, tileId)
       -- print ("discovered new tile at (x: " .. x .. ", y: " .. y .. ")" .. " tile is: " .. tileName .. " tile id is: " .. tileId)
       if tileId >= 8 and tileId <= 10 then
         print ("discovered important location at (x: " .. x .. ", y: " .. y .. ")" .. " it is a: " .. tileName)
-        table.insert(self.importantLocations, Point(Overworld, x, y))
+        table.insert(self.importantLocations, ImportantLocation(x, y, tileId))
       end
   end
 end
@@ -130,10 +148,10 @@ function OverWorld:neighbors(x,y)
     return OVERWORLD_TILES[self.overworldRows[y][x]].walkable
   end
   local res = {}
-  if x > 0 and isWalkable(x-1, y) then table.insert(res, Point(Overworld, x-1, y)) end
-  if x < 119 and isWalkable(x+1, y) then table.insert(res, Point(Overworld, x+1, y)) end
-  if y > 0 and isWalkable(x, y-1) then table.insert(res, Point(Overworld, x, y-1)) end
-  if y < 119 and isWalkable(x, y+1) then table.insert(res, Point(Overworld, x, y+1)) end
+  if x > 0 and isWalkable(x-1, y) then table.insert(res, Point(OverWorldId, x-1, y)) end
+  if x < 119 and isWalkable(x+1, y) then table.insert(res, Point(OverWorldId, x+1, y)) end
+  if y > 0 and isWalkable(x, y-1) then table.insert(res, Point(OverWorldId, x, y-1)) end
+  if y < 119 and isWalkable(x, y+1) then table.insert(res, Point(OverWorldId, x, y+1)) end
   return res
 end
 
@@ -157,7 +175,7 @@ function OverWorld:knownWorldBorder()
         for i = 1, #(nbrs) do
           local p = nbrs[i]
           if self:getKnownWorldTileAt(p.x,p.y) == nil then
-            table.insert(res, Point(Overworld, x, y))
+            table.insert(res, Point(OverWorldId, x, y))
           end
         end
       end
