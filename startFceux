@@ -1,3 +1,5 @@
+find . -name "*.lua" | xargs  wc -l
+
 ln -s /Users/joshcough/work/dwrandomizer_ai/ai.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/ai.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/Class.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/Class.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/controller.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/controller.lua
@@ -10,5 +12,7 @@ ln -s /Users/joshcough/work/dwrandomizer_ai/map_scripts.lua /usr/local/Cellar/fc
 ln -s /Users/joshcough/work/dwrandomizer_ai/mem.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/mem.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/overworld.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/overworld.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/player_data.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/player_data.lua
+ln -s /Users/joshcough/work/dwrandomizer_ai/shops.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/shops.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/static_maps.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/static_maps.lua
+
 fceux

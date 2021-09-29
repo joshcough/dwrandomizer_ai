@@ -1,6 +1,7 @@
 require 'Class'
 require 'helpers'
 require 'player_data'
+require 'shops'
 
 -- Some constant memory locations
 MAP_ADDR = 0x45
@@ -40,6 +41,10 @@ function Memory:getLocation ()
   return Point(self:getMapId(), self:getX(), self:getY())
 end
 
+function Memory:getCoordinates()
+  return Point(OverWorldId, self:readRAM(0xe114), self:readRAM(0xe11A))
+end
+
 function Memory:getRadiantTimer () return self:readRAM(0xDA) end
 function Memory:setRadiantTimer (n) return self:writeRAM(0xDA, n) end
 
@@ -51,9 +56,9 @@ function Memory:setRepelTimer (n) return self:writeRAM(0xDB, n) end
 function Memory:getEnemyId () return self.ram.readbyte(ENEMY_ID_ADDR)+1 end
 function Memory:setEnemyId (enemyId) return memory.writebyte(ENEMY_ID_ADDR, enemyId) end
 
-function setReturnWarpLocation(x, y)
-  mem:writeROM(RETURN_WARP_X_ADDR, x)
-  mem:writeROM(RETURN_WARP_Y_ADDR, y)
+function Memory:setReturnWarpLocation(x, y)
+  self:writeROM(RETURN_WARP_X_ADDR, x)
+  self:writeROM(RETURN_WARP_Y_ADDR, y)
 end
 
 function Memory:getItemNumberOfHerbs ()
@@ -164,4 +169,117 @@ end
 
 function Memory:readPlayerData()
   return PlayerData(self:readStats(), self:getEquipment(), self:spells(), self:getItems(), self:getStatuses())
+end
+
+function Memory:readWeaponAndArmorShops()
+  function readSlots(start, stop)
+    local slots = {}
+    for i = start,stop do table.insert(slots, self:readROM(i)) end
+    return slots
+  end
+
+  -- TODO: these might have to be redone
+  -- because one shop sometimes has 5 things, and sometimes 6
+  -- and all the shops end with a special delimiter (253 i think)
+  return WeaponAndArmorShops(
+    readSlots(0x19A8, 0x19AC), -- Brecconary
+    readSlots(0x19B4, 0x19B8), -- Cantlin1
+    readSlots(0x19BA, 0x19BE), -- Cantlin2
+    readSlots(0x19C0, 0x19C4), -- Cantlin3
+    readSlots(0x19AE, 0x19B2), -- Garinham
+    readSlots(0x19A1, 0x19A6), -- Kol
+    readSlots(0x19C6, 0x19CA)  -- Rimuldar
+  )
+end
+
+function Memory:readSearchSpots()
+  function readSpot(b, loc)
+    local id = self:readRAM(b)
+    if id == 0 then return SearchSpot(loc, nil)
+    else return SearchSpot(loc, CHEST_CONTENT[self:readRAM(b)])
+    end
+  end
+  --  03:E11D: A9 01 LDA #$01  (rom position for overworld search spot)
+  --  03:E13C: A9 00 LDA #$00  (rom position for kol search spot)
+  --  03:E152: A9 11 LDA #$11  (rom position for hauksness search spot)
+  return SearchSpots(
+    readSpot(0xe11e, self:getCoordinates()),
+    readSpot(0xe13d, Point(Kol, 9, 6)),
+    readSpot(0xe153, Point(Hauksness, 18, 12))
+  )
+end
+
+function Memory:readChests()
+  local chests = {}
+  -- 5DDD - 5E58  | Chest Data  | Four bytes long: Map,X,Y,Contents
+  local firstChestAddr = 0x5ddd
+  for i = 0,30 do
+    local addr = firstChestAddr + i * 4
+    local mapId = self:readROM(addr)
+    local x = self:readROM(addr + 1)
+    local y = self:readROM(addr + 2)
+    local contents = self:readROM(addr + 3)
+    table.insert(chests, Chest(Point(mapId, x, y), CHEST_CONTENT[contents]))
+  end
+  return Chests(chests)
+end
+
+
+-- 0x51 - ??       | NPC Data                | 16 bits ------------------------->   3 bits -> sprite
+--                 |                         | 5 bits -> x coordinate
+--                 |                         | 3 bits -> direction
+--                 |                         | 5 bits -> y coordinate
+
+-- .alias NPCXPos          $51     ;Through $8A. NPC X block position on current map. Also NPC type.
+-- .alias NPCYPos          $52     ;Through $8B. NPC Y block position on current map. Also NPC direction.
+-- .alias NPCMidPos        $53     ;Through $8C. NPC offset from current tile. Used only when moving.
+function Memory:readNPCs()
+  return {
+    self:readNPC(0x51), -- 123
+    self:readNPC(0x54), -- 456
+    self:readNPC(0x57), -- 789
+    self:readNPC(0x5A), -- abc
+    self:readNPC(0x5D), -- def
+    self:readNPC(0x60), -- 012
+    self:readNPC(0x63), -- 345
+    self:readNPC(0x66), -- 678
+    self:readNPC(0x69), -- 9ab
+    self:readNPC(0x6C), -- cde
+    self:readNPC(0x6F), -- f01
+    self:readNPC(0x72), -- 234
+    self:readNPC(0x75), -- 567
+    self:readNPC(0x78), -- 89a
+    self:readNPC(0x7B), -- bcd
+    self:readNPC(0x7E), -- ef0
+    self:readNPC(0x81), -- 123
+    self:readNPC(0x84), -- 456
+    self:readNPC(0x87), -- 789
+    self:readNPC(0x8A), -- abc
+  }
+end
+
+function Memory:readNPC(byte)
+  local b1 = self:readRAM(byte)
+  local b2 = self:readRAM(byte + 1)
+  return NPC(byte, AND(b1, 31), AND(b2, 31))
+  -- if we ever care about sprite and direction (i doubt we will), we can use these:
+  -- print("SSS? ", AND(b1, 224), decimalToHex(bitwise_and(b1, 224)))
+  -- print("DDD? ", AND(b2, 224), decimalToHex(bitwise_and(b2, 224)))
+end
+
+NPC = class(function(a, byte, x, y)
+  a.byte = byte
+  a.x = x
+  a.y = y
+end)
+
+function NPC:__tostring()
+  return "NPC {x:" .. self.x .. ", y:" .. self.y .. "}"
+end
+
+function Memory:printNPCs()
+  local npcs = self:readNPCs()
+  for _, npc in ipairs(npcs) do
+    print(npc)
+  end
 end

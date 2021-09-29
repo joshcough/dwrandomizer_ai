@@ -32,6 +32,20 @@ function AI:register(memory)
   memory.registerexecute(0xca83, self:endRepelTimer())
 end
 
+-- TODO: obviously this will be removed later
+-- but for now it just helps me survive to test exploration
+-- give ourself gold, xp, best equipment, etc
+function cheat(mem)
+  mem:writeRAM(0xbb, 65535 / 256)
+  mem:writeRAM(0xba, 65535 % 256)
+  mem:writeRAM(0xbe, 255) -- best equipment
+  -- mem:writeRAM(0xbe, 0) -- no equipment
+  mem:writeRAM(0xbf, 5)   -- 5 herbs
+  mem:writeRAM(0xc0, 5)   -- 5 keys
+  -- mem:writeRAM(0xc1, RainbowDropByte)
+  -- mem:writeRAM(0xc1, SilverHarpByte)
+end
+
 -------------------
 ---- MAIN LOOP ----
 -------------------
@@ -40,14 +54,7 @@ function main()
   hud_main()
 
   local mem = Memory(memory, rom)
-
-  -- give ourself gold, xp, best equipment, etc
-  mem:writeRAM(0xbb, 65535 / 256)
-  mem:writeRAM(0xba, 65535 % 256)
-  mem:writeRAM(0xbe, 255) -- best equipment
-  mem:writeRAM(0xbf, 6)   -- 6 herbs
-  mem:writeRAM(0xc0, 6)   -- 6 keys
-  mem:writeRAM(0xc1, 14)  -- rainbow drop
+  cheat(mem)
 
   -- always save the maps man. if we dont do this
   -- we start getting out of date and bad stuff happens.
@@ -57,14 +64,18 @@ function main()
   local ai = AI(game)
   ai:register(memory)
 
-  game.tantegelLoc = game:getLocation()
-  print("game.tantegelLoc", game.tantegelLoc)
-
   -- TODO: this is a hack
   -- right now this gets called when we move
   -- but we need to call it here once before we move, too.
-  game.overworld:getVisibleOverworldGrid(game:getX(), game:getY())
-  print(game:readPlayerData())
+--   if(game:getLocation().mapId == 1) then
+--     game.overworld:getVisibleOverworldGrid(game:getX(), game:getY())
+--   end
+
+--   mem:printNPCs()
+--   print(game.playerData)
+--   print(game.weaponAndArmorShops)
+--   print(game.searchSpots)
+--   print(game.chests)
 
   emu.speedmode("normal")
   while true do
@@ -84,6 +95,7 @@ main()
 --     local spells = game.memory:readPlayerData().spells
 --     print(spells:spellIndex(Healmore))
 --   game:interpretScript(scripts.throneRoomOpeningGameScript())
+--   mem:setReturnWarpLocation(30,83) -- tangegel
 
 -- game:gameStartScript()
 --   game:goTo(Point(Tantegel, 29,29))
