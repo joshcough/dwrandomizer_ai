@@ -16,11 +16,11 @@ require 'static_maps'
 AI = class(function(a, game) a.game = game end)
 
 function AI:onEncounter()   return function(address) self.game:startEncounter() end end
-function AI:enemyRun()      return function(address) self.game:enemyRun() end end
-function AI:playerRun()     return function(address) self.game:playerRun() end end
-function AI:onPlayerMove()  return function(address) self.game:onPlayerMove() end end
-function AI:onMapChange()   return function(address) self.game:onMapChange() end end
-function AI:endRepelTimer() return function(address) self.game:endRepelTimer() end end
+function AI:enemyRun()      return function(address) self.game:enemyRun()       end end
+function AI:playerRun()     return function(address) self.game:playerRun()      end end
+function AI:onPlayerMove()  return function(address) self.game:onPlayerMove()   end end
+function AI:onMapChange()   return function(address) self.game:onMapChange()    end end
+function AI:endRepelTimer() return function(address) self.game:endRepelTimer()  end end
 
 function AI:register(memory)
   memory.registerexecute(0xcf44, self:onEncounter())
@@ -36,14 +36,20 @@ end
 -- but for now it just helps me survive to test exploration
 -- give ourself gold, xp, best equipment, etc
 function cheat(mem)
+  -- xp
   mem:writeRAM(0xbb, 65535 / 256)
   mem:writeRAM(0xba, 65535 % 256)
+  -- gold
+  mem:writeRAM(0xbd, 65535 / 256)
+  mem:writeRAM(0xbc, 65535 % 256)
   mem:writeRAM(0xbe, 255) -- best equipment
   -- mem:writeRAM(0xbe, 0) -- no equipment
   mem:writeRAM(0xbf, 5)   -- 5 herbs
   mem:writeRAM(0xc0, 5)   -- 5 keys
   -- mem:writeRAM(0xc1, RainbowDropByte)
   -- mem:writeRAM(0xc1, SilverHarpByte)
+  -- TODO: this doesn't seem to be working properly.
+  mem:writeRAM(0xdb, 0xff) -- repel always on
 end
 
 -------------------
@@ -67,15 +73,9 @@ function main()
   -- TODO: this is a hack
   -- right now this gets called when we move
   -- but we need to call it here once before we move, too.
---   if(game:getLocation().mapId == 1) then
---     game.overworld:getVisibleOverworldGrid(game:getX(), game:getY())
---   end
-
---   mem:printNPCs()
---   print(game.playerData)
---   print(game.weaponAndArmorShops)
---   print(game.searchSpots)
---   print(game.chests)
+  if(game:getLocation().mapId == 1) then
+    game.overworld:getVisibleOverworldGrid(game:getX(), game:getY())
+  end
 
   emu.speedmode("normal")
   while true do
@@ -96,6 +96,16 @@ main()
 --     print(spells:spellIndex(Healmore))
 --   game:interpretScript(scripts.throneRoomOpeningGameScript())
 --   mem:setReturnWarpLocation(30,83) -- tangegel
+
+--   print(game.maps[SwampCave].overworldCoordinates)
+--   print(game.maps[Garinham].overworldCoordinates)
+--   print(game.scripts.MapScripts[Tantegel])
+
+--   mem:printNPCs()
+--   print(game.playerData)
+--   print(game.weaponAndArmorShops)
+--   print(game.searchSpots)
+--   print(game.chests)
 
 -- game:gameStartScript()
 --   game:goTo(Point(Tantegel, 29,29))
