@@ -2,34 +2,34 @@ require 'helpers'
 require 'Class'
 require 'controller'
 
-Charlock = 2
-Hauksness = 3
-Tantegel = 4
+Charlock           = 2
+Hauksness          = 3
+Tantegel           = 4
 TantegelThroneRoom = 5
 CharlockThroneRoom = 6
-Kol = 7
-Brecconary = 8
-Garinham = 9
-Cantlin = 10
-Rimuldar = 11
-TantegelBasement = 12
-NorthernShrine = 13
-SouthernShrine = 14
-CharlockCaveLv1 = 15
-CharlockCaveLv2 = 16
-CharlockCaveLv3 = 17
-CharlockCaveLv4 = 18
-CharlockCaveLv5 = 19
-CharlockCaveLv6 = 20
-SwampCave = 21
-MountainCaveLv1 = 22
-MountainCaveLv2 = 23
-GarinsGraveLv1 = 24
-GarinsGraveLv2 = 25
-GarinsGraveLv3 = 26
-GarinsGraveLv4 = 27
-ErdricksCaveLv1 = 28
-ErdricksCaveLv2 = 29
+Kol                = 7
+Brecconary         = 8
+Garinham           = 9
+Cantlin            = 10
+Rimuldar           = 11
+TantegelBasement   = 12
+NorthernShrine     = 13
+SouthernShrine     = 14
+CharlockCaveLv1    = 15
+CharlockCaveLv2    = 16
+CharlockCaveLv3    = 17
+CharlockCaveLv4    = 18
+CharlockCaveLv5    = 19
+CharlockCaveLv6    = 20
+SwampCave          = 21
+MountainCaveLv1    = 22
+MountainCaveLv2    = 23
+GarinsGraveLv1     = 24
+GarinsGraveLv2     = 25
+GarinsGraveLv3     = 26
+GarinsGraveLv4     = 27
+ErdricksCaveLv1    = 28
+ErdricksCaveLv2    = 29
 
 TantegelBasementStairs = Point(Tantegel, 29, 29)
 
@@ -47,44 +47,44 @@ function Warp:__tostring()
 end
 
 WARPS = {
-  Warp(Point(Charlock, 10, 1), Point(CharlockCaveLv1, 9, 0))
-, Warp(Point(Charlock, 4, 14), Point(CharlockCaveLv1, 8, 13))
-, Warp(Point(Charlock, 15, 14), Point(CharlockCaveLv1, 17, 15))
-, Warp(Point(TantegelThroneRoom, 1, 8), Point(Tantegel, 1, 7))
-, Warp(Point(TantegelThroneRoom, 8, 8), Point(Tantegel, 7, 7))
--- 9 = garinham, 24 = GarinsGrave -- this one has to be discovered, like the basement
--- , Warp(Point(9, 19, 0), Point(24, 6, 11))
-, Warp(Point(CharlockCaveLv1, 15, 1), Point(CharlockCaveLv2, 8, 0))
-, Warp(Point(CharlockCaveLv1, 13, 7), Point(CharlockCaveLv2, 4, 4))
-, Warp(Point(CharlockCaveLv1, 19, 7), Point(CharlockCaveLv2, 9, 8))
-, Warp(Point(CharlockCaveLv1, 14, 9), Point(CharlockCaveLv2, 8, 9))
-, Warp(Point(CharlockCaveLv1, 2, 14), Point(CharlockCaveLv2, 0, 1))
-, Warp(Point(CharlockCaveLv1, 2, 4), Point(CharlockCaveLv2, 0, 0))
-, Warp(Point(CharlockCaveLv1, 8, 19), Point(CharlockCaveLv2, 5, 0))
-, Warp(Point(CharlockCaveLv2, 3, 0), Point(CharlockCaveLv3, 7, 0))
-, Warp(Point(CharlockCaveLv2, 9, 1), Point(CharlockCaveLv3, 2, 2))
-, Warp(Point(CharlockCaveLv2, 0, 8), Point(CharlockCaveLv3, 5, 4))
-, Warp(Point(CharlockCaveLv2, 1, 9), Point(CharlockCaveLv3, 0, 9))
-, Warp(Point(CharlockCaveLv3, 1, 6), Point(CharlockCaveLv4, 0, 9))
-, Warp(Point(CharlockCaveLv3, 7, 7), Point(CharlockCaveLv4, 7, 7))
-, Warp(Point(CharlockCaveLv4, 2, 2), Point(CharlockCaveLv5, 9, 0))
-, Warp(Point(CharlockCaveLv4, 8, 1), Point(CharlockCaveLv5, 4, 0))
-, Warp(Point(CharlockCaveLv5, 5, 5), Point(CharlockCaveLv6, 0, 0))
-, Warp(Point(CharlockCaveLv5, 0, 0), Point(CharlockCaveLv6, 0, 6))
-, Warp(Point(CharlockCaveLv6, 9, 0), Point(CharlockCaveLv6, 0, 0))
-, Warp(Point(CharlockCaveLv6, 9, 6), Point(CharlockThroneRoom, 10, 29))
-, Warp(Point(MountainCaveLv1, 0, 0), Point(MountainCaveLv2, 0, 0))
-, Warp(Point(MountainCaveLv1, 6, 5), Point(MountainCaveLv2, 6, 5))
-, Warp(Point(MountainCaveLv1, 12, 12), Point(MountainCaveLv2, 12, 12))
-, Warp(Point(GarinsGraveLv1, 1, 18), Point(GarinsGraveLv2, 11, 2))
-, Warp(Point(GarinsGraveLv2, 1, 1), Point(GarinsGraveLv3, 1, 26))
-, Warp(Point(GarinsGraveLv2, 12, 1), Point(GarinsGraveLv3, 18, 1))
-, Warp(Point(GarinsGraveLv2, 5, 6), Point(GarinsGraveLv3, 6, 11))
-, Warp(Point(GarinsGraveLv2, 1, 10), Point(GarinsGraveLv3, 2, 17))
-, Warp(Point(GarinsGraveLv2, 12, 10), Point(GarinsGraveLv3, 18, 13))
-, Warp(Point(GarinsGraveLv3, 9, 5), Point(GarinsGraveLv4, 0, 4))
-, Warp(Point(GarinsGraveLv3, 10, 9), Point(GarinsGraveLv4, 5, 4))
-, Warp(Point(ErdricksCaveLv1, 9, 9), Point(ErdricksCaveLv2, 8, 9))
+   Warp(Point(Charlock, 10, 1),          Point(CharlockCaveLv1, 9, 0))
+ , Warp(Point(Charlock, 4, 14),          Point(CharlockCaveLv1, 8, 13))
+ , Warp(Point(Charlock, 15, 14),         Point(CharlockCaveLv1, 17, 15))
+ , Warp(Point(TantegelThroneRoom, 1, 8), Point(Tantegel, 1, 7))
+ , Warp(Point(TantegelThroneRoom, 8, 8), Point(Tantegel, 7, 7))
+ -- 9 = garinham, 24 = GarinsGrave -- this one has to be discovered, like the basement
+ -- , Warp(Point(9, 19, 0), Point(24, 6, 11))
+ , Warp(Point(CharlockCaveLv1, 15, 1),   Point(CharlockCaveLv2, 8, 0))
+ , Warp(Point(CharlockCaveLv1, 13, 7),   Point(CharlockCaveLv2, 4, 4))
+ , Warp(Point(CharlockCaveLv1, 19, 7),   Point(CharlockCaveLv2, 9, 8))
+ , Warp(Point(CharlockCaveLv1, 14, 9),   Point(CharlockCaveLv2, 8, 9))
+ , Warp(Point(CharlockCaveLv1, 2, 14),   Point(CharlockCaveLv2, 0, 1))
+ , Warp(Point(CharlockCaveLv1, 2, 4),    Point(CharlockCaveLv2, 0, 0))
+ , Warp(Point(CharlockCaveLv1, 8, 19),   Point(CharlockCaveLv2, 5, 0))
+ , Warp(Point(CharlockCaveLv2, 3, 0),    Point(CharlockCaveLv3, 7, 0))
+ , Warp(Point(CharlockCaveLv2, 9, 1),    Point(CharlockCaveLv3, 2, 2))
+ , Warp(Point(CharlockCaveLv2, 0, 8),    Point(CharlockCaveLv3, 5, 4))
+ , Warp(Point(CharlockCaveLv2, 1, 9),    Point(CharlockCaveLv3, 0, 9))
+ , Warp(Point(CharlockCaveLv3, 1, 6),    Point(CharlockCaveLv4, 0, 9))
+ , Warp(Point(CharlockCaveLv3, 7, 7),    Point(CharlockCaveLv4, 7, 7))
+ , Warp(Point(CharlockCaveLv4, 2, 2),    Point(CharlockCaveLv5, 9, 0))
+ , Warp(Point(CharlockCaveLv4, 8, 1),    Point(CharlockCaveLv5, 4, 0))
+ , Warp(Point(CharlockCaveLv5, 5, 5),    Point(CharlockCaveLv6, 0, 0))
+ , Warp(Point(CharlockCaveLv5, 0, 0),    Point(CharlockCaveLv6, 0, 6))
+ , Warp(Point(CharlockCaveLv6, 9, 0),    Point(CharlockCaveLv6, 0, 0))
+ , Warp(Point(CharlockCaveLv6, 9, 6),    Point(CharlockThroneRoom, 10, 29))
+ , Warp(Point(MountainCaveLv1, 0, 0),    Point(MountainCaveLv2, 0, 0))
+ , Warp(Point(MountainCaveLv1, 6, 5),    Point(MountainCaveLv2, 6, 5))
+ , Warp(Point(MountainCaveLv1, 12, 12),  Point(MountainCaveLv2, 12, 12))
+ , Warp(Point(GarinsGraveLv1,  1, 18),   Point(GarinsGraveLv2, 11, 2))
+ , Warp(Point(GarinsGraveLv2,  1, 1),    Point(GarinsGraveLv3, 1, 26))
+ , Warp(Point(GarinsGraveLv2,  12, 1),   Point(GarinsGraveLv3, 18, 1))
+ , Warp(Point(GarinsGraveLv2,  5, 6),    Point(GarinsGraveLv3, 6, 11))
+ , Warp(Point(GarinsGraveLv2,  1, 10),   Point(GarinsGraveLv3, 2, 17))
+ , Warp(Point(GarinsGraveLv2,  12, 10),  Point(GarinsGraveLv3, 18, 13))
+ , Warp(Point(GarinsGraveLv3,  9, 5),    Point(GarinsGraveLv4, 0, 4))
+ , Warp(Point(GarinsGraveLv3,  10, 9),   Point(GarinsGraveLv4, 5, 4))
+ , Warp(Point(ErdricksCaveLv1, 9, 9),    Point(ErdricksCaveLv2, 8, 9))
 }
 
 function getWarpsForMap(mapId, allWarps)
@@ -109,46 +109,53 @@ function MapSize:__tostring()
   return "MapSize(height: " .. self.height .. ", width: " .. self.width .. ")"
 end
 
-StaticMapMetadata = class(function(a,mapId, name,size,romAddr)
+StaticMapMetadata = class(function(a, mapId, name, size, mapLayoutRomAddr, entrancesRomAddrs)
   a.mapId = mapId
   a.name = name
   a.size = size
-  a.romAddr = romAddr
+  a.mapLayoutRomAddr = mapLayoutRomAddr
+  -- this is a list because swamp cave has two entrances
+  -- nil means it doesn't have an overworld location.
+  a.entrancesRomAddrs = entrancesRomAddrs
 end)
 
 function StaticMapMetadata:__tostring()
-  return "StaticMapMetadata(name: " .. self.name .. ", size: " .. tostring(self.size) .. ", mapId: " .. self.mapId .. ")"
+  return "StaticMapMetadata(name: " .. self.name ..
+                         ", size: " .. tostring(self.size) ..
+                         ", mapId: " .. self.mapId ..
+                         ", mapLayoutRomAddr: " .. self.mapLayoutRomAddr ..
+                         ", entrancesRomAddrs: " .. tostring(self.entrancesRomAddrs) .. ")"
 end
 
-MAP_DATA = {
-  [2] = StaticMapMetadata(2, "Charlock", MapSize(20, 20), 0xC0),
-  [3] = StaticMapMetadata(3, "Hauksness", MapSize(20, 20), 0x188),
-  [4] = StaticMapMetadata(4, "Tantegel", MapSize(30, 30), 0x250),
-  [5] = StaticMapMetadata(5, "Tantegel Throne Room", MapSize(10, 10), 0x412),
-  [6] = StaticMapMetadata(6, "Charlock Throne Room", MapSize(30, 30), 0x444),
-  [7] = StaticMapMetadata(7, "Kol", MapSize(24, 24), 0x606),
-  [8] = StaticMapMetadata(8, "Brecconary", MapSize(30, 30), 0x726),
-  [9] = StaticMapMetadata(9, "Garinham", MapSize(20, 20), 0xAAA),
-  [10]= StaticMapMetadata(10, "Cantlin", MapSize(30, 30), 0x8E8),
-  [11]= StaticMapMetadata(11, "Rimuldar", MapSize(30, 30), 0xB72),
-  [12]= StaticMapMetadata(12, "Tantegel Basement", MapSize(10, 10), 0xD34),
-  [13]= StaticMapMetadata(13, "Northern Shrine", MapSize(10, 10), 0xD66),
-  [14]= StaticMapMetadata(14, "Southern Shrine", MapSize(10, 10), 0xD98),
-  [15]= StaticMapMetadata(15, "Charlock Cave Lv 1", MapSize(20, 20), 0xDCA),
-  [16]= StaticMapMetadata(16, "Charlock Cave Lv 2", MapSize(10, 10), 0xE92),
-  [17]= StaticMapMetadata(17, "Charlock Cave Lv 3", MapSize(10, 10), 0xEC4),
-  [18]= StaticMapMetadata(18, "Charlock Cave Lv 4", MapSize(10, 10), 0xEF6),
-  [19]= StaticMapMetadata(19, "Charlock Cave Lv 5", MapSize(10, 10), 0xF28),
-  [20]= StaticMapMetadata(20, "Charlock Cave Lv 6", MapSize(10, 10), 0xF5A),
-  [21]= StaticMapMetadata(21, "Swamp Cave", MapSize(6, 30), 0xF8C),
-  [22]= StaticMapMetadata(22, "Mountain Cave", MapSize(14, 14), 0xFE6),
-  [23]= StaticMapMetadata(23, "Mountain Cave Lv 2", MapSize(14, 14), 0x1048),
-  [24]= StaticMapMetadata(24, "Garin's Grave Lv 1", MapSize(20, 20), 0x10AA),
-  [25]= StaticMapMetadata(25, "Garin's Grave Lv 2", MapSize(14, 12), 0x126C),
-  [26]= StaticMapMetadata(26, "Garin's Grave Lv 3", MapSize(20, 20), 0x1172),
-  [27]= StaticMapMetadata(27, "Garin's Grave Lv 4", MapSize(10, 10), 0x123A),
-  [28]= StaticMapMetadata(28, "Erdrick's Cave", MapSize(10, 10), 0x12C0),
-  [29]= StaticMapMetadata(29, "Erdrick's Cave Lv 2", MapSize(10, 10), 0x12F2),
+STATIC_MAP_METADATA = {
+  [2]  = StaticMapMetadata(2,  "Charlock",             MapSize(20, 20), 0xC0,   {0xF3EA}),
+  [3]  = StaticMapMetadata(3,  "Hauksness",            MapSize(20, 20), 0x188,  {0xF3F6}),
+  [4]  = StaticMapMetadata(4,  "Tantegel",             MapSize(30, 30), 0x250,  {0xF3E4}),
+  [5]  = StaticMapMetadata(5,  "Tantegel Throne Room", MapSize(10, 10), 0x412),
+  [6]  = StaticMapMetadata(6,  "Charlock Throne Room", MapSize(30, 30), 0x444),
+  [7]  = StaticMapMetadata(7,  "Kol",                  MapSize(24, 24), 0x606,  {0xF3DE}),
+  [8]  = StaticMapMetadata(8,  "Brecconary",           MapSize(30, 30), 0x726,  {0xF3E1}),
+  [9]  = StaticMapMetadata(9,  "Garinham",             MapSize(20, 20), 0xAAA,  {0xF3D8}),
+  [10] = StaticMapMetadata(10, "Cantlin",              MapSize(30, 30), 0x8E8,  {0xF3F9}),
+  [11] = StaticMapMetadata(11, "Rimuldar",             MapSize(30, 30), 0xB72,  {0xF3F3}),
+  [12] = StaticMapMetadata(12, "Tantegel Basement",    MapSize(10, 10), 0xD34)  {0xF40B}),
+  [13] = StaticMapMetadata(13, "Northern Shrine",      MapSize(10, 10), 0xD66,  {0xF3DB}),
+  [14] = StaticMapMetadata(14, "Southern Shrine",      MapSize(10, 10), 0xD98,  {0xF3FC}),
+  [15] = StaticMapMetadata(15, "Charlock Cave Lv 1",   MapSize(20, 20), 0xDCA),
+  [16] = StaticMapMetadata(16, "Charlock Cave Lv 2",   MapSize(10, 10), 0xE92),
+  [17] = StaticMapMetadata(17, "Charlock Cave Lv 3",   MapSize(10, 10), 0xEC4),
+  [18] = StaticMapMetadata(18, "Charlock Cave Lv 4",   MapSize(10, 10), 0xEF6),
+  [19] = StaticMapMetadata(19, "Charlock Cave Lv 5",   MapSize(10, 10), 0xF28),
+  [20] = StaticMapMetadata(20, "Charlock Cave Lv 6",   MapSize(10, 10), 0xF5A),
+  [21] = StaticMapMetadata(21, "Swamp Cave",           MapSize( 6, 30), 0xF8C,  {0xF3E7, 0xF3ED}),
+  [22] = StaticMapMetadata(22, "Mountain Cave",        MapSize(14, 14), 0xFE6,  {0xF3F0}),
+  [23] = StaticMapMetadata(23, "Mountain Cave Lv 2",   MapSize(14, 14), 0x1048),
+  [24] = StaticMapMetadata(24, "Garin's Grave Lv 1",   MapSize(20, 20), 0x10AA, {0xF411}),
+  [25] = StaticMapMetadata(25, "Garin's Grave Lv 2",   MapSize(14, 12), 0x126C),
+  [26] = StaticMapMetadata(26, "Garin's Grave Lv 3",   MapSize(20, 20), 0x1172),
+  [27] = StaticMapMetadata(27, "Garin's Grave Lv 4",   MapSize(10, 10), 0x123A),
+  [28] = StaticMapMetadata(28, "Erdrick's Cave",       MapSize(10, 10), 0x12C0, {0xF3FF}),
+  [29] = StaticMapMetadata(29, "Erdrick's Cave Lv 2",  MapSize(10, 10), 0x12F2),
 }
 
 StaticMapTile = class(function(a,tileId,name,walkable,walkableWithKeys)
@@ -169,63 +176,63 @@ end
 
 NON_DUNGEON_TILES = {
   [0]   = StaticMapTile(0,  "Grass" , true),
-  [1]   = StaticMapTile(1,  "Sand" , true),
+  [1]   = StaticMapTile(1,  "Sand"  , true),
   [2]   = StaticMapTile(2,  "Water" , false),
   [3]   = StaticMapTile(3,  "Chest" , true),
   [4]   = StaticMapTile(4,  "Stone" , false),
-  [5]   = StaticMapTile(5,  "Up" , true),
+  [5]   = StaticMapTile(5,  "Up"    , true),
   [6]   = StaticMapTile(6,  "Brick" , true),
-  [7]   = StaticMapTile(7,  "Down" , true),
+  [7]   = StaticMapTile(7,  "Down"  , true),
   [8]   = StaticMapTile(8,  "Trees" , true),
   [9]   = StaticMapTile(9,  "Swamp" , true),
   [0xA] = StaticMapTile(10, "Field" , true),
-  [0xB] = StaticMapTile(11, "Door" , false, true), -- walkableWithKeys
-  [0xC] = StaticMapTile(12, "Weapon" , false),
-  [0xD] = StaticMapTile(13, "Inn" , false),
-  [0xE] = StaticMapTile(14, "Bridge" , true),
-  [0xF] = StaticMapTile(15, "Tile" , false),
+  [0xB] = StaticMapTile(11, "Door"  , false, true), -- walkableWithKeys
+  [0xC] = StaticMapTile(12, "Weapon", false),
+  [0xD] = StaticMapTile(13, "Inn"   , false),
+  [0xE] = StaticMapTile(14, "Bridge", true),
+  [0xF] = StaticMapTile(15, "Tile"  , false),
 }
 
 DUNGEON_TILES = {
-  [0]   = StaticMapTile(0, "Stone" , false),
-  [1]   = StaticMapTile(1, "Up" , true),
-  [2]   = StaticMapTile(2, "Brick" , true),
+  [0]   = StaticMapTile(0, "Stone", false),
+  [1]   = StaticMapTile(1, "Up"   , true),
+  [2]   = StaticMapTile(2, "Brick", true),
   [3]   = StaticMapTile(3, "Down" , true),
-  [4]   = StaticMapTile(4, "Chest" , true),
-  [5]   = StaticMapTile(5, "Door", false, true), -- walkableWithKeys
+  [4]   = StaticMapTile(4, "Chest", true),
+  [5]   = StaticMapTile(5, "Door" , false, true), -- walkableWithKeys
   -- in swamp cave, we get id six where the princess is. its the only 6 we get in any dungeon.
   [6]   = StaticMapTile(6, "Brick", true),
 }
 
 IMMOBILE_NPCS = {
-  [Charlock] = {},
-  [Hauksness] = {},
-  [Tantegel] = {{2,8}, {8,6}, {8,8}, {27,5}, {26,15}, {9,27}, {12,27}, {15, 20}},
+  [Charlock]           = {},
+  [Hauksness]          = {},
+  [Tantegel]           = {{2,8}, {8,6}, {8,8}, {27,5}, {26,15}, {9,27}, {12,27}, {15, 20}},
   [TantegelThroneRoom] = {{3,6}, {5,6}},
   [CharlockThroneRoom] = {},
-  [Kol] = {},
-  [Brecconary] = {},
-  [Garinham] = {{2,17}, {9,6}, {14,1}},
-  [Cantlin] = {},
-  [Rimuldar] = {{2,4}, {27,0}},
-  [TantegelBasement] = {},
-  [NorthernShrine] = {},
-  [SouthernShrine] = {},
-  [CharlockCaveLv1] = {},
-  [CharlockCaveLv2] = {},
-  [CharlockCaveLv3] = {},
-  [CharlockCaveLv4] = {},
-  [CharlockCaveLv5] = {},
-  [CharlockCaveLv6] = {},
-  [SwampCave] = {},
-  [MountainCaveLv1] = {},
-  [MountainCaveLv2] = {},
-  [GarinsGraveLv1] = {},
-  [GarinsGraveLv2] = {},
-  [GarinsGraveLv3] = {},
-  [GarinsGraveLv4] = {},
-  [ErdricksCaveLv1] = {},
-  [ErdricksCaveLv2] = {},
+  [Kol]                = {},
+  [Brecconary]         = {},
+  [Garinham]           = {{2,17}, {9,6}, {14,1}},
+  [Cantlin]            = {{0,0}},
+  [Rimuldar]           = {{2,4}, {27,0}},
+  [TantegelBasement]   = {},
+  [NorthernShrine]     = {},
+  [SouthernShrine]     = {},
+  [CharlockCaveLv1]    = {},
+  [CharlockCaveLv2]    = {},
+  [CharlockCaveLv3]    = {},
+  [CharlockCaveLv4]    = {},
+  [CharlockCaveLv5]    = {},
+  [CharlockCaveLv6]    = {},
+  [SwampCave]          = {},
+  [MountainCaveLv1]    = {},
+  [MountainCaveLv2]    = {},
+  [GarinsGraveLv1]     = {},
+  [GarinsGraveLv2]     = {},
+  [GarinsGraveLv3]     = {},
+  [GarinsGraveLv4]     = {},
+  [ErdricksCaveLv1]    = {},
+  [ErdricksCaveLv2]    = {},
 }
 
 function getImmobileNPCsForMap(mapId)
@@ -233,14 +240,16 @@ function getImmobileNPCsForMap(mapId)
   return list.map(IMMOBILE_NPCS[mapId], function(xy) return Point(mapId, xy[1], xy[2]) end)
 end
 
-StaticMap = class(function(a, mapId, mapName, width, height, rows, allWarps)
+StaticMap = class(function(a, mapId, mapName, overworldCoordinates, width, height, rows, allWarps)
   a.mapId = mapId
   a.mapName = mapName
+  a.overworldCoordinates = overworldCoordinates
   a.width = width
   a.height = height
   a.rows = rows
   a.warps = getWarpsForMap(mapId, allWarps)
   a.immobileScps = getImmobileNPCsForMap(mapId)
+  a.seenByPlayer = false
 end)
 
 function StaticMap:getTileSet ()
@@ -251,9 +260,9 @@ function StaticMap:getTileAt(x, y)
   return self:getTileSet()[self.rows[y][x]]
 end
 
-PRINT_TILE_NAME = 1
+PRINT_TILE_NAME    = 1
 PRINT_TILE_NO_KEYS = 2
-PRINT_TILE_KEYS = 3
+PRINT_TILE_KEYS    = 3
 
 function StaticMap:__tostring (printStrat)
   function printTile(t)
@@ -380,17 +389,19 @@ end
 
 function loadStaticMapFromFile (mapId, allWarps)
   if mapId < 2 then return nil end
-  local mapData = MAP_DATA[mapId]
+  local mapData = STATIC_MAP_METADATA[mapId]
   local mapName = mapData.name
   local mapFileName = MAP_DIRECTORY .. mapName
   return StaticMap(mapId, mapName, mapData.size.width, mapData.size.height, table.load(mapFileName), allWarps)
 end
 
 function readAllStaticMaps(memory, allWarps)
+  print("readAllStaticMaps")
   local res = {}
   for i = 2, 29 do
     res[i] = memory == nil and loadStaticMapFromFile(i, allWarps) or readStaticMapFromRom(memory, i, allWarps)
   end
+  print("done readAllStaticMaps")
   return res
 end
 
@@ -416,12 +427,12 @@ function saveStaticMaps(memory, allWarps)
 end
 
 function readStaticMapFromRom(memory, mapId, allWarps)
-  local mapData = MAP_DATA[mapId]
+  local mapData = STATIC_MAP_METADATA[mapId]
 
   -- returns the tile id for the given (x,y) for the current map
   function getMapTileIdAt(x, y)
     local offset = (y*mapData.size.width) + x
-    local addr = mapData.romAddr + math.floor(offset/2)
+    local addr = mapData.mapLayoutRomAddr + math.floor(offset/2)
     local val = memory:readROM(addr)
     local tile = isEven(offset) and hiNibble(val) or loNibble(val)
     -- TODO: i tried to use 0x111 but it went insane... so just using 7 instead.
@@ -440,7 +451,17 @@ function readStaticMapFromRom(memory, mapId, allWarps)
     return res
   end
 
-  return StaticMap(mapId, mapData.name, mapData.size.width, mapData.size.height, getMapTileIds(), allWarps)
+  function readOverworldCoordinates()
+    print("-----")
+    if mapData.entrancesRomAddrs == nil then return nil end
+    return list.map(mapData.entrancesRomAddrs, function(romAddr)
+      local p = Point(memory:readROM(romAddr), memory:readROM(romAddr+1), memory:readROM(romAddr+2))
+      print(p)
+      return p
+    end)
+  end
+
+  return StaticMap(mapId, mapData.name, readOverworldCoordinates(), mapData.size.width, mapData.size.height, getMapTileIds(), allWarps)
 end
 
 MovementCommand = class(function(a,direction,from,to)
