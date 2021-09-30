@@ -9,6 +9,7 @@ require 'player_data'
 require 'static_maps'
 
 Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsWithoutKeys)
+  a.scripts = Scripts(memory)
   a.memory = memory
   a.warps = warps
   a.overworld = overworld
@@ -25,6 +26,11 @@ Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsW
   a.searchSpots = memory:readSearchSpots()
   a.chests = memory:readChests()
   a.lastPrintedPercentage = 0
+  -- TODO: is this right? its a safe starting point i guess...
+  -- but is there a better way? like reading the location?
+  -- does it even matter?
+  a.currentMapId = TantegelThroneRoom
+  a.mapChanged = false
 end)
 
 function newGame(memory)
@@ -161,7 +167,6 @@ function Game:interpretScript(s)
     then
       if     s == DoNothing     then return
       elseif s == KingOpening   then self:kingScript()
-      elseif s == LeaveTantegel then self:leaveTantegelFromX0Y9()
       elseif s == OpenChest     then self:openChestScript()
       elseif s == Search        then self:searchGroundScript()
       elseif s == Stairs        then self:takeStairs(self:getLocation())
@@ -310,13 +315,6 @@ function Game:takeStairs (from)
   pressDown(2)
   pressDown(2)
   pressA(60)
-
-  if from:equals(TantegelBasementStairs)
-  then
-    local loc = self:getLocation()
-    print("Discovered what's in Tantegel's basement ... it's " .. self.maps[loc.mapId].mapName .. "!!!")
-    self:addWarp(Warp(TantegelBasementStairs, loc))
-  end
 end
 
 function Game:gameStartMenuScript ()
@@ -348,18 +346,16 @@ function Game:kingScript ()
   holdA(250)
 end
 
-function Game:leaveTantegelFromX0Y9()
-  print("======leaving tantegel =======")
-  holdLeft(30)
-  waitFrames(20)
-  self.tantegelLoc = self:getLocation()
-  self.overworld:getVisibleOverworldGrid(self:getX(), self:getY())
-  print("self.tantegelLoc: ", self.tantegelLoc)
-end
+-- function Game:leaveTantegelFromX0Y9()
+--   self.overworld:getVisibleOverworldGrid(self:getX(), self:getY())
+--   print("self.tantegelLoc: ", self.tantegelLoc)
+-- end
 
 -- TODO: this whole function needs to get redone completely. this is just a hack.
 function Game:addWarp(warp)
-  table.insert(self.warps, warp)
+  if table.containsUsingDotEquals(self.warps, warp) then return end
+
+  print("Adding warp: " .. tostring(warp))
   table.insert(self.warps, warp)
 
   -- TODO: this is just terrible....
@@ -403,12 +399,12 @@ function Game:shortestPath(startNode, endNode)
       if allGraphs[node.mapId].graph[node.y] ~= nil then
         local neighbors = allGraphs[node.mapId].graph[node.y][node.x]
 
-        if neighbors ~= nil then -- it can be nil if we've never visited it on the overworld.
+        if neighbors ~= nil then -- it can be nil if we've never seen it on the overworld.
           for _, neighbor in ipairs(neighbors) do
             if not containsPoint(visited, neighbor) then
               q:push(neighbor)
               insertPoint(visited, neighbor, true)
-              insertPoint(prev, neighbor, node)
+              insertPoint(prev, neighbor, {node, neighbor} )
             end
           end
         end
@@ -422,10 +418,13 @@ function Game:shortestPath(startNode, endNode)
     local path = {}
     local at = e
     while not (at == nil) do
-      table.insert(path, at)
       if prev[at.mapId] == nil or prev[at.mapId][at.x] == nil or prev[at.mapId][at.x][at.y] == nil
-        then at = nil
-        else at = prev[at.mapId][at.x][at.y]
+        then
+          table.insert(path, at)
+          at = nil
+        else
+          table.insert(path, prev[at.mapId][at.x][at.y][2])
+          at = prev[at.mapId][at.x][at.y][1]
       end
     end
     local pathR = table.reverse(path)
@@ -445,6 +444,16 @@ function Game:saveUnlockedDoor(point)
   table.insert(self.unlockedDoors, point)
 end
 
+MovementCommand = class(function(a,direction,from,to)
+  a.direction = direction
+  a.from = from
+  a.to = to
+end)
+
+function MovementCommand:sameDirection (other)
+  return self.direction == other.direction
+end
+
 -- TODO: this shit seems to work... but im not sure i understand it. lol
 -- there is definitely a way to do this that is more intuitive.
 function convertPathToCommands(pathIn, maps)
@@ -452,11 +461,18 @@ function convertPathToCommands(pathIn, maps)
     local res = {}
 
     function move(next)
-      if p1.mapId ~= p2.mapId then return MovementCommand("Stairs", p1, p2) end
-      if p2.y < p1.y then return MovementCommand(UP, p1, next) end
-      if p2.y > p1.y then return MovementCommand(DOWN, p1, next) end
-      if p2.x < p1.x then return MovementCommand(LEFT, p1, next) end
-      if p2.x > p1.x then return MovementCommand(RIGHT, p1, next) end
+      if p2.type == NeighborType.STAIRS then return MovementCommand("Stairs", p1, p2) end
+      if p2.type == NeighborType.BORDER_LEFT then return MovementCommand(LEFT, p1, p2) end
+      if p2.type == NeighborType.BORDER_RIGHT then return MovementCommand(RIGHT, p1, p2) end
+      if p2.type == NeighborType.BORDER_UP then return MovementCommand(UP, p1, p2) end
+      if p2.type == NeighborType.BORDER_DOWN then return MovementCommand(DOWN, p1, p2) end
+      if p2.type == NeighborType.SAME_MAP then
+        if p2.y < p1.y then return MovementCommand(UP, p1, next) end
+        if p2.y > p1.y then return MovementCommand(DOWN, p1, next) end
+        if p2.x < p1.x then return MovementCommand(LEFT, p1, next) end
+        if p2.x > p1.x then return MovementCommand(RIGHT, p1, next) end
+      else print("i have no idea what is going on with the neighbor type")
+      end
     end
 
     function nextTileIsDoor()
@@ -494,7 +510,9 @@ function convertPathToCommands(pathIn, maps)
 end
 
 function Game:stateMachine()
-  self:explore()
+  if self.mapChanged then self:dealWithMapChange()
+  else self:explore()
+  end
 end
 
 function Game:atFirstImportantLocation()
@@ -538,12 +556,12 @@ end
 function Game:exploreStaticMap()
   waitUntil(function() return self:onStaticMap() end, 240)
   local loc = self:getLocation()
-  local script = scripts.MapScripts[loc.mapId]
+  local script = self.scripts.MapScripts[loc.mapId]
 
   if script ~= nil then self:interpretScript(script)
   else
     if (emu.framecount() % 60 == 0) then
-      print("i don't yet know how to explore this map: " .. tostring(loc), ", " .. tostring(MAP_DATA[loc.mapId]))
+      print("i don't yet know how to explore this map: " .. tostring(loc), ", " .. tostring(STATIC_MAP_METADATA[loc.mapId]))
     end
   end
 end
@@ -686,11 +704,60 @@ function Game:onPlayerMove()
   -- this wasn't working quite right
   -- so i just folded it into the followPath algo.
   -- i think that is a better spot for it anyway
+  -- print("position as changed to: " .. tostring(self:getLocation()))
 end
 
 function Game:onMapChange()
-  print("The map has changed! currentLoc: " .. tostring(self:getLocation()))
-  if self:getMapId() == OverWorldId then self.chests:closeAll() end
+  self.mapChanged = true
+end
+
+function Game:dealWithMapChange()
+  local newMapId = self:getMapId()
+  local oldMapId = self.currentMapId
+  local newLoc   = self:getLocation()
+  print("The map has changed! current position: " ..  tostring(newLoc) .. ", old map: " .. tostring(oldMapId))
+
+  if newMapId == OverWorldId then self.chests:closeAll()
+  elseif newMapId > 1 and newMapId <= 29 then
+    if not self.maps[newMapId].seenByPlayer then
+      print("now seen by player: ", self.maps[newMapId].mapName)
+      self.maps[newMapId].seenByPlayer = true
+    end
+  end
+
+  if newMapId ~= 1 and newMapId ~= Tantegel then
+    local coordinatesList = self.maps[newMapId].overworldCoordinates
+    if coordinatesList ~= nil then
+      if #coordinatesList == 1 then
+        self:addWarp(Warp(newLoc, coordinatesList[1]))
+      else
+        -- this must be swamp cave, because it has more than one entrance
+        if newLoc:equals(SwampNorthEntrance) then
+          print("adding warp to SwampNorthEntrance")
+          self:addWarp(Warp(newLoc, coordinatesList[1]))
+        elseif newLoc:equals(SwampSouthEntrance) then
+          print("adding warp to SwampSouthEntrance")
+          self:addWarp(Warp(newLoc, coordinatesList[2]))
+        end
+      end
+    end
+  elseif oldMapId == SwampCave then
+    print("leaving swamp cave")
+    local coordinatesList = self.maps[SwampCave].overworldCoordinates
+    if newLoc:equals(coordinatesList[1]) then
+      print("adding warp to SwampNorthEntrance")
+      self:addWarp(Warp(newLoc, SwampNorthEntrance))
+    else
+      print("adding warp to SwampSouthEntrance")
+      self:addWarp(Warp(newLoc, SwampSouthEntrance))
+    end
+  elseif oldMapId == Tantegel then
+    print("leaving Tantegel")
+    self:addWarp(Warp(TantegelEntrance, self.maps[Tantegel].overworldCoordinates[1]))
+  end
+
+  self.currentMapId = newMapId
+  self.mapChanged = false
 end
 
 function Game:openItemMenu()

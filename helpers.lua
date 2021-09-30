@@ -1,4 +1,5 @@
 require "Class"
+enum = require("enum")
 
 function bitwise_and(a, b)
   return AND(a, b)
@@ -201,6 +202,18 @@ function table.concat(tbl1, tbl2)
   return res
 end
 
+function table.concatAll(tbls)
+  local res = {}
+
+  for i=1, #tbls do
+    for _,v in ipairs(tbls[i]) do
+      table.insert(res, v)
+    end
+  end
+
+  return res
+end
+
 list = {}
 
 function list.drop(n, t)
@@ -385,6 +398,26 @@ end
 function Point:equals(p2)
   if p2 == nil then return false end
   return self.mapId == p2.mapId and self.x == p2.x and self.y == p2.y
+end
+
+NeighborType = enum.new("Neighbor Type", {
+  "SAME_MAP",
+  "STAIRS",
+  "BORDER_LEFT",
+  "BORDER_RIGHT",
+  "BORDER_UP",
+  "BORDER_DOWN",
+})
+
+Neighbor = class(function(a, mapId, x, y, type)
+  a.mapId = mapId
+  a.x = x
+  a.y = y
+  a.type = type
+end)
+
+function Neighbor:__tostring()
+  return"{mapId:" .. self.mapId .. ", x:" .. self.x .. ", y:" .. self.y .. "}" -- ", type: " .. tostring(self.type.name) .. "}"
 end
 
 Queue = class(function(a)

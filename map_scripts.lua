@@ -66,7 +66,6 @@ ActionScript = class(Script, function(a, name)
 end)
 
 KingOpening   = ActionScript("KING_OPENING_GAME")
-LeaveTantegel = ActionScript("LEAVE_TANTEGEL_OPENING_GAME")
 DoNothing     = ActionScript("DO_NOTHING")
 OpenChest     = ActionScript("OPEN_CHEST")
 Search        = ActionScript("SEARCH")
@@ -205,259 +204,271 @@ function ListScript:__tostring()
   return res
 end
 
-scripts = {}
+Scripts = class(function(a,mem)
 
-function scripts.OpenChestAt(mapId, x, y)
-  local loc = Point(mapId, x, y)
-  return IfScript("Test if chest is open at " .. tostring(loc),
-     IsChestOpen(loc),
-     DoNothing,
-     ListScript("Opening Chest at: " .. tostring(loc), {Goto(mapId, x, y), OpenChest})
-   )
-end
+  coordinates = getAllOverworldCoordinates(mem)
 
-function scripts.VisitShop(mapId, x, y)
-  return ListScript("Visiting shop at: " .. tostring(Point(mapId, x, y)), {Goto(mapId, x, y), ShopKeeper})
-end
+  function VisitShop(mapId, x, y)
+    return ListScript("Visiting shop at: " .. tostring(Point(mapId, x, y)), {Goto(mapId, x, y), ShopKeeper})
+  end
 
-function scripts.VisitInn(mapId, x, y)
-  return ListScript("Visiting inn at: " .. tostring(Point(mapId, x, y)), {Goto(mapId, x, y), InnKeeper})
-end
+  function VisitInn(mapId, x, y)
+    return ListScript("Visiting inn at: " .. tostring(Point(mapId, x, y)), {Goto(mapId, x, y), InnKeeper})
+  end
 
-function scripts.SearchAt(mapId, x, y)
-  return ListScript("Searching at: " .. tostring(Point(mapId, x, y)), {Goto(mapId, x, y), Search})
-end
+  function SearchAt(mapId, x, y)
+    return ListScript("Searching at: " .. tostring(Point(mapId, x, y)), {Goto(mapId, x, y), Search})
+  end
 
-function scripts.Consecutive(name, scripts)
-  return ListScript(name, scripts)
-end
+  function Consecutive(name, scripts)
+    return ListScript(name, scripts)
+  end
 
-function scripts.IfHaveKeys(name, t, f)
-  return IfScript(name, HaveKeys, t, f)
-end
+  function IfHaveKeys(name, t, f)
+    return IfScript(name, HaveKeys, t, f)
+  end
 
-scripts.openMenu = scripts.Consecutive("Open Menu", { HoldA(30), WaitFrames(10) })
-scripts.talk = scripts.Consecutive("Talk", { HoldA(30), WaitFrames(10), PressA })
+  function OpenChestAt(mapId, x, y)
+    local loc = Point(mapId, x, y)
+    return IfScript("Test if chest is open at " .. tostring(loc),
+       IsChestOpen(loc),
+       DoNothing,
+       ListScript("Opening Chest at: " .. tostring(loc), {Goto(mapId, x, y), OpenChest})
+     )
+  end
 
-scripts.exploreGraveScript =
-  scripts.Consecutive("Garin's Grave", {
-    scripts.OpenChestAt(GarinsGraveLv1, 13, 0),
-    scripts.OpenChestAt(GarinsGraveLv1, 12, 0),
-    scripts.OpenChestAt(GarinsGraveLv1, 11, 0),
-    scripts.IfHaveKeys("If we have keys, Search Bottom Of Grave",
-      scripts.Consecutive("Search Bottom Of Grave", {scripts.OpenChestAt(GarinsGraveLv3, 13, 6), Exit}),
-      Exit
-    ),
-  })
+  function GotoPoint(p)
+    return Goto(p.mapId, p.x, p.y)
+  end
 
-scripts.exploreMountainCaveScript =
-  scripts.Consecutive("Mountain Cave", {
-    scripts.OpenChestAt(MountainCaveLv1, 13, 5),
-    scripts.OpenChestAt(MountainCaveLv2, 3, 2),
-    scripts.OpenChestAt(MountainCaveLv2, 2, 2),
-    scripts.OpenChestAt(MountainCaveLv2, 10, 9),
-    scripts.OpenChestAt(MountainCaveLv2, 1, 6),
-    Exit
-  })
+  function GotoOverworld(fromMap)
+    local p = coordinates[fromMap][1]
+    return Goto(p.mapId, p.x, p.y)
+  end
 
-scripts.exploreErdricksCaveScript =
-  scripts.Consecutive("Erdrick's Cave", {
-    scripts.OpenChestAt(ErdricksCaveLv2, 9, 3),
-    Exit
-  })
+  openMenu = Consecutive("Open Menu", { HoldA(30), WaitFrames(10) })
+  talk = Consecutive("Talk", { HoldA(30), WaitFrames(10), PressA })
 
-scripts.exploreHauksness =
-  scripts.Consecutive("Hauksness", {
-    Goto(Hauksness, 18, 12),
-    Search,
-    Exit -- TODO: need to use the warp point here because Outside doesn't work
-         -- I think this will force us to figure out how to leave towns from many different locations.
-         -- the good news is that when you leave, you end up on top of the town.
-         -- so we can say something similar to: Goto(OverWorldId, town.x, town.y)
-         -- but how it chooses to leave from inside the town is still unknown.
-  })
-
-scripts.exploreCharlock =
-  scripts.Consecutive("Charlock", {
-    Goto(Charlock, 10, 1),
-    Search,
-    Stairs,
-    Goto(CharlockThroneRoom, 10, 29),
-    scripts.exploreCharlockThroneRoom
-  })
-
-scripts.exploreCharlockThroneRoom =
-  scripts.Consecutive("Charlock Throne Room", {
-    Goto(CharlockThroneRoom, 17, 24),
-    DragonLord
-  })
-
-scripts.northernShrineScript =
-  IfScript(
-    "Do we have the harp?",
-    HaveHarp,
-    scripts.Consecutive("Get Staff", {
-      Goto(NorthernShrine, 5, 4),
-      scripts.Consecutive("Talk to old man", { scripts.talk, HoldA(60), PressB }),
-      scripts.OpenChestAt(NorthernShrine, 3, 4),
-      Goto(NorthernShrine, 4, 9),
-      Stairs
-    }),
-    Stairs
-  )
-
-scripts.southernShrineScript =
-  IfScript(
-    "Do we have the staff, stones and token?",
-    All ({ HaveStaff, HaveStones, HaveToken }),
-    scripts.Consecutive("Talk to old man", {
-      Goto(SouthernShrine, 3, 5),
-      TalkToOldMan,
-      ExitWalking
-    }),
-    Stairs
-  )
-
-scripts.garinhamScript =
-  scripts.Consecutive("Garinham", {
-    scripts.IfHaveKeys("If we have keys...",
-      scripts.Consecutive("Get chests and go down stairs in Garinham.", {
-        scripts.OpenChestAt(Garinham, 8, 6),
-        scripts.OpenChestAt(Garinham, 8, 5),
-        scripts.OpenChestAt(Garinham, 9, 5),
-        Goto(Garinham, 19, 0),
-        Stairs
-      })
-    ),
-  })
-
-scripts.leaveTantegalOnFoot =
-  scripts.Consecutive("Leaving Throne room via legs", {Goto(Tantegel, 0, 9), LeaveTantegel})
-
-scripts.leaveThroneRoomOpeningGameScript =
-  IfScript(
-    "Figure out how to leave throne room",
-    HaveReturn,
-    scripts.Consecutive("Leaving Throne room via return", {scripts.saveWithKingScript, CastReturn}),
-    IfScript(
-      "Check to leave throne room with wings",
-      HaveWings,
-      scripts.Consecutive("Leaving Throne room via wings", {scripts.saveWithKingScript, UseWings}),
-      scripts.leaveTantegalOnFoot
-    )
-  )
-
-scripts.throneRoomOpeningGameScript =
-  IfScript(
-    "Have we ever left the throne room? If not, must be starting the game.",
-    Not(LeftThroneRoom),
-    scripts.Consecutive("Tantagel Throne Room Opening Game", {
-      -- we should already be here...but, when i monkey around its better to have this.
-      Goto(TantegelThroneRoom, 3, 4),
-      HoldUp(30),
-      KingOpening,
-      scripts.OpenChestAt(TantegelThroneRoom, 4, 4),
-      scripts.OpenChestAt(TantegelThroneRoom, 5, 4),
-      scripts.OpenChestAt(TantegelThroneRoom, 6, 1),
-      scripts.leaveThroneRoomOpeningGameScript
-    }),
-    -- We probably died, and need to resume doing whatever it was we were last doing.
-    -- So it seems like we need some sort of goal system in order to be able to resume.
-    scripts.leaveTantegalOnFoot
-  )
-
-scripts.saveWithKingScript =
-  scripts.Consecutive("Leaving Throne room via wings", {
-    Goto(TantegelThroneRoom, 3, 4), Save
-  })
-
--- TODO: add static  npc to basement and fix this up
-scripts.tantegelBasementShrine =
-  scripts.Consecutive("TantegelBasement (Free cave)", {
-    Goto(TantegelBasement, 5, 7),
-    Goto(TantegelBasement, 5, 5),
-    scripts.OpenChestAt(TantegelBasement, 4, 5),
-    Goto(TantegelBasement, 5, 5),
-    Goto(TantegelBasement, 5, 7),
-    Goto(TantegelBasement, 0, 4),
-    Stairs
-  })
-
-scripts.kol =
-  scripts.Consecutive("Kol", {
-    scripts.VisitShop(Kol, 20, 12),
-    scripts.SearchAt(Kol, 9, 6),
-    scripts.VisitInn(Kol, 19, 2),
-    scripts.VisitShop(Kol, 12, 21)
-  })
-
-scripts.rimuldar =
-  scripts.Consecutive("Rimuldar", {
-    IfScript("Do we need keys?", All(NeedKeys, HaveGold(53)),
-      scripts.Consecutive("Buy Keys in Rimuldar", {Goto(Rimuldar, 4, 5), ShopKeeper}),
-      DoNothing
-    ),
-    IfScript("Do we have two?", All(HaveKeys(2), HasChestEverBeenOpened(Rimuldar, 24, 23)),
-      scripts.Consecutive("Get chest Rimuldar", {Goto(Rimuldar, 24, 23), OpenChest}),
-      DoNothing
-    )
-  })
-
--- TODO: a lot of work needs to be done on this script
-scripts.swampCave =
-  IfScript(
-    "Are we at swamp north?",
-    AtLocation(SwampCave, 0, 0),
-    scripts.Consecutive("Go to swamp south and exit", {
-      Goto(SwampCave, 0, 29), Stairs
-    }),
-    -- TODO: we could just cast Outside from here.
-    scripts.Consecutive("Go to swamp north and exit", {
-      Goto(SwampCave, 0, 0), Stairs
+  saveWithKingScript =
+    Consecutive("Leaving Throne room via wings", {
+      Goto(TantegelThroneRoom, 3, 4), Save
     })
-  )
 
--- scripts.cantlin = scripts.VisitShop(Cantlin, 25, 26)
+  exploreGraveScript =
+    Consecutive("Garin's Grave", {
+      OpenChestAt(GarinsGraveLv1, 13, 0),
+      OpenChestAt(GarinsGraveLv1, 12, 0),
+      OpenChestAt(GarinsGraveLv1, 11, 0),
+      IfHaveKeys("If we have keys, Search Bottom Of Grave",
+        Consecutive("Search Bottom Of Grave", {OpenChestAt(GarinsGraveLv3, 13, 6), Exit}),
+        Exit
+      ),
+    })
 
--- This is for maps that we don't really need a script for
--- because they are handled by the first floor of the map, basically.
--- for example in ErdricksCaveLv1, we just say { OpenChestAt(ErdricksCaveLv2, 9, 3), Exit }
--- there just isn't a case were we need a script for ErdricksCaveLv2
--- the only reason i could potentially ever needing one is like...
--- the script crashes, and we have to restart it and we happen to be in an NA map.
--- but... eh.
-NA = nil
+  exploreMountainCaveScript =
+    Consecutive("Mountain Cave", {
+      OpenChestAt(MountainCaveLv1, 13, 5),
+      OpenChestAt(MountainCaveLv2, 3, 2),
+      OpenChestAt(MountainCaveLv2, 2, 2),
+      OpenChestAt(MountainCaveLv2, 10, 9),
+      OpenChestAt(MountainCaveLv2, 1, 6),
+      Exit
+    })
 
-scripts.MapScripts = {
-  [Charlock] = scripts.exploreCharlock,
-  [Hauksness] = scripts.exploreHauksness,
-  -- TODO we will need to have more here, but its not terrible for now.
-  [Tantegel] = scripts.leaveTantegalOnFoot,
-  -- todo this one is kinda broken. i need to see why im in the room
-  -- is it my first time there? or did i walk in there to save? or did i just die?
-  [TantegelThroneRoom] = scripts.throneRoomOpeningGameScript,
-  [CharlockThroneRoom] = scripts.exploreCharlockThroneRoom,
-  [Kol] = scripts.kol,
-  [Brecconary] = nil,
-  [Garinham] = scripts.garinhamScript,
-  [Cantlin] = scripts.VisitShop(Cantlin, 25, 26),
-  [Rimuldar] = scripts.rimuldar,
-  [TantegelBasement] = scripts.tantegelBasementShrine,
-  [NorthernShrine] = scripts.northernShrineScript,
-  [SouthernShrine] = scripts.southernShrineScript,
-  [CharlockCaveLv1] = NA,
-  [CharlockCaveLv2] = NA,
-  [CharlockCaveLv3] = NA,
-  [CharlockCaveLv4] = NA,
-  [CharlockCaveLv5] = NA,
-  [CharlockCaveLv6] = NA,
-  [SwampCave] = scripts.swampCave,
-  [MountainCaveLv1] = scripts.exploreMountainCaveScript,
-  [MountainCaveLv2] = NA,
-  [GarinsGraveLv1] = scripts.exploreGraveScript,
-  [GarinsGraveLv2] = NA,
-  [GarinsGraveLv3] = NA,
-  [GarinsGraveLv4] = NA,
-  [ErdricksCaveLv1] = scripts.exploreErdricksCaveScript,
-  [ErdricksCaveLv2] = NA,
-}
+  exploreErdricksCaveScript =
+    Consecutive("Erdrick's Cave", {
+      OpenChestAt(ErdricksCaveLv2, 9, 3),
+      Exit
+    })
+
+  exploreHauksness =
+    Consecutive("Hauksness", {
+      Goto(Hauksness, 18, 12),
+      Search,
+      Exit -- TODO: need to use the warp point here because Outside doesn't work
+           -- I think this will force us to figure out how to leave towns from many different locations.
+           -- the good news is that when you leave, you end up on top of the town.
+           -- so we can say something similar to: Goto(OverWorldId, town.x, town.y)
+           -- but how it chooses to leave from inside the town is still unknown.
+    })
+
+  exploreCharlockThroneRoom =
+    Consecutive("Charlock Throne Room", {
+      Goto(CharlockThroneRoom, 17, 24),
+      DragonLord
+    })
+
+  exploreCharlock =
+    Consecutive("Charlock", {
+      Goto(Charlock, 10, 1),
+      Search,
+      Stairs,
+      Goto(CharlockThroneRoom, 10, 29),
+      exploreCharlockThroneRoom
+    })
+
+  northernShrineScript =
+    IfScript(
+      "Do we have the harp?",
+      HaveHarp,
+      Consecutive("Get Staff", {
+        Goto(NorthernShrine, 5, 4),
+        Consecutive("Talk to old man", { talk, HoldA(60), PressB }),
+        OpenChestAt(NorthernShrine, 3, 4),
+        Goto(NorthernShrine, 4, 9),
+        Stairs
+      }),
+      Stairs
+    )
+
+  southernShrineScript =
+    IfScript(
+      "Do we have the staff, stones and token?",
+      All ({ HaveStaff, HaveStones, HaveToken }),
+      Consecutive("Talk to old man", {
+        Goto(SouthernShrine, 3, 5),
+        TalkToOldMan,
+        ExitWalking
+      }),
+      Stairs
+    )
+
+  garinhamScript =
+    Consecutive("Garinham", {
+      IfHaveKeys("If we have keys...",
+        Consecutive("Get chests and go down stairs in Garinham.", {
+          OpenChestAt(Garinham, 8, 6),
+          OpenChestAt(Garinham, 8, 5),
+          OpenChestAt(Garinham, 9, 5),
+          Goto(Garinham, 19, 0),
+          Stairs
+        })
+      ),
+    })
+
+  leaveTantegalOnFoot =
+    Consecutive("Leaving Throne room via legs", {GotoOverworld(Tantegel)})
+
+  leaveThroneRoomOpeningGameScript =
+    IfScript(
+      "Figure out how to leave throne room",
+      HaveReturn,
+      Consecutive("Leaving Throne room via return", {aveWithKingScript, CastReturn}),
+      IfScript(
+        "Check to leave throne room with wings",
+        HaveWings,
+        Consecutive("Leaving Throne room via wings", {saveWithKingScript, UseWings}),
+        leaveTantegalOnFoot
+      )
+    )
+
+  throneRoomOpeningGameScript =
+    IfScript(
+      "Have we ever left the throne room? If not, must be starting the game.",
+      Not(LeftThroneRoom),
+      Consecutive("Tantagel Throne Room Opening Game", {
+        -- we should already be here...but, when i monkey around its better to have this.
+        Goto(TantegelThroneRoom, 3, 4),
+        HoldUp(30),
+        KingOpening,
+        OpenChestAt(TantegelThroneRoom, 4, 4),
+        OpenChestAt(TantegelThroneRoom, 5, 4),
+        OpenChestAt(TantegelThroneRoom, 6, 1),
+        leaveThroneRoomOpeningGameScript
+      }),
+      -- We probably died, and need to resume doing whatever it was we were last doing.
+      -- So it seems like we need some sort of goal system in order to be able to resume.
+      leaveTantegalOnFoot
+    )
+
+  -- TODO: add static  npc to basement and fix this up
+  tantegelBasementShrine =
+    Consecutive("TantegelBasement (Free cave)", {
+      Goto(TantegelBasement, 5, 7),
+      Goto(TantegelBasement, 5, 5),
+      OpenChestAt(TantegelBasement, 4, 5),
+      Goto(TantegelBasement, 5, 5),
+      Goto(TantegelBasement, 5, 7),
+      Goto(TantegelBasement, 0, 4),
+      Stairs
+    })
+
+  kol =
+    Consecutive("Kol", {
+      VisitShop(Kol, 20, 12),
+      SearchAt(Kol, 9, 6),
+      VisitInn(Kol, 19, 2),
+      VisitShop(Kol, 12, 21)
+    })
+
+  rimuldar =
+    Consecutive("Rimuldar", {
+      IfScript("Do we need keys?", All(NeedKeys, HaveGold(53)),
+        Consecutive("Buy Keys in Rimuldar", {Goto(Rimuldar, 4, 5), ShopKeeper}),
+        DoNothing
+      ),
+      IfScript("Do we have two?", All(HaveKeys(2), HasChestEverBeenOpened(Rimuldar, 24, 23)),
+        Consecutive("Get chest Rimuldar", {Goto(Rimuldar, 24, 23), OpenChest}),
+        DoNothing
+      )
+    })
+
+  -- TODO: a lot of work needs to be done on this script
+  swampCave =
+    IfScript(
+      "Are we at swamp north?",
+      AtLocation(SwampCave, 0, 0),
+      Consecutive("Go to swamp south and exit", {
+        Goto(SwampCave, 0, 29), Stairs
+      }),
+      -- TODO: we could just cast Outside from here.
+      Consecutive("Go to swamp north and exit", {
+        Goto(SwampCave, 0, 0), Stairs
+      })
+    )
+
+  cantlin = VisitShop(Cantlin, 25, 26)
+
+  -- This is for maps that we don't really need a script for
+  -- because they are handled by the first floor of the map, basically.
+  -- for example in ErdricksCaveLv1, we just say { OpenChestAt(ErdricksCaveLv2, 9, 3), Exit }
+  -- there just isn't a case were we need a script for ErdricksCaveLv2
+  -- the only reason i could potentially ever needing one is like...
+  -- the script crashes, and we have to restart it and we happen to be in an NA map.
+  -- but... eh.
+  NA = nil
+
+  a.MapScripts = {
+    [Charlock] = exploreCharlock,
+    [Hauksness] = exploreHauksness,
+    -- TODO we will need to have more here, but its not terrible for now.
+    [Tantegel] = leaveTantegalOnFoot,
+    -- todo this one is kinda broken. i need to see why im in the room
+    -- is it my first time there? or did i walk in there to save? or did i just die?
+    [TantegelThroneRoom] = throneRoomOpeningGameScript,
+    [CharlockThroneRoom] = exploreCharlockThroneRoom,
+    [Kol] = kol,
+    [Brecconary] = nil,
+    [Garinham] = garinhamScript,
+    [Cantlin] = cantlin,
+    [Rimuldar] = rimuldar,
+    [TantegelBasement] = tantegelBasementShrine,
+    [NorthernShrine] = northernShrineScript,
+    [SouthernShrine] = southernShrineScript,
+    [CharlockCaveLv1] = NA,
+    [CharlockCaveLv2] = NA,
+    [CharlockCaveLv3] = NA,
+    [CharlockCaveLv4] = NA,
+    [CharlockCaveLv5] = NA,
+    [CharlockCaveLv6] = NA,
+    [SwampCave] = swampCave,
+    [MountainCaveLv1] = exploreMountainCaveScript,
+    [MountainCaveLv2] = NA,
+    [GarinsGraveLv1] = exploreGraveScript,
+    [GarinsGraveLv2] = NA,
+    [GarinsGraveLv3] = NA,
+    [GarinsGraveLv4] = NA,
+    [ErdricksCaveLv1] = exploreErdricksCaveScript,
+    [ErdricksCaveLv2] = NA,
+  }
+end)

@@ -8,3 +8,20 @@ Brick is supposed to be 1/16.  Same with Barrier tiles.
 Chests/stairs are 1/24
 Bridge (and stairs) is same as grass.
 If x and y are both even or both odd, it's 1/32 if one is even and the other odd, it's 1/16.
+
+
+
+
+-- something happened in the bottom of the grave. we tried to cast outside
+and it said we didn't have it, even though we did...
+and then it got all confused. i think there was even a bug with opening the chest
+and also we coldn't leave the dungeon with outside, so then it got stuck and didn't know how to get out
+i THINK this is because we were out of MP. but how the heck did we get out of MP?
+i have seen it say that we haven't learned that spell...so i guess we need to do some testing there.
+
+OPEN_CHEST
+======opening chest=======
+EXIT
+can't cast Outside, spell hasn't been learned.
+The map has changed! current position: {mapId:26, x:13, y:6}, old map: 1
+now seen by player:  Garin's Grave Lv 3

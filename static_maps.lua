@@ -31,7 +31,10 @@ GarinsGraveLv4     = 27
 ErdricksCaveLv1    = 28
 ErdricksCaveLv2    = 29
 
+TantegelEntrance = Point(Tantegel, 11, 29)
 TantegelBasementStairs = Point(Tantegel, 29, 29)
+SwampNorthEntrance = Point(SwampCave, 0, 0)
+SwampSouthEntrance = Point(SwampCave, 0, 29)
 
 Warp = class(function(a, src, dest)
   a.src = src
@@ -44,6 +47,11 @@ end
 
 function Warp:__tostring()
   return "{src: " .. tostring(self.src) .. ", dest: " .. tostring(self.dest) .. "}"
+end
+
+function Warp:equals(w)
+  return (self.src:equals(w.src) and self.dest:equals(w.dest)) or
+         (self.src:equals(w.dest) and self.dest:equals(w.src))
 end
 
 WARPS = {
@@ -109,9 +117,10 @@ function MapSize:__tostring()
   return "MapSize(height: " .. self.height .. ", width: " .. self.width .. ")"
 end
 
-StaticMapMetadata = class(function(a, mapId, name, size, mapLayoutRomAddr, entrancesRomAddrs)
+StaticMapMetadata = class(function(a, mapId, name, mapType, size, mapLayoutRomAddr, entrancesRomAddrs)
   a.mapId = mapId
   a.name = name
+  a.mapType = mapType
   a.size = size
   a.mapLayoutRomAddr = mapLayoutRomAddr
   -- this is a list because swamp cave has two entrances
@@ -127,36 +136,56 @@ function StaticMapMetadata:__tostring()
                          ", entrancesRomAddrs: " .. tostring(self.entrancesRomAddrs) .. ")"
 end
 
+MapType = enum.new("Map Type", { "TOWN", "DUNGEON", "BOTH", "OTHER" })
+
 STATIC_MAP_METADATA = {
-  [2]  = StaticMapMetadata(2,  "Charlock",             MapSize(20, 20), 0xC0,   {0xF3EA}),
-  [3]  = StaticMapMetadata(3,  "Hauksness",            MapSize(20, 20), 0x188,  {0xF3F6}),
-  [4]  = StaticMapMetadata(4,  "Tantegel",             MapSize(30, 30), 0x250,  {0xF3E4}),
-  [5]  = StaticMapMetadata(5,  "Tantegel Throne Room", MapSize(10, 10), 0x412),
-  [6]  = StaticMapMetadata(6,  "Charlock Throne Room", MapSize(30, 30), 0x444),
-  [7]  = StaticMapMetadata(7,  "Kol",                  MapSize(24, 24), 0x606,  {0xF3DE}),
-  [8]  = StaticMapMetadata(8,  "Brecconary",           MapSize(30, 30), 0x726,  {0xF3E1}),
-  [9]  = StaticMapMetadata(9,  "Garinham",             MapSize(20, 20), 0xAAA,  {0xF3D8}),
-  [10] = StaticMapMetadata(10, "Cantlin",              MapSize(30, 30), 0x8E8,  {0xF3F9}),
-  [11] = StaticMapMetadata(11, "Rimuldar",             MapSize(30, 30), 0xB72,  {0xF3F3}),
-  [12] = StaticMapMetadata(12, "Tantegel Basement",    MapSize(10, 10), 0xD34)  {0xF40B}),
-  [13] = StaticMapMetadata(13, "Northern Shrine",      MapSize(10, 10), 0xD66,  {0xF3DB}),
-  [14] = StaticMapMetadata(14, "Southern Shrine",      MapSize(10, 10), 0xD98,  {0xF3FC}),
-  [15] = StaticMapMetadata(15, "Charlock Cave Lv 1",   MapSize(20, 20), 0xDCA),
-  [16] = StaticMapMetadata(16, "Charlock Cave Lv 2",   MapSize(10, 10), 0xE92),
-  [17] = StaticMapMetadata(17, "Charlock Cave Lv 3",   MapSize(10, 10), 0xEC4),
-  [18] = StaticMapMetadata(18, "Charlock Cave Lv 4",   MapSize(10, 10), 0xEF6),
-  [19] = StaticMapMetadata(19, "Charlock Cave Lv 5",   MapSize(10, 10), 0xF28),
-  [20] = StaticMapMetadata(20, "Charlock Cave Lv 6",   MapSize(10, 10), 0xF5A),
-  [21] = StaticMapMetadata(21, "Swamp Cave",           MapSize( 6, 30), 0xF8C,  {0xF3E7, 0xF3ED}),
-  [22] = StaticMapMetadata(22, "Mountain Cave",        MapSize(14, 14), 0xFE6,  {0xF3F0}),
-  [23] = StaticMapMetadata(23, "Mountain Cave Lv 2",   MapSize(14, 14), 0x1048),
-  [24] = StaticMapMetadata(24, "Garin's Grave Lv 1",   MapSize(20, 20), 0x10AA, {0xF411}),
-  [25] = StaticMapMetadata(25, "Garin's Grave Lv 2",   MapSize(14, 12), 0x126C),
-  [26] = StaticMapMetadata(26, "Garin's Grave Lv 3",   MapSize(20, 20), 0x1172),
-  [27] = StaticMapMetadata(27, "Garin's Grave Lv 4",   MapSize(10, 10), 0x123A),
-  [28] = StaticMapMetadata(28, "Erdrick's Cave",       MapSize(10, 10), 0x12C0, {0xF3FF}),
-  [29] = StaticMapMetadata(29, "Erdrick's Cave Lv 2",  MapSize(10, 10), 0x12F2),
+  [2]  = StaticMapMetadata(2,  "Charlock",             MapType.BOTH,    MapSize(20, 20), 0xC0,   {0xF3EA}),
+  [3]  = StaticMapMetadata(3,  "Hauksness",            MapType.BOTH,    MapSize(20, 20), 0x188,  {0xF3F6}),
+  [4]  = StaticMapMetadata(4,  "Tantegel",             MapType.TOWN,    MapSize(30, 30), 0x250,  {0xF3E4}),
+  [5]  = StaticMapMetadata(5,  "Tantegel Throne Room", MapType.OTHER,   MapSize(10, 10), 0x412),
+  [6]  = StaticMapMetadata(6,  "Charlock Throne Room", MapType.DUNGEON, MapSize(30, 30), 0x444),
+  [7]  = StaticMapMetadata(7,  "Kol",                  MapType.TOWN,    MapSize(24, 24), 0x606,  {0xF3DE}),
+  [8]  = StaticMapMetadata(8,  "Brecconary",           MapType.TOWN,    MapSize(30, 30), 0x726,  {0xF3E1}),
+  [9]  = StaticMapMetadata(9,  "Garinham",             MapType.TOWN,    MapSize(20, 20), 0xAAA,  {0xF3D8}),
+  [10] = StaticMapMetadata(10, "Cantlin",              MapType.TOWN,    MapSize(30, 30), 0x8E8,  {0xF3F9}),
+  [11] = StaticMapMetadata(11, "Rimuldar",             MapType.TOWN,    MapSize(30, 30), 0xB72,  {0xF3F3}),
+  [12] = StaticMapMetadata(12, "Tantegel Basement",    MapType.OTHER,   MapSize(10, 10), 0xD34,  {0xF40B}),
+  [13] = StaticMapMetadata(13, "Northern Shrine",      MapType.OTHER,   MapSize(10, 10), 0xD66,  {0xF3DB}),
+  [14] = StaticMapMetadata(14, "Southern Shrine",      MapType.OTHER,   MapSize(10, 10), 0xD98,  {0xF3FC}),
+  [15] = StaticMapMetadata(15, "Charlock Cave Lv 1",   MapType.DUNGEON, MapSize(20, 20), 0xDCA),
+  [16] = StaticMapMetadata(16, "Charlock Cave Lv 2",   MapType.DUNGEON, MapSize(10, 10), 0xE92),
+  [17] = StaticMapMetadata(17, "Charlock Cave Lv 3",   MapType.DUNGEON, MapSize(10, 10), 0xEC4),
+  [18] = StaticMapMetadata(18, "Charlock Cave Lv 4",   MapType.DUNGEON, MapSize(10, 10), 0xEF6),
+  [19] = StaticMapMetadata(19, "Charlock Cave Lv 5",   MapType.DUNGEON, MapSize(10, 10), 0xF28),
+  [20] = StaticMapMetadata(20, "Charlock Cave Lv 6",   MapType.DUNGEON, MapSize(10, 10), 0xF5A),
+  [21] = StaticMapMetadata(21, "Swamp Cave",           MapType.DUNGEON, MapSize( 6, 30), 0xF8C,  {0xF3E7, 0xF3ED}),
+  [22] = StaticMapMetadata(22, "Mountain Cave",        MapType.DUNGEON, MapSize(14, 14), 0xFE6,  {0xF3F0}),
+  [23] = StaticMapMetadata(23, "Mountain Cave Lv 2",   MapType.DUNGEON, MapSize(14, 14), 0x1048),
+  [24] = StaticMapMetadata(24, "Garin's Grave Lv 1",   MapType.DUNGEON, MapSize(20, 20), 0x10AA, {0xF411}),
+  [25] = StaticMapMetadata(25, "Garin's Grave Lv 2",   MapType.DUNGEON, MapSize(14, 12), 0x126C),
+  [26] = StaticMapMetadata(26, "Garin's Grave Lv 3",   MapType.DUNGEON, MapSize(20, 20), 0x1172),
+  [27] = StaticMapMetadata(27, "Garin's Grave Lv 4",   MapType.DUNGEON, MapSize(10, 10), 0x123A),
+  [28] = StaticMapMetadata(28, "Erdrick's Cave",       MapType.DUNGEON, MapSize(10, 10), 0x12C0, {0xF3FF}),
+  [29] = StaticMapMetadata(29, "Erdrick's Cave Lv 2",  MapType.DUNGEON, MapSize(10, 10), 0x12F2),
 }
+
+function StaticMapMetadata:readOverworldCoordinates(memory)
+  if self.entrancesRomAddrs == nil then return nil end
+  return list.map(self.entrancesRomAddrs, function(romAddr)
+    return Point(memory:readROM(romAddr), memory:readROM(romAddr+1), memory:readROM(romAddr+2))
+  end)
+end
+
+-- ok the idea is this:
+-- we return a table 2-29 that has all the overworldCoordinates in the values
+-- then from LeaveOnFoot or whatever, we simply Goto(overworldCoordinates)
+function getAllOverworldCoordinates(memory)
+  local res = {}
+  for i, meta in pairs(STATIC_MAP_METADATA) do
+    res[i] = meta:readOverworldCoordinates(memory)
+  end
+  return res
+end
 
 StaticMapTile = class(function(a,tileId,name,walkable,walkableWithKeys)
   a.tileId = tileId
@@ -240,9 +269,10 @@ function getImmobileNPCsForMap(mapId)
   return list.map(IMMOBILE_NPCS[mapId], function(xy) return Point(mapId, xy[1], xy[2]) end)
 end
 
-StaticMap = class(function(a, mapId, mapName, overworldCoordinates, width, height, rows, allWarps)
+StaticMap = class(function(a, mapId, mapName, mapType, overworldCoordinates, width, height, rows, allWarps)
   a.mapId = mapId
   a.mapName = mapName
+  a.mapType = mapType
   a.overworldCoordinates = overworldCoordinates
   a.width = width
   a.height = height
@@ -309,17 +339,46 @@ function StaticMap:mkGraph (haveKeys)
     -- if we can't walk to the node, dont bother including the node in the graph at all
     if not isWalkable(x,y) then return {} end
     local res = {}
-    if x > 0 and isWalkable(x-1, y) then table.insert(res, Point(self.mapId, x-1, y)) end
-    if x < self.width - 1 and isWalkable(x+1, y) then table.insert(res, Point(self.mapId, x+1, y)) end
-    if y > 0 and isWalkable(x, y-1) then table.insert(res, Point(self.mapId, x, y-1)) end
-    if y < self.height - 1 and isWalkable(x, y+1) then table.insert(res, Point(self.mapId, x, y+1)) end
+    function insertNeighbor(x,y) table.insert(res, Neighbor(self.mapId, x, y, NeighborType.SAME_MAP)) end
+    if x > 0 and isWalkable(x-1, y) then insertNeighbor(x-1, y) end
+    if x < self.width - 1 and isWalkable(x+1, y) then insertNeighbor(x+1, y) end
+    if y > 0 and isWalkable(x, y-1) then insertNeighbor(x, y-1) end
+    if y < self.height - 1 and isWalkable(x, y+1) then insertNeighbor(x, y+1) end
 
     if self.warps[x] ~= nil then
       if self.warps[x][y] ~= nil then
-        for _, w in pairs(self.warps[x][y]) do table.insert(res, w)  end
+        for _, w in pairs(self.warps[x][y]) do
+          table.insert(res, Neighbor(w.mapId, w.x, w.y, NeighborType.STAIRS))
+        end
       end
     end
+    return res
+  end
 
+  function warpNeighbors(x,y)
+    local res = {}
+    if self.warps[x] ~= nil then
+      if self.warps[x][y] ~= nil then
+        for _, w in pairs(self.warps[x][y]) do
+          table.insert(res, Neighbor(w.mapId, w.x, w.y, NeighborType.STAIRS))
+        end
+      end
+    end
+    return res
+  end
+
+  function borderNeighbors(x,y)
+    -- this only applies to maps where you can walk directly out onto the overworld.
+    if self.mapType ~= MapType.TOWN and self.mapType ~= MapType.BOTH then return {} end
+    if not isWalkable(x,y) then return {} end
+    local res = {}
+    local coor = self.overworldCoordinates[1]
+    function insertNeighbor(dir) table.insert(res, Neighbor(coor.mapId, coor.x, coor.y, dir)) end
+    if     x == 0               then insertNeighbor(NeighborType.BORDER_LEFT)
+    elseif x == self.width  - 1 then insertNeighbor(NeighborType.BORDER_RIGHT)
+    elseif y == 0               then insertNeighbor(NeighborType.BORDER_UP)
+    elseif y == self.height - 1 then insertNeighbor(NeighborType.BORDER_DOWN)
+    end
     return res
   end
 
@@ -327,7 +386,7 @@ function StaticMap:mkGraph (haveKeys)
   for y = 0,self.height-1 do
     res[y] = {}
     for x = 0,self.width-1 do
-      res[y][x] = neighbors(x,y)
+      res[y][x] = table.concatAll({neighbors(x,y), warpNeighbors(x,y), borderNeighbors(x,y)})
     end
   end
   return Graph(res, haveKeys, self)
@@ -392,16 +451,17 @@ function loadStaticMapFromFile (mapId, allWarps)
   local mapData = STATIC_MAP_METADATA[mapId]
   local mapName = mapData.name
   local mapFileName = MAP_DIRECTORY .. mapName
-  return StaticMap(mapId, mapName, mapData.size.width, mapData.size.height, table.load(mapFileName), allWarps)
+  -- todo: these overworld coordinates are wrong. we definitely have a problem
+  -- reading from files now.
+  return StaticMap(mapId, mapName, mapData.mapType, mapData.overworldCoordinates,
+                   mapData.size.width, mapData.size.height, table.load(mapFileName), allWarps)
 end
 
 function readAllStaticMaps(memory, allWarps)
-  print("readAllStaticMaps")
   local res = {}
   for i = 2, 29 do
     res[i] = memory == nil and loadStaticMapFromFile(i, allWarps) or readStaticMapFromRom(memory, i, allWarps)
   end
-  print("done readAllStaticMaps")
   return res
 end
 
@@ -451,26 +511,6 @@ function readStaticMapFromRom(memory, mapId, allWarps)
     return res
   end
 
-  function readOverworldCoordinates()
-    print("-----")
-    if mapData.entrancesRomAddrs == nil then return nil end
-    return list.map(mapData.entrancesRomAddrs, function(romAddr)
-      local p = Point(memory:readROM(romAddr), memory:readROM(romAddr+1), memory:readROM(romAddr+2))
-      print(p)
-      return p
-    end)
-  end
-
-  return StaticMap(mapId, mapData.name, readOverworldCoordinates(), mapData.size.width, mapData.size.height, getMapTileIds(), allWarps)
+  return StaticMap(mapId, mapData.name, mapData.mapType, mapData:readOverworldCoordinates(memory),
+                   mapData.size.width, mapData.size.height, getMapTileIds(), allWarps)
 end
-
-MovementCommand = class(function(a,direction,from,to)
-  a.direction = direction
-  a.from = from
-  a.to = to
-end)
-
-function MovementCommand:sameDirection (other)
-  return self.direction == other.direction
-end
-

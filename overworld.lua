@@ -148,10 +148,15 @@ function OverWorld:neighbors(x,y)
     return OVERWORLD_TILES[self.overworldRows[y][x]].walkable
   end
   local res = {}
-  if x > 0 and isWalkable(x-1, y) then table.insert(res, Point(OverWorldId, x-1, y)) end
-  if x < 119 and isWalkable(x+1, y) then table.insert(res, Point(OverWorldId, x+1, y)) end
-  if y > 0 and isWalkable(x, y-1) then table.insert(res, Point(OverWorldId, x, y-1)) end
-  if y < 119 and isWalkable(x, y+1) then table.insert(res, Point(OverWorldId, x, y+1)) end
+
+  function insertNeighbor(x,y)
+    table.insert(res,Neighbor(OverWorldId, x, y, NeighborType.SAME_MAP))
+  end
+
+  if x > 0   and isWalkable(x-1, y) then insertNeighbor(x-1, y) end
+  if x < 119 and isWalkable(x+1, y) then insertNeighbor(x+1, y) end
+  if y > 0   and isWalkable(x, y-1) then insertNeighbor(x, y-1) end
+  if y < 119 and isWalkable(x, y+1) then insertNeighbor(x, y+1) end
   return res
 end
 
