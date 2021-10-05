@@ -170,7 +170,6 @@ function Game:interpretScript(s)
       elseif s == OpenChest     then self:openChestScript()
       elseif s == Search        then self:searchGroundScript()
       elseif s == Stairs        then self:takeStairs(self:getLocation())
-      elseif s == Exit          then self:exitDungeonScript()
       elseif s == DeathWarp     then self:deathWarp()
       elseif s == SavePrincess  then self:savePrincess()
       elseif s == DragonLord    then self:fightDragonLord()
@@ -201,6 +200,7 @@ function Game:evaluateCondition(s)
   -- base conditions
   if     s == HaveKeys       then return self:haveKeys()
   elseif s == HaveWings      then return self:haveWings()
+  elseif s == HaveOutside    then return self:haveOutside()
   elseif s == HaveReturn     then return self:haveReturn()
   elseif s == LeftThroneRoom then return self:leftThroneRoom()
   elseif s == HaveHarp       then return self.playerData.items:hasSilverHarp()
@@ -243,17 +243,6 @@ end
 function Game:openMenu()
   holdA(30)
   waitFrames(10)
-end
-
--- TODO: we have to implement this. it might be hard
--- we can either cast outside (if possible)
--- or we have to like, lookup the warp point out of this dungeon
--- (which means we will have to keep track of that better)
--- and then follow the path out of that.
--- but lets how we even follow paths in this interpreter first.
--- for now, doing nothing.
-function Game:exitDungeonScript ()
-  self:cast(Outside)
 end
 
 -- TODO: i have no idea how i am going to do this yet.
@@ -353,7 +342,10 @@ end
 
 -- TODO: this whole function needs to get redone completely. this is just a hack.
 function Game:addWarp(warp)
-  if table.containsUsingDotEquals(self.warps, warp) then return end
+  if table.containsUsingDotEquals(self.warps, warp) then
+    print("NOT Adding warp, it already exists!: " .. tostring(warp))
+    return
+  end
 
   print("Adding warp: " .. tostring(warp))
   table.insert(self.warps, warp)
@@ -555,6 +547,7 @@ end
 -- we could use a map to store them. but it might be awkward with swamp N?S?
 function Game:exploreStaticMap()
   waitUntil(function() return self:onStaticMap() end, 240)
+  self:dealWithMapChange()
   local loc = self:getLocation()
   local script = self.scripts.MapScripts[loc.mapId]
 
@@ -862,6 +855,11 @@ end
 function Game:haveReturn()
   return self.playerData.spells:haveReturn()
 end
+
+function Game:haveOutside()
+  return self.playerData.spells:haveOutside()
+end
+
 
 function Game:leftThroneRoom()
   return self.playerData.statuses.leftThroneRoom
