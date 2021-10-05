@@ -499,6 +499,10 @@ function Spells:equals(spells)
   end
 end
 
+function Spells:haveOutside()
+  return self:spellIndex(Outside) ~= nil
+end
+
 function Spells:haveReturn()
   return self:spellIndex(Return) ~= nil
 end

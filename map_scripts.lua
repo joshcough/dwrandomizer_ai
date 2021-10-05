@@ -70,13 +70,12 @@ DoNothing     = ActionScript("DO_NOTHING")
 OpenChest     = ActionScript("OPEN_CHEST")
 Search        = ActionScript("SEARCH")
 Stairs        = ActionScript("STAIRS")
-Exit          = ActionScript("EXIT")
-ExitWalking   = ActionScript("EXIT_WALKING")
 DeathWarp     = ActionScript("DEATH_WARP")
 SavePrincess  = ActionScript("RESCUE_PRINCESS")
 DragonLord    = ActionScript("DRAGONLORD")
 Save          = ActionScript("SAVE")
 CastReturn    = ActionScript("CAST_RETURN")
+CastOutside   = ActionScript("CAST_OUTSIDE")
 UseWings      = ActionScript("USE_WINGS")
 TalkToOldMan  = ActionScript("TALK_TO_OLD_MAN")
 ShopKeeper    = ActionScript("TALK_TO_SHOP_KEEPER")
@@ -88,6 +87,7 @@ LeftThroneRoom = ConditionScript("LEFT_THRONEROOM")
 HaveKeys       = ConditionScript("HAVE_KEYS")
 HaveWings      = ConditionScript("HAVE_WINGS")
 HaveReturn     = ConditionScript("HAVE_RETURN")
+HaveOutside    = ConditionScript("HAVE_OUTSIDE")
 HaveHarp       = ConditionScript("HAVE_HARP")
 HaveToken      = ConditionScript("HAVE_TOKEN")
 HaveStones     = ConditionScript("HAVE_STONES")
@@ -249,6 +249,15 @@ Scripts = class(function(a,mem)
   openMenu = Consecutive("Open Menu", { HoldA(30), WaitFrames(10) })
   talk = Consecutive("Talk", { HoldA(30), WaitFrames(10), PressA })
 
+  function LeaveDungeon(mapId)
+    return IfScript(
+      "Figure out how to leave map: " .. tostring(mapId),
+      HaveOutside,
+      CastOutside,
+      GotoOverworld(mapId)
+    )
+  end
+
   saveWithKingScript =
     Consecutive("Leaving Throne room via wings", {
       Goto(TantegelThroneRoom, 3, 4), Save
@@ -260,8 +269,8 @@ Scripts = class(function(a,mem)
       OpenChestAt(GarinsGraveLv1, 12, 0),
       OpenChestAt(GarinsGraveLv1, 11, 0),
       IfHaveKeys("If we have keys, Search Bottom Of Grave",
-        Consecutive("Search Bottom Of Grave", {OpenChestAt(GarinsGraveLv3, 13, 6), Exit}),
-        Exit
+        Consecutive("Search Bottom Of Grave", {OpenChestAt(GarinsGraveLv3, 13, 6), LeaveDungeon(GarinsGraveLv1)}),
+        LeaveDungeon(GarinsGraveLv1)
       ),
     })
 
@@ -272,24 +281,20 @@ Scripts = class(function(a,mem)
       OpenChestAt(MountainCaveLv2, 2, 2),
       OpenChestAt(MountainCaveLv2, 10, 9),
       OpenChestAt(MountainCaveLv2, 1, 6),
-      Exit
+      LeaveDungeon(MountainCaveLv1)
     })
 
   exploreErdricksCaveScript =
     Consecutive("Erdrick's Cave", {
       OpenChestAt(ErdricksCaveLv2, 9, 3),
-      Exit
+      LeaveDungeon(ErdricksCaveLv1)
     })
 
   exploreHauksness =
     Consecutive("Hauksness", {
       Goto(Hauksness, 18, 12),
       Search,
-      Exit -- TODO: need to use the warp point here because Outside doesn't work
-           -- I think this will force us to figure out how to leave towns from many different locations.
-           -- the good news is that when you leave, you end up on top of the town.
-           -- so we can say something similar to: Goto(OverWorldId, town.x, town.y)
-           -- but how it chooses to leave from inside the town is still unknown.
+      GotoOverworld(Hauksness)
     })
 
   exploreCharlockThroneRoom =
@@ -328,7 +333,7 @@ Scripts = class(function(a,mem)
       Consecutive("Talk to old man", {
         Goto(SouthernShrine, 3, 5),
         TalkToOldMan,
-        ExitWalking
+        GotoOverworld(SouthernShrine)
       }),
       Stairs
     )
@@ -349,7 +354,7 @@ Scripts = class(function(a,mem)
   leaveTantegalOnFoot =
     Consecutive("Leaving Throne room via legs", {GotoOverworld(Tantegel)})
 
-  leaveThroneRoomOpeningGameScript =
+  leaveThroneRoomScript =
     IfScript(
       "Figure out how to leave throne room",
       HaveReturn,
@@ -362,7 +367,7 @@ Scripts = class(function(a,mem)
       )
     )
 
-  throneRoomOpeningGameScript =
+  throneRoomScript =
     IfScript(
       "Have we ever left the throne room? If not, must be starting the game.",
       Not(LeftThroneRoom),
@@ -374,7 +379,7 @@ Scripts = class(function(a,mem)
         OpenChestAt(TantegelThroneRoom, 4, 4),
         OpenChestAt(TantegelThroneRoom, 5, 4),
         OpenChestAt(TantegelThroneRoom, 6, 1),
-        leaveThroneRoomOpeningGameScript
+        leaveThroneRoomScript
       }),
       -- We probably died, and need to resume doing whatever it was we were last doing.
       -- So it seems like we need some sort of goal system in order to be able to resume.
@@ -445,7 +450,7 @@ Scripts = class(function(a,mem)
     [Tantegel] = leaveTantegalOnFoot,
     -- todo this one is kinda broken. i need to see why im in the room
     -- is it my first time there? or did i walk in there to save? or did i just die?
-    [TantegelThroneRoom] = throneRoomOpeningGameScript,
+    [TantegelThroneRoom] = throneRoomScript,
     [CharlockThroneRoom] = exploreCharlockThroneRoom,
     [Kol] = kol,
     [Brecconary] = nil,
@@ -466,7 +471,7 @@ Scripts = class(function(a,mem)
     [MountainCaveLv2] = NA,
     [GarinsGraveLv1] = exploreGraveScript,
     [GarinsGraveLv2] = NA,
-    [GarinsGraveLv3] = NA,
+    [GarinsGraveLv3] = GotoOverworld(GarinsGraveLv1),
     [GarinsGraveLv4] = NA,
     [ErdricksCaveLv1] = exploreErdricksCaveScript,
     [ErdricksCaveLv2] = NA,
