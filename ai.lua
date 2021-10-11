@@ -46,7 +46,7 @@ function cheat(mem)
   -- mem:writeRAM(0xbe, 0) -- no equipment
   mem:writeRAM(0xbf, 5)   -- 5 herbs
   mem:writeRAM(0xc0, 5)   -- 5 keys
-  -- mem:writeRAM(0xc1, RainbowDropByte)
+  mem:writeRAM(0xc1, RainbowDropByte)
   -- mem:writeRAM(0xc1, SilverHarpByte)
   -- TODO: this doesn't seem to be working properly.
   mem:writeRAM(0xdb, 0xff) -- repel always on

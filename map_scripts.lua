@@ -1,5 +1,6 @@
 require 'Class'
 enum = require("enum")
+require 'player_data'
 require 'static_maps'
 
 Script = class(function(a, name, body) a.name = name end)
@@ -65,34 +66,47 @@ ActionScript = class(Script, function(a, name)
   Script.init(a, name)
 end)
 
-KingOpening   = ActionScript("KING_OPENING_GAME")
-DoNothing     = ActionScript("DO_NOTHING")
-OpenChest     = ActionScript("OPEN_CHEST")
-Search        = ActionScript("SEARCH")
-Stairs        = ActionScript("STAIRS")
-DeathWarp     = ActionScript("DEATH_WARP")
-SavePrincess  = ActionScript("RESCUE_PRINCESS")
-DragonLord    = ActionScript("DRAGONLORD")
-Save          = ActionScript("SAVE")
-CastReturn    = ActionScript("CAST_RETURN")
-CastOutside   = ActionScript("CAST_OUTSIDE")
-UseWings      = ActionScript("USE_WINGS")
-TalkToOldMan  = ActionScript("TALK_TO_OLD_MAN")
-ShopKeeper    = ActionScript("TALK_TO_SHOP_KEEPER")
-InnKeeper     = ActionScript("TALK_TO_INN_KEEPER")
+KingOpening    = ActionScript("KING_OPENING_GAME")
+DoNothing      = ActionScript("DO_NOTHING")
+OpenChest      = ActionScript("OPEN_CHEST")
+Search         = ActionScript("SEARCH")
+Stairs         = ActionScript("STAIRS")
+DeathWarp      = ActionScript("DEATH_WARP")
+SavePrincess   = ActionScript("RESCUE_PRINCESS")
+DragonLord     = ActionScript("DRAGONLORD")
+Save           = ActionScript("SAVE")
+TalkToOldMan   = ActionScript("TALK_TO_OLD_MAN")
+ShopKeeper     = ActionScript("TALK_TO_SHOP_KEEPER")
+InnKeeper      = ActionScript("TALK_TO_INN_KEEPER")
+
+UseItem = class(ActionScript, function(a, item)
+  ActionScript.init(a, "UseItem: " .. tostring(item))
+  a.item = item
+end)
+
+CastSpell = class(ActionScript, function(a, spell)
+  ActionScript.init(a, "CastSpell: " .. tostring(spell))
+  a.spell = spell
+end)
 
 ConditionScript = class(Script, function(a, name) Script.init(a, name) end)
 
-LeftThroneRoom = ConditionScript("LEFT_THRONEROOM")
-HaveKeys       = ConditionScript("HAVE_KEYS")
-HaveWings      = ConditionScript("HAVE_WINGS")
-HaveReturn     = ConditionScript("HAVE_RETURN")
-HaveOutside    = ConditionScript("HAVE_OUTSIDE")
-HaveHarp       = ConditionScript("HAVE_HARP")
-HaveToken      = ConditionScript("HAVE_TOKEN")
-HaveStones     = ConditionScript("HAVE_STONES")
-HaveStaff      = ConditionScript("HAVE_STAFF")
-NeedKeys       = ConditionScript("NEED_KEYS")
+-- TODO: i really think NeedKeys needs to die.
+NeedKeys        = ConditionScript("NEED_KEYS")
+-- TODO: we need something like: Flag = class(ConditionScript, function(a, flag) ...
+-- and then just read into the flags here.
+LeftThroneRoom  = ConditionScript("LEFT_THRONEROOM")
+RainbowBridge   = ConditionScript("RAINBOW_BRIDGE")
+
+HaveItem = class(ConditionScript, function(a, item)
+  ConditionScript.init(a, tostring(item))
+  a.item = item
+end)
+
+HaveSpell = class(ConditionScript, function(a, spell)
+  ConditionScript.init(a, tostring(spell))
+  a.spell = spell
+end)
 
 AtLocation    = class(ConditionScript, function(a, mapId, x, y)
   ConditionScript.init(a, "AT_LOCATION")
@@ -225,7 +239,7 @@ Scripts = class(function(a,mem)
   end
 
   function IfHaveKeys(name, t, f)
-    return IfScript(name, HaveKeys, t, f)
+    return IfScript(name, HaveKeys(1), t, f)
   end
 
   function OpenChestAt(mapId, x, y)
@@ -252,8 +266,8 @@ Scripts = class(function(a,mem)
   function LeaveDungeon(mapId)
     return IfScript(
       "Figure out how to leave map: " .. tostring(mapId),
-      HaveOutside,
-      CastOutside,
+      HaveSpell(Outside),
+      CastSpell(Outside),
       GotoOverworld(mapId)
     )
   end
@@ -297,6 +311,29 @@ Scripts = class(function(a,mem)
       GotoOverworld(Hauksness)
     })
 
+  charlockLocation = coordinates[Charlock][1]
+  print("charlockLocation", charlockLocation)
+
+  a.enterCharlock =
+    IfScript(
+      "Have we already created the rainbow bridge?",
+      RainbowBridge,
+      GotoPoint(charlockLocation),
+      IfScript(
+        "Do we have the rainbow drop?",
+        HaveItem(RainbowDrop),
+        Consecutive("Enter Charlock", {
+          Goto(OverWorldId, charlockLocation.x + 3, charlockLocation.y),
+          UseItem(RainbowDrop),
+          -- TODO: probably need to put the bridge into the overworld graph here somehow
+          -- not unlike addWarp, but, yet, unlike it... lol
+          -- we probably just need to set the tile to a bridge, and then (unfortunately) rebuild the graph.
+          GotoPoint(charlockLocation)
+        }),
+        DoNothing
+      )
+    )
+
   exploreCharlockThroneRoom =
     Consecutive("Charlock Throne Room", {
       Goto(CharlockThroneRoom, 17, 24),
@@ -315,7 +352,7 @@ Scripts = class(function(a,mem)
   northernShrineScript =
     IfScript(
       "Do we have the harp?",
-      HaveHarp,
+      HaveItem(SilverHarp),
       Consecutive("Get Staff", {
         Goto(NorthernShrine, 5, 4),
         Consecutive("Talk to old man", { talk, HoldA(60), PressB }),
@@ -329,7 +366,7 @@ Scripts = class(function(a,mem)
   southernShrineScript =
     IfScript(
       "Do we have the staff, stones and token?",
-      All ({ HaveStaff, HaveStones, HaveToken }),
+      All ({ HaveItem(StaffOfRain), HaveItem(StonesOfSunlight), HaveItem(ErdricksToken) }),
       Consecutive("Talk to old man", {
         Goto(SouthernShrine, 3, 5),
         TalkToOldMan,
@@ -357,12 +394,12 @@ Scripts = class(function(a,mem)
   leaveThroneRoomScript =
     IfScript(
       "Figure out how to leave throne room",
-      HaveReturn,
-      Consecutive("Leaving Throne room via return", {aveWithKingScript, CastReturn}),
+      HaveSpell(Return),
+      Consecutive("Leaving Throne room via return", {saveWithKingScript, CastSpell(Return)}),
       IfScript(
         "Check to leave throne room with wings",
-        HaveWings,
-        Consecutive("Leaving Throne room via wings", {saveWithKingScript, UseWings}),
+        HaveItem(Wings),
+        Consecutive("Leaving Throne room via wings", {saveWithKingScript, UseItem(Wings)}),
         leaveTantegalOnFoot
       )
     )
