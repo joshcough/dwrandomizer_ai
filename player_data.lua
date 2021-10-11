@@ -84,23 +84,23 @@ function Items:__tostring()
   return res
 end
 
-function Items:itemIndex(itemId)
-  if not self:contains(itemId) then return nil end
+function Items:itemIndex(item)
+  if not self:contains(item) then return nil end
   local herbOffset = self:haveHerbs() and 1 or 0
   local keyOffset = self:haveKeys() and 1 + herbOffset or 0
   local indexOffset = keyOffset
-  if itemId == Herb and self:haveHerbs() then return 1
-  elseif itemId == MagicKey and self:haveKeys() then return keyOffset
+  if item == Herb and self:haveHerbs() then return 1
+  elseif item == MagicKey and self:haveKeys() then return keyOffset
   else
-    local slotIndex = list.indexOf(self.slots, itemId, function(i1, i2) return i1 == i2 end)
+    local slotIndex = list.indexOf(self.slots, item, function(i1, i2) return i1 == i2 end)
     return indexOffset + slotIndex
   end
 end
 
-function Items:contains(itemId)
-  if itemId == Herb then return self:haveHerbs()
-  elseif itemId == MagicKey then return self:haveKeys()
-  else return table.contains(self.slots, itemId, function(i1, i2) return i1 == i2 end)
+function Items:contains(item)
+  if item == Herb then return self:haveHerbs()
+  elseif item == MagicKey then return self:haveKeys()
+  else return table.contains(self.slots, item, function(i1, i2) return i1 == i2 end)
   end
 end
 
@@ -483,6 +483,10 @@ function Spells:spellIndex(spell)
   return list.indexOf(self.order, spell, function(s1, s2) return s1:equals(s2) end)
 end
 
+function Spells:contains(spell)
+  return self:spellIndex(spell) ~= nil
+end
+
 function Spells:__tostring()
   local res = "=== Spells ===\n"
   for ix,s in pairs(self.order) do
@@ -497,14 +501,6 @@ function Spells:equals(spells)
   else
     return list.all(list.zipWith(self.order, spells.order), function (ss) return ss[1]:equals(ss[2]) end)
   end
-end
-
-function Spells:haveOutside()
-  return self:spellIndex(Outside) ~= nil
-end
-
-function Spells:haveReturn()
-  return self:spellIndex(Return) ~= nil
 end
 
 -- =======================

@@ -162,22 +162,27 @@ function Game:interpretScript(s)
   print(s)
   -- TODO: im not sure if these first two cases are reeeeallly needed, but they dont hurt.
   if     self.inBattle then self:executeBattle()
+  -- TODO: consider casting repel right here instead of just closing window
   elseif self.repelTimerWindowOpen then self:closeRepelTimerWindow()
   elseif s:is_a(ActionScript)
     then
-      if     s == DoNothing     then return
-      elseif s == KingOpening   then self:kingScript()
-      elseif s == OpenChest     then self:openChestScript()
-      elseif s == Search        then self:searchGroundScript()
-      elseif s == Stairs        then self:takeStairs(self:getLocation())
-      elseif s == DeathWarp     then self:deathWarp()
-      elseif s == SavePrincess  then self:savePrincess()
-      elseif s == DragonLord    then self:fightDragonLord()
-      elseif s == Save          then self:saveWithKing()
-      elseif s == CastReturn    then self:castReturn()
-      elseif s == UseWings      then self:useWings()
-      elseif s == ShopKeeper    then self:talkToShopKeeper()
-      elseif s == InnKeeper     then self:kingScript() -- TODO
+      if     s == DoNothing      then return
+      elseif s == KingOpening    then self:kingScript()
+      elseif s == OpenChest      then self:openChestScript()
+      elseif s == Search         then self:searchGroundScript()
+      elseif s == Stairs         then self:takeStairs(self:getLocation())
+      elseif s == DeathWarp      then self:deathWarp()
+      elseif s == SavePrincess   then self:savePrincess()
+      elseif s == DragonLord     then self:fightDragonLord()
+      elseif s == Save           then self:saveWithKing()
+      elseif s == ShopKeeper     then self:talkToShopKeeper()
+      elseif s == InnKeeper      then self:kingScript() -- TODO
+      elseif s:is_a(UseItem) then
+        -- this is a little special because we have to fix up the overworld to add the bridge
+        if s.item == RainbowDrop then self:useRainbowDrop()
+        else self:useItem(s.item)
+        end
+      elseif s:is_a(CastSpell) then self:cast(s.spell)
       end
   elseif s:is_a(Goto) then self:goTo(s.location)
   elseif s:is_a(IfScript)
@@ -200,15 +205,11 @@ function Game:evaluateCondition(s)
   -- base conditions
   if     s == HaveKeys       then return self:haveKeys()
   elseif s == HaveWings      then return self:haveWings()
-  elseif s == HaveOutside    then return self:haveOutside()
-  elseif s == HaveReturn     then return self:haveReturn()
   elseif s == LeftThroneRoom then return self:leftThroneRoom()
-  elseif s == HaveHarp       then return self.playerData.items:hasSilverHarp()
-  elseif s == HaveToken      then return self.playerData.items:hasErdricksToken()
-  elseif s == HaveStones     then return self.playerData.items:hasStonesOfSunlight()
-  elseif s == HaveStaff      then return self.playerData.items:hasStaffOfRain()
   elseif s == NeedKeys       then return self:needKeys()
-
+  elseif s == RainbowBridge  then return self.playerData.statuses.rainbowBridge
+  elseif s:is_a(HaveItem)    then return self.playerData.items:contains(s.item)
+  elseif s:is_a(HaveSpell)   then return self.playerData.spells:contains(s.spell)
   elseif s:is_a(HaveGold)    then return self.playerData.stats.gold >= s.minAmountOfGold
   elseif s:is_a(HaveKeys)    then return self.playerData.items.nrKeys >= s.minAmountOfGold
   elseif s:is_a(AtLocation)  then return self:getLocation():equals(s.location)
@@ -570,6 +571,11 @@ function Game:exploreStart()
     if newImportantLoc:equals(self.tantegelLoc) then
       print("I see a castle, but its just tantegel, so I'm ignoring it")
       self.overworld.importantLocations = list.delete(self.overworld.importantLocations, 1)
+    elseif self.overworld.importantLocations[1].type == ImportantLocationType.CHARLOCK then
+      print("I see Charlock!")
+      self:interpretScript(self.scripts.enterCharlock)
+      waitUntil(function() return self:onStaticMap() end, 240)
+      self:dealWithMapChange()
     else
       if self.exploreDest == nil or not self.exploreDest:equals(newImportantLoc) then
         print("I see something new at: ", newImportantLoc)
@@ -701,6 +707,7 @@ function Game:onPlayerMove()
 end
 
 function Game:onMapChange()
+  print("recording that the map has changed.")
   self.mapChanged = true
 end
 
@@ -823,18 +830,15 @@ function Game:castRepel(disregardTimer)
   end
 end
 
-function Game:castReturn()
-  self:cast(Return)
-end
-
 function Game:saveWithKing()
   self:openMenu()
   holdA(180)
   pressB(2)
 end
 
-function Game:useWings()
-  self:useItem(Wings)
+function Game:useRainbowDrop()
+  self:useItem(RainbowDrop)
+  self.overworld:useRainbowDrop(self:getLocation())
 end
 
 function Game:haveKeys()
@@ -847,19 +851,6 @@ end
 function Game:needKeys()
   return self.playerData.items.nrKeys < 6
 end
-
-function Game:haveWings()
-  return self.playerData.items:hasWings()
-end
-
-function Game:haveReturn()
-  return self.playerData.spells:haveReturn()
-end
-
-function Game:haveOutside()
-  return self.playerData.spells:haveOutside()
-end
-
 
 function Game:leftThroneRoom()
   return self.playerData.statuses.leftThroneRoom

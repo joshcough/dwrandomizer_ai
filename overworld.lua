@@ -213,6 +213,15 @@ function OverWorld:getOverworldMapTileIdAt(x, y)
   return tileId
 end
 
+function OverWorld:setOverworldMapTileIdAt(x, y, tileId)
+  self.overworldRows[y][x] = tileId
+end
+
+-- this is always done from one tile right of where the brige will be
+function OverWorld:useRainbowDrop(loc)
+  self:setOverworldMapTileIdAt(loc.x - 1, loc.y, 0xB) -- 0xB is a bridge
+end
+
 function OverWorld:getVisibleOverworldGrid(currentX, currentY)
   local upperLeftX = math.max(0, currentX - 8)
   local upperLeftY = math.max(0, currentY - 6)
