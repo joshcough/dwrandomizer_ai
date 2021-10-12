@@ -66,11 +66,9 @@ ActionScript = class(Script, function(a, name)
   Script.init(a, name)
 end)
 
-KingOpening    = ActionScript("KING_OPENING_GAME")
 DoNothing      = ActionScript("DO_NOTHING")
 OpenChest      = ActionScript("OPEN_CHEST")
 Search         = ActionScript("SEARCH")
-Stairs         = ActionScript("STAIRS")
 DeathWarp      = ActionScript("DEATH_WARP")
 SavePrincess   = ActionScript("RESCUE_PRINCESS")
 DragonLord     = ActionScript("DRAGONLORD")
@@ -91,33 +89,9 @@ end)
 
 ConditionScript = class(Script, function(a, name) Script.init(a, name) end)
 
--- TODO: i really think NeedKeys needs to die.
-NeedKeys        = ConditionScript("NEED_KEYS")
--- TODO: we need something like: Flag = class(ConditionScript, function(a, flag) ...
--- and then just read into the flags here.
-LeftThroneRoom  = ConditionScript("LEFT_THRONEROOM")
-RainbowBridge   = ConditionScript("RAINBOW_BRIDGE")
+function AtLocation(location) return DotEq(GetLocation, location) end
 
-HaveItem = class(ConditionScript, function(a, item)
-  ConditionScript.init(a, tostring(item))
-  a.item = item
-end)
-
-HaveSpell = class(ConditionScript, function(a, spell)
-  ConditionScript.init(a, tostring(spell))
-  a.spell = spell
-end)
-
-AtLocation    = class(ConditionScript, function(a, mapId, x, y)
-  ConditionScript.init(a, "AT_LOCATION")
-  a.location = Point(mapId, x, y)
-end)
-
-function AtLocation:__tostring()
-  return self.name .. ": " .. tostring(self.location)
-end
-
-IsChestOpen    = class(ConditionScript, function(a, location)
+IsChestOpen = class(ConditionScript, function(a, location)
   ConditionScript.init(a, "IS_CHEST_OPEN")
   a.location = location
 end)
@@ -135,23 +109,47 @@ function HasChestEverBeenOpened:__tostring()
   return self.name .. ": " .. tostring(self.location)
 end
 
-HaveGold = class(ConditionScript, function(a, minAmountOfGold)
-  ConditionScript.init(a, "HAVE_N_GOLD")
-  a.minAmountOfGold = minAmountOfGold
+Eq = class(ConditionScript, function(a, l, r)
+  ConditionScript.init(a, "==")
+  a.l = l
+  a.r = r
 end)
 
-function HaveGold:__tostring()
-  return self.name .. ": " .. tostring(self.minAmountOfGold)
-end
-
-HaveKeys = class(ConditionScript, function(a, minAmountOfKeys)
-  ConditionScript.init(a, "HAVE_N_KEYS")
-  a.minAmountOfKeys = minAmountOfKeys
+DotEq = class(ConditionScript, function(a, l, r)
+  ConditionScript.init(a, ":equals()")
+  a.l = l
+  a.r = r
 end)
 
-function HaveKeys:__tostring()
-  return self.name .. ": " .. tostring(self.minAmountOfKeys)
-end
+NotEq = class(ConditionScript, function(a, l, r)
+  ConditionScript.init(a, "!=")
+  a.l = l
+  a.r = r
+end)
+
+Lt = class(ConditionScript, function(a, l, r)
+  ConditionScript.init(a, "<")
+  a.l = l
+  a.r = r
+end)
+
+LtEq = class(ConditionScript, function(a, l, r)
+  ConditionScript.init(a, "<=")
+  a.l = l
+  a.r = r
+end)
+
+Gt = class(ConditionScript, function(a, l, r)
+  ConditionScript.init(a, ">")
+  a.l = l
+  a.r = r
+end)
+
+GtEq = class(ConditionScript, function(a, l, r)
+  ConditionScript.init(a, ">=")
+  a.l = l
+  a.r = r
+end)
 
 Any = class(ConditionScript, function(a, conditions)
   ConditionScript.init(a, "ANY")
@@ -188,7 +186,32 @@ function Not:__tostring()
   return "NOT: " .. tostring(self.condition)
 end
 
-IfScript = class(Script, function(a, name, condition, trueBranch, falseBranch)
+Contains = class(ConditionScript, function(a, container, v)
+  ConditionScript.init(a, "CONTAINS" .. tostring(v))
+  a.container = container
+  a.v = v
+end)
+
+function HaveItem(i) return Contains(GetItems, i) end
+function HaveSpell(s) return Contains(GetSpells, s) end
+
+PlayerDataScript = class(Script, function(a, name, playerDataF)
+  Script.init(a, name)
+  a.playerDataF = playerDataF
+end)
+
+GetNrKeys   = PlayerDataScript("Number of magic keys player has.", function(pd) return pd.items.nrKeys end)
+GetGold     = PlayerDataScript("Amount of gold player has.", function(pd) return pd.stats.gold end)
+GetLocation = PlayerDataScript("Location of player", function(pd) return pd.stats.gold end)
+GetItems    = PlayerDataScript("Player's Items", function(pd) return pd.items end)
+GetSpells   = PlayerDataScript("Player's Spells", function(pd) return pd.spells end)
+GetStatuses = PlayerDataScript("Game statuses", function(pd) return pd.statuses end)
+
+function StatusScript(statusFld)
+  return PlayerDataScript("Status: " .. statusFld, function(pd) return pd.statuses[statusFld] end)
+end
+
+IfThenScript = class(Script, function(a, name, condition, trueBranch, falseBranch)
   Script.init(a, name)
   a.condition = condition
   a.trueBranch = trueBranch
@@ -196,7 +219,7 @@ IfScript = class(Script, function(a, name, condition, trueBranch, falseBranch)
 end)
 
 -- TODO: we need to do indent level stuff here, but right now i dont feel like it.
-function IfScript:__tostring()
+function IfThenScript:__tostring()
   local res = self.name .. ":\n"
   res = res .. "  Condition " .. tostring(self.condition) .. "\n"
   res = res .. "    True Branch: "  .. tostring(self.trueBranch) .. "\n"
@@ -222,6 +245,11 @@ Scripts = class(function(a,mem)
 
   coordinates = getAllOverworldCoordinates(mem)
 
+  a.tantegelLocation = coordinates[Tantegel][1]
+  a.charlockLocation = coordinates[Charlock][1]
+--   print("tantegelLocation", a.tantegelLocation)
+--   print("charlockLocation", a.charlockLocation)
+
   function VisitShop(mapId, x, y)
     return ListScript("Visiting shop at: " .. tostring(Point(mapId, x, y)), {Goto(mapId, x, y), ShopKeeper})
   end
@@ -239,12 +267,12 @@ Scripts = class(function(a,mem)
   end
 
   function IfHaveKeys(name, t, f)
-    return IfScript(name, HaveKeys(1), t, f)
+    return IfThenScript(name, Gt(GetNrKeys, 0), t, f)
   end
 
   function OpenChestAt(mapId, x, y)
     local loc = Point(mapId, x, y)
-    return IfScript("Test if chest is open at " .. tostring(loc),
+    return IfThenScript("Test if chest is open at " .. tostring(loc),
        IsChestOpen(loc),
        DoNothing,
        ListScript("Opening Chest at: " .. tostring(loc), {Goto(mapId, x, y), OpenChest})
@@ -260,11 +288,15 @@ Scripts = class(function(a,mem)
     return Goto(p.mapId, p.x, p.y)
   end
 
-  openMenu = Consecutive("Open Menu", { HoldA(30), WaitFrames(10) })
-  talk = Consecutive("Talk", { HoldA(30), WaitFrames(10), PressA })
+  OpenMenu = Consecutive("Open Menu", { HoldA(30), WaitFrames(10) })
+  Talk = Consecutive("Talk", { HoldA(30), WaitFrames(10), PressA })
+
+  TakeStairs = Consecutive("Take Stairs", {
+    OpenMenu, HoldDown(2), HoldDown(2), HoldA(60)
+  })
 
   function LeaveDungeon(mapId)
-    return IfScript(
+    return IfThenScript(
       "Figure out how to leave map: " .. tostring(mapId),
       HaveSpell(Outside),
       CastSpell(Outside),
@@ -311,24 +343,21 @@ Scripts = class(function(a,mem)
       GotoOverworld(Hauksness)
     })
 
-  charlockLocation = coordinates[Charlock][1]
-  print("charlockLocation", charlockLocation)
-
   a.enterCharlock =
-    IfScript(
+    IfThenScript(
       "Have we already created the rainbow bridge?",
-      RainbowBridge,
-      GotoPoint(charlockLocation),
-      IfScript(
+      StatusScript("rainbowBridge"),
+      GotoPoint(a.charlockLocation),
+      IfThenScript(
         "Do we have the rainbow drop?",
         HaveItem(RainbowDrop),
         Consecutive("Enter Charlock", {
-          Goto(OverWorldId, charlockLocation.x + 3, charlockLocation.y),
+          Goto(OverWorldId, a.charlockLocation.x + 3, a.charlockLocation.y),
           UseItem(RainbowDrop),
           -- TODO: probably need to put the bridge into the overworld graph here somehow
           -- not unlike addWarp, but, yet, unlike it... lol
           -- we probably just need to set the tile to a bridge, and then (unfortunately) rebuild the graph.
-          GotoPoint(charlockLocation)
+          GotoPoint(a.charlockLocation)
         }),
         DoNothing
       )
@@ -344,27 +373,27 @@ Scripts = class(function(a,mem)
     Consecutive("Charlock", {
       Goto(Charlock, 10, 1),
       Search,
-      Stairs,
+      TakeStairs,
       Goto(CharlockThroneRoom, 10, 29),
       exploreCharlockThroneRoom
     })
 
   northernShrineScript =
-    IfScript(
+    IfThenScript(
       "Do we have the harp?",
       HaveItem(SilverHarp),
       Consecutive("Get Staff", {
         Goto(NorthernShrine, 5, 4),
-        Consecutive("Talk to old man", { talk, HoldA(60), PressB }),
+        Consecutive("Talk to old man", { Talk, HoldA(60), PressB }),
         OpenChestAt(NorthernShrine, 3, 4),
         Goto(NorthernShrine, 4, 9),
-        Stairs
+        TakeStairs
       }),
-      Stairs
+      TakeStairs
     )
 
   southernShrineScript =
-    IfScript(
+    IfThenScript(
       "Do we have the staff, stones and token?",
       All ({ HaveItem(StaffOfRain), HaveItem(StonesOfSunlight), HaveItem(ErdricksToken) }),
       Consecutive("Talk to old man", {
@@ -372,7 +401,7 @@ Scripts = class(function(a,mem)
         TalkToOldMan,
         GotoOverworld(SouthernShrine)
       }),
-      Stairs
+      TakeStairs
     )
 
   garinhamScript =
@@ -383,7 +412,7 @@ Scripts = class(function(a,mem)
           OpenChestAt(Garinham, 8, 5),
           OpenChestAt(Garinham, 9, 5),
           Goto(Garinham, 19, 0),
-          Stairs
+          TakeStairs
         })
       ),
     })
@@ -392,11 +421,11 @@ Scripts = class(function(a,mem)
     Consecutive("Leaving Throne room via legs", {GotoOverworld(Tantegel)})
 
   leaveThroneRoomScript =
-    IfScript(
+    IfThenScript(
       "Figure out how to leave throne room",
       HaveSpell(Return),
       Consecutive("Leaving Throne room via return", {saveWithKingScript, CastSpell(Return)}),
-      IfScript(
+      IfThenScript(
         "Check to leave throne room with wings",
         HaveItem(Wings),
         Consecutive("Leaving Throne room via wings", {saveWithKingScript, UseItem(Wings)}),
@@ -405,14 +434,14 @@ Scripts = class(function(a,mem)
     )
 
   throneRoomScript =
-    IfScript(
+    IfThenScript(
       "Have we ever left the throne room? If not, must be starting the game.",
-      Not(LeftThroneRoom),
+      Not(StatusScript("leftThroneRoom")),
       Consecutive("Tantagel Throne Room Opening Game", {
         -- we should already be here...but, when i monkey around its better to have this.
         Goto(TantegelThroneRoom, 3, 4),
-        HoldUp(30),
-        KingOpening,
+        HoldUp(30), -- this makes sure we are looking at the king
+        HoldA(250), -- this talks to the king
         OpenChestAt(TantegelThroneRoom, 4, 4),
         OpenChestAt(TantegelThroneRoom, 5, 4),
         OpenChestAt(TantegelThroneRoom, 6, 1),
@@ -423,7 +452,7 @@ Scripts = class(function(a,mem)
       leaveTantegalOnFoot
     )
 
-  -- TODO: add static  npc to basement and fix this up
+  -- TODO: add static npc to basement and fix this up
   tantegelBasementShrine =
     Consecutive("TantegelBasement (Free cave)", {
       Goto(TantegelBasement, 5, 7),
@@ -432,7 +461,7 @@ Scripts = class(function(a,mem)
       Goto(TantegelBasement, 5, 5),
       Goto(TantegelBasement, 5, 7),
       Goto(TantegelBasement, 0, 4),
-      Stairs
+      TakeStairs
     })
 
   kol =
@@ -445,11 +474,11 @@ Scripts = class(function(a,mem)
 
   rimuldar =
     Consecutive("Rimuldar", {
-      IfScript("Do we need keys?", All(NeedKeys, HaveGold(53)),
+      IfThenScript("Do we need keys?", All(NeedKeys, GtEq(GetGold, 53)),
         Consecutive("Buy Keys in Rimuldar", {Goto(Rimuldar, 4, 5), ShopKeeper}),
         DoNothing
       ),
-      IfScript("Do we have two?", All(HaveKeys(2), HasChestEverBeenOpened(Rimuldar, 24, 23)),
+      IfThenScript("Do we have two keys?", All(GtEq(GetNrKeys, 2), Not(HasChestEverBeenOpened(Rimuldar, 24, 23))),
         Consecutive("Get chest Rimuldar", {Goto(Rimuldar, 24, 23), OpenChest}),
         DoNothing
       )
@@ -457,15 +486,15 @@ Scripts = class(function(a,mem)
 
   -- TODO: a lot of work needs to be done on this script
   swampCave =
-    IfScript(
+    IfThenScript(
       "Are we at swamp north?",
       AtLocation(SwampCave, 0, 0),
       Consecutive("Go to swamp south and exit", {
-        Goto(SwampCave, 0, 29), Stairs
+        Goto(SwampCave, 0, 29), TakeStairs
       }),
       -- TODO: we could just cast Outside from here.
       Consecutive("Go to swamp north and exit", {
-        Goto(SwampCave, 0, 0), Stairs
+        Goto(SwampCave, 0, 0), TakeStairs
       })
     )
 

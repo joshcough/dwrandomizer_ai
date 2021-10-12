@@ -19,7 +19,6 @@ Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsW
   a.playerData = memory:readPlayerData()
   a.inBattle = false
   a.exploreDest = nil
-  a.tantegelLoc = nil
   a.repelTimerWindowOpen = false
   a.unlockedDoors = {}
   a.weaponAndArmorShops = memory:readWeaponAndArmorShops()
@@ -167,7 +166,6 @@ function Game:interpretScript(s)
   elseif s:is_a(ActionScript)
     then
       if     s == DoNothing      then return
-      elseif s == KingOpening    then self:kingScript()
       elseif s == OpenChest      then self:openChestScript()
       elseif s == Search         then self:searchGroundScript()
       elseif s == Stairs         then self:takeStairs(self:getLocation())
@@ -176,7 +174,7 @@ function Game:interpretScript(s)
       elseif s == DragonLord     then self:fightDragonLord()
       elseif s == Save           then self:saveWithKing()
       elseif s == ShopKeeper     then self:talkToShopKeeper()
-      elseif s == InnKeeper      then self:kingScript() -- TODO
+      elseif s == InnKeeper      then self:talkToInnKeeper()
       elseif s:is_a(UseItem) then
         -- this is a little special because we have to fix up the overworld to add the bridge
         if s.item == RainbowDrop then self:useRainbowDrop()
@@ -185,15 +183,13 @@ function Game:interpretScript(s)
       elseif s:is_a(CastSpell) then self:cast(s.spell)
       end
   elseif s:is_a(Goto) then self:goTo(s.location)
-  elseif s:is_a(IfScript)
+  elseif s:is_a(PlayerDataScript) then return s.playerDataF(self:readPlayerData())
+  elseif s:is_a(IfThenScript)
     then
       local branch = self:evaluateCondition(s.condition) and s.trueBranch or s.falseBranch
-      self:interpretScript(branch)
+      return self:interpretScript(branch)
   elseif s:is_a(ListScript)
-    then
-      for i,branch in pairs(s.scripts) do
-        self:interpretScript(branch)
-      end
+    then for i,branch in pairs(s.scripts) do self:interpretScript(branch) end
   elseif s:is_a(PressButtonScript) then pressButton(s.button.name, 2)
   elseif s:is_a(HoldButtonScript) then holdButton(s.button.name, s.duration)
   elseif s:is_a(WaitFrames) then waitFrames(s.duration)
@@ -203,24 +199,28 @@ end
 
 function Game:evaluateCondition(s)
   -- base conditions
-  if     s == HaveKeys       then return self:haveKeys()
-  elseif s == HaveWings      then return self:haveWings()
-  elseif s == LeftThroneRoom then return self:leftThroneRoom()
-  elseif s == NeedKeys       then return self:needKeys()
-  elseif s == RainbowBridge  then return self.playerData.statuses.rainbowBridge
-  elseif s:is_a(HaveItem)    then return self.playerData.items:contains(s.item)
-  elseif s:is_a(HaveSpell)   then return self.playerData.spells:contains(s.spell)
-  elseif s:is_a(HaveGold)    then return self.playerData.stats.gold >= s.minAmountOfGold
-  elseif s:is_a(HaveKeys)    then return self.playerData.items.nrKeys >= s.minAmountOfGold
-  elseif s:is_a(AtLocation)  then return self:getLocation():equals(s.location)
-  elseif s:is_a(IsChestOpen) then return self.chests:isChestOpen(s.location)
+      if s:is_a(IsChestOpen) then return self.chests:isChestOpen(s.location)
   elseif s:is_a(HasChestEverBeenOpened) then return self.chests:hasChestEverBeenOpened(s.location)
-
   -- combinators
+  elseif s:is_a(Eq) then
+    return self:interpretScript(x.l) == self:interpretScript(x.r)
+  elseif s:is_a(DotEq) then
+    return self:interpretScript(x.l):equals(self:interpretScript(x.r))
+  elseif s:is_a(NotEq) then
+    return self:interpretScript(x.l) ~= self:interpretScript(x.r)
+  elseif s:is_a(Lt) then
+    return self:interpretScript(x.l) < self:interpretScript(x.r)
+  elseif s:is_a(LtEq) then
+    return self:interpretScript(x.l) <= self:interpretScript(x.r)
+  elseif s:is_a(Gt) then
+    return self:interpretScript(x.l) > self:interpretScript(x.r)
+  elseif s:is_a(GtEq) then
+    return self:interpretScript(x.l) >= self:interpretScript(x.r)
   elseif s:is_a(Any) then
     return list.any(s.conditions, function(x) return self:evaluateCondition(x) end)
   elseif s:is_a(All) then
     return list.all(s.conditions, function(x) return self:evaluateCondition(x) end)
+  elseif s:is_a(Contains) then return self:interpretScript(s.container):contains(s.v)
   elseif s:is_a(Not) then
     return not self:evaluateCondition(s.condition)
   else return false
@@ -330,16 +330,6 @@ function Game:gameStartMenuScript ()
   pressUp(30)
   pressA(30)
 end
-
-function Game:kingScript ()
-  print("======executing king script=======")
-  holdA(250)
-end
-
--- function Game:leaveTantegelFromX0Y9()
---   self.overworld:getVisibleOverworldGrid(self:getX(), self:getY())
---   print("self.tantegelLoc: ", self.tantegelLoc)
--- end
 
 -- TODO: this whole function needs to get redone completely. this is just a hack.
 function Game:addWarp(warp)
@@ -568,7 +558,7 @@ function Game:exploreStart()
   if seeSomethingNew then
     local newImportantLoc = self.overworld.importantLocations[1].location
     -- if the the new location we have spotted on the overworld is tantegel itself, ignore it.
-    if newImportantLoc:equals(self.tantegelLoc) then
+    if newImportantLoc:equals(self.scripts.tantegelLocation) then
       print("I see a castle, but its just tantegel, so I'm ignoring it")
       self.overworld.importantLocations = list.delete(self.overworld.importantLocations, 1)
     elseif self.overworld.importantLocations[1].type == ImportantLocationType.CHARLOCK then
@@ -780,8 +770,8 @@ end
 -- TODO: didn't work completely for RainbowDrop
 -- might need to do a little extra work there.
 function Game:useItem(item)
-  local itemIndex = self.playerData.items:itemIndex(item)
-  print("itemIndex", itemIndex)
+  local itemIndex = self:readPlayerData().items:itemIndex(item)
+  -- print("itemIndex", itemIndex)
   if itemIndex == nil then
     print("can't use " .. ITEMS[item] .. ", we don't have it.")
     return
@@ -800,11 +790,12 @@ end
 -- TODO: does this work in battle as well as on the overworld?
 -- it probably should, but, i have not checked yet.
 function Game:cast(spell)
-  local spellIndex = self.playerData.spells:spellIndex(spell)
+  local pd = self:readPlayerData()
+  local spellIndex = pd.spells:spellIndex(spell)
   if spellIndex == nil then
     print("can't cast " .. tostring(spell) .. ", spell hasn't been learned.")
     return
-  elseif self.playerData.stats.currentMP < spell.mp then
+  elseif pd.stats.currentMP < spell.mp then
     print("can't cast " .. tostring(spell) .. ", not enough mp.")
     return
   else
@@ -842,18 +833,7 @@ function Game:useRainbowDrop()
 end
 
 function Game:haveKeys()
-  return self.playerData.items:haveKeys()
-end
-
--- TODO: obviously we can do better than this
--- like, do we ever need to open any more doors?
--- if not, then we dont need keys
-function Game:needKeys()
-  return self.playerData.items.nrKeys < 6
-end
-
-function Game:leftThroneRoom()
-  return self.playerData.statuses.leftThroneRoom
+  return self:readPlayerData().items:haveKeys()
 end
 
 function Game:endRepelTimer()
@@ -866,6 +846,11 @@ function Game:talkToShopKeeper()
   -- TODO: here, we just print out things that we know.
   -- but really, we need to make a decision on if we should buy the upgrade
   -- and if so, then go ahead and actualy buy it.
-  print(self.weaponAndArmorShops:getAllKnownUpgrades(self.playerData))
-  print(self.weaponAndArmorShops:getAllKnownAffordableUpgrades(self.playerData))
+  local pd = self:readPlayerData()
+  print(self.weaponAndArmorShops:getAllKnownUpgrades(pd))
+  print(self.weaponAndArmorShops:getAllKnownAffordableUpgrades(pd))
+end
+
+function Game:talkToInnKeeper()
+  print("TODO: talkToInnKeeper")
 end

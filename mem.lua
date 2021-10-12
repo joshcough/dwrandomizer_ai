@@ -168,7 +168,8 @@ function Memory:spells()
 end
 
 function Memory:readPlayerData()
-  return PlayerData(self:readStats(), self:getEquipment(), self:spells(), self:getItems(), self:getStatuses())
+  return PlayerData(self:getLocation(), self:readStats(), self:getEquipment(),
+                    self:spells(), self:getItems(), self:getStatuses())
 end
 
 function Memory:readWeaponAndArmorShops()
