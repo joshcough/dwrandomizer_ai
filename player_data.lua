@@ -507,7 +507,8 @@ end
 -- === All Player data ===
 -- =======================
 
-PlayerData = class(function(a,stats,equipment,spells,items,statuses)
+PlayerData = class(function(a,loc,stats,equipment,spells,items,statuses)
+  a.loc = loc
   a.stats = stats
   a.equipment = equipment
   a.spells = spells
@@ -516,7 +517,8 @@ PlayerData = class(function(a,stats,equipment,spells,items,statuses)
 end)
 
 function PlayerData:equals(pd)
-  return self.stats:equals(pd.stats) and
+  return self.loc:equals(pd.loc) and
+         self.stats:equals(pd.stats) and
          self.equipment:equals(pd.equipment) and
          self.spells:equals(pd.spells) and
          self.items:equals(pd.items) and
@@ -525,6 +527,7 @@ end
 
 function PlayerData:__tostring()
   local res = "==== Player Data ====\n"
+  res = res .. "Location: " .. tostring(self.loc)
   res = res .. tostring(self.stats)
   res = res .. tostring(self.equipment)
   res = res .. tostring(self.spells)
