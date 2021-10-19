@@ -6,6 +6,11 @@ require 'static_maps'
 Script = class(function(a, name, body) a.name = name end)
 function Script:__tostring() return self.name end
 
+Value = class(Script, function(a, v)
+  Script.init(a, "(Value " .. tostring(i) .. ")")
+  a.v = v
+end)
+
 DebugScript = class(Script, function(a, msg) Script.init(a, msg) end)
 
 Goto = class(Script, function(a, mapId, x, y)
@@ -33,19 +38,20 @@ WaitFrames = class(Script, function(a, duration)
   a.duration = duration
 end)
 
-PressButtonScript = class(Script, function(a, button)
+PressButtonScript = class(Script, function(a, button, waitFrames)
   Script.init(a, button.name)
   a.button = button
+  a.waitFrames = waitFrames
 end)
 
-PressA      = PressButtonScript(Buttons.A)
-PressB      = PressButtonScript(Buttons.B)
-PressUp     = PressButtonScript(Buttons.up)
-PressDown   = PressButtonScript(Buttons.down)
-PressLeft   = PressButtonScript(Buttons.left)
-PressRight  = PressButtonScript(Buttons.right)
-PressSelect = PressButtonScript(Buttons.select)
-PressStart  = PressButtonScript(Buttons.start)
+function PressA(waitFrames)      return PressButtonScript(Buttons.A, waitFrames) end
+function PressB(waitFrames)      return PressButtonScript(Buttons.B, waitFrames) end
+function PressUp(waitFrames)     return PressButtonScript(Buttons.up, waitFrames) end
+function PressDown(waitFrames)   return PressButtonScript(Buttons.down, waitFrames) end
+function PressLeft(waitFrames)   return PressButtonScript(Buttons.left, waitFrames) end
+function PressRight(waitFrames)  return PressButtonScript(Buttons.right, waitFrames) end
+function PressSelect(waitFrames) return PressButtonScript(Buttons.select, waitFrames) end
+function PressStart(waitFrames)  return PressButtonScript(Buttons.start, waitFrames) end
 
 HoldButtonScript = class(Script, function(a, button, duration)
   Script.init(a, button.name)
@@ -76,6 +82,12 @@ Save           = ActionScript("SAVE")
 TalkToOldMan   = ActionScript("TALK_TO_OLD_MAN")
 ShopKeeper     = ActionScript("TALK_TO_SHOP_KEEPER")
 InnKeeper      = ActionScript("TALK_TO_INN_KEEPER")
+
+SaveUnlockedDoor = class(ActionScript, function(a, loc)
+  ActionScript.init(a, "SAVE_UNLOCKED_DOOR: " .. tostring(loc))
+  a.loc = loc
+end)
+
 
 UseItem = class(ActionScript, function(a, item)
   ActionScript.init(a, "UseItem: " .. tostring(item))
@@ -109,44 +121,60 @@ function HasChestEverBeenOpened:__tostring()
   return self.name .. ": " .. tostring(self.location)
 end
 
-Eq = class(ConditionScript, function(a, l, r)
-  ConditionScript.init(a, "==")
+IsDoorOpen = class(ConditionScript, function(a, location)
+  ConditionScript.init(a, "IS_DOOR_OPEN")
+  a.location = location
+end)
+
+function IsDoorOpen:__tostring()
+  return self.name .. ": " .. tostring(self.location)
+end
+
+BinaryOperator = class(ConditionScript, function(a, name, l, r)
+  ConditionScript.init(a, tostring(l) .. " " .. name .. " " .. tostring(r))
+  a.location = location
   a.l = l
   a.r = r
 end)
 
-DotEq = class(ConditionScript, function(a, l, r)
-  ConditionScript.init(a, ":equals()")
+Eq = class(BinaryOperator, function(a, l, r)
+  BinaryOperator.init(a, "==", l, r)
   a.l = l
   a.r = r
 end)
 
-NotEq = class(ConditionScript, function(a, l, r)
-  ConditionScript.init(a, "!=")
+DotEq = class(BinaryOperator, function(a, l, r)
+  BinaryOperator.init(a, "equals", l, r)
   a.l = l
   a.r = r
 end)
 
-Lt = class(ConditionScript, function(a, l, r)
-  ConditionScript.init(a, "<")
+NotEq = class(BinaryOperator, function(a, l, r)
+  BinaryOperator.init(a, "!=", l, r)
   a.l = l
   a.r = r
 end)
 
-LtEq = class(ConditionScript, function(a, l, r)
-  ConditionScript.init(a, "<=")
+Lt = class(BinaryOperator, function(a, l, r)
+  BinaryOperator.init(a, "<", l, r)
   a.l = l
   a.r = r
 end)
 
-Gt = class(ConditionScript, function(a, l, r)
-  ConditionScript.init(a, ">")
+LtEq = class(BinaryOperator, function(a, l, r)
+  BinaryOperator.init(a, "<=", l, r)
   a.l = l
   a.r = r
 end)
 
-GtEq = class(ConditionScript, function(a, l, r)
-  ConditionScript.init(a, ">=")
+Gt = class(BinaryOperator, function(a, l, r)
+  BinaryOperator.init(a, ">", l, r)
+  a.l = l
+  a.r = r
+end)
+
+GtEq = class(BinaryOperator, function(a, l, r)
+  BinaryOperator.init(a, ">=", l, r)
   a.l = l
   a.r = r
 end)
@@ -227,13 +255,13 @@ function IfThenScript:__tostring()
   return res
 end
 
-ListScript = class(Script, function(a, name, scripts)
+Consecutive = class(Script, function(a, name, scripts)
   Script.init(a, name)
   a.scripts = scripts
 end)
 
 -- TODO: we need to do indent level stuff here, but right now i dont feel like it.
-function ListScript:__tostring()
+function Consecutive:__tostring()
   local res = self.name .. ":\n"
   for i,s in pairs(self.scripts) do
     res = res .. "  " .. tostring(s) .. "\n"
@@ -245,37 +273,68 @@ Scripts = class(function(a,mem)
 
   coordinates = getAllOverworldCoordinates(mem)
 
+  charlockLocation = coordinates[Charlock][1]
   a.tantegelLocation = coordinates[Tantegel][1]
-  a.charlockLocation = coordinates[Charlock][1]
+--   print("charlockLocation", charlockLocation)
 --   print("tantegelLocation", a.tantegelLocation)
---   print("charlockLocation", a.charlockLocation)
+
 
   function VisitShop(mapId, x, y)
-    return ListScript("Visiting shop at: " .. tostring(Point(mapId, x, y)), {Goto(mapId, x, y), ShopKeeper})
+    return Consecutive("Visiting shop at: " .. tostring(Point(mapId, x, y)), {Goto(mapId, x, y), ShopKeeper})
   end
 
   function VisitInn(mapId, x, y)
-    return ListScript("Visiting inn at: " .. tostring(Point(mapId, x, y)), {Goto(mapId, x, y), InnKeeper})
+    return Consecutive("Visiting inn at: " .. tostring(Point(mapId, x, y)), {Goto(mapId, x, y), InnKeeper})
+  end
+
+  OpenMenu = Consecutive("Open Menu", { HoldA(30), WaitFrames(10) })
+  OpenItemMenu = Consecutive("Open Item Menu", { OpenMenu, PressRight(2), PressDown(2), PressA(2), WaitFrames(30) })
+  OpenSpellMenu = Consecutive("Open Spell Menu", { OpenMenu, PressRight(2), PressA(2), WaitFrames(30) })
+  Talk = Consecutive("Talk", { HoldA(30), WaitFrames(10), PressA(2) })
+  TakeStairs = Consecutive("Take Stairs", { OpenMenu, HoldDown(2), HoldDown(2), HoldA(60) })
+
+  function OpenDoor(loc)
+   return IfThenScript(
+      "If the door open at: " .. tostring(loc) .. ", then open it.",
+      IsDoorOpen(loc),
+      DoNothing,
+      Consecutive("Open Door", {
+        OpenMenu, PressDown(2), PressDown(2), PressRight(2), PressA(20), SaveUnlockedDoor(loc)
+      })
+    )
   end
 
   function SearchAt(mapId, x, y)
-    return ListScript("Searching at: " .. tostring(Point(mapId, x, y)), {Goto(mapId, x, y), Search})
+    return Consecutive("Searching at: " .. tostring(Point(mapId, x, y)), {
+      Goto(mapId, x, y),
+      OpenMenu,
+      PressUp(2),
+      PressA(40),
+      Search
+    })
   end
 
-  function Consecutive(name, scripts)
-    return ListScript(name, scripts)
-  end
+  TakeStairs = Consecutive("Taking stairs", {
+    OpenMenu,
+    PressDown(2),
+    PressDown(2),
+    PressA(60),
+  })
 
   function IfHaveKeys(name, t, f)
-    return IfThenScript(name, Gt(GetNrKeys, 0), t, f)
+    return IfThenScript(name, Gt(GetNrKeys, Value(2)), t, f)
   end
+
+  openChestMenuing = Consecutive("Menuing for opening Chest at",
+    { OpenMenu, PressUp(2), PressRight(2), HoldA(40), OpenChest }
+  )
 
   function OpenChestAt(mapId, x, y)
     local loc = Point(mapId, x, y)
     return IfThenScript("Test if chest is open at " .. tostring(loc),
        IsChestOpen(loc),
        DoNothing,
-       ListScript("Opening Chest at: " .. tostring(loc), {Goto(mapId, x, y), OpenChest})
+       Consecutive("Opening Chest at: " .. tostring(loc), { Goto(mapId, x, y), openChestMenuing })
      )
   end
 
@@ -288,13 +347,6 @@ Scripts = class(function(a,mem)
     return Goto(p.mapId, p.x, p.y)
   end
 
-  OpenMenu = Consecutive("Open Menu", { HoldA(30), WaitFrames(10) })
-  Talk = Consecutive("Talk", { HoldA(30), WaitFrames(10), PressA })
-
-  TakeStairs = Consecutive("Take Stairs", {
-    OpenMenu, HoldDown(2), HoldDown(2), HoldA(60)
-  })
-
   function LeaveDungeon(mapId)
     return IfThenScript(
       "Figure out how to leave map: " .. tostring(mapId),
@@ -303,6 +355,29 @@ Scripts = class(function(a,mem)
       GotoOverworld(mapId)
     )
   end
+
+  GameStartMenuScript = Consecutive("Game start menu", {
+    PressStart(30),
+    PressStart(30),
+    PressA(30),
+    PressA(30),
+    PressDown(10),
+    PressDown(10),
+    PressRight(10),
+    PressRight(10),
+    PressRight(10),
+    PressA(30),
+    PressDown(10),
+    PressDown(10),
+    PressDown(10),
+    PressRight(10),
+    PressRight(10),
+    PressRight(10),
+    PressRight(10),
+    PressA(30),
+    PressUp(30),
+    PressA(30),
+  })
 
   saveWithKingScript =
     Consecutive("Leaving Throne room via wings", {
@@ -338,26 +413,25 @@ Scripts = class(function(a,mem)
 
   exploreHauksness =
     Consecutive("Hauksness", {
-      Goto(Hauksness, 18, 12),
-      Search,
+      SearchAt(Hauksness, 18, 12),
       GotoOverworld(Hauksness)
     })
 
-  a.enterCharlock =
+  EnterCharlock =
     IfThenScript(
       "Have we already created the rainbow bridge?",
       StatusScript("rainbowBridge"),
-      GotoPoint(a.charlockLocation),
+      GotoPoint(charlockLocation),
       IfThenScript(
         "Do we have the rainbow drop?",
         HaveItem(RainbowDrop),
         Consecutive("Enter Charlock", {
-          Goto(OverWorldId, a.charlockLocation.x + 3, a.charlockLocation.y),
+          Goto(OverWorldId, charlockLocation.x + 3, charlockLocation.y),
           UseItem(RainbowDrop),
           -- TODO: probably need to put the bridge into the overworld graph here somehow
           -- not unlike addWarp, but, yet, unlike it... lol
           -- we probably just need to set the tile to a bridge, and then (unfortunately) rebuild the graph.
-          GotoPoint(a.charlockLocation)
+          GotoPoint(charlockLocation)
         }),
         DoNothing
       )
@@ -371,8 +445,7 @@ Scripts = class(function(a,mem)
 
   exploreCharlock =
     Consecutive("Charlock", {
-      Goto(Charlock, 10, 1),
-      Search,
+      SearchAt(Charlock, 10, 1),
       TakeStairs,
       Goto(CharlockThroneRoom, 10, 29),
       exploreCharlockThroneRoom
@@ -474,11 +547,11 @@ Scripts = class(function(a,mem)
 
   rimuldar =
     Consecutive("Rimuldar", {
-      IfThenScript("Do we need keys?", All(NeedKeys, GtEq(GetGold, 53)),
+      IfThenScript("Do we need keys?", All(NeedKeys, GtEq(GetGold, Value(53))),
         Consecutive("Buy Keys in Rimuldar", {Goto(Rimuldar, 4, 5), ShopKeeper}),
         DoNothing
       ),
-      IfThenScript("Do we have two keys?", All(GtEq(GetNrKeys, 2), Not(HasChestEverBeenOpened(Rimuldar, 24, 23))),
+      IfThenScript("Do we have two keys?", All(GtEq(GetNrKeys, Value(2)), Not(HasChestEverBeenOpened(Rimuldar, 24, 23))),
         Consecutive("Get chest Rimuldar", {Goto(Rimuldar, 24, 23), OpenChest}),
         DoNothing
       )
@@ -542,4 +615,13 @@ Scripts = class(function(a,mem)
     [ErdricksCaveLv1] = exploreErdricksCaveScript,
     [ErdricksCaveLv2] = NA,
   }
+
+  a.OpenMenu = OpenMenu
+  a.OpenItemMenu = OpenItemMenu
+  a.OpenSpellMenu = OpenSpellMenu
+  a.OpenChestAt = OpenChestAt
+  a.OpenDoor = OpenDoor
+  a.TakeStairs = TakeStairs
+  a.EnterCharlock = EnterCharlock
+  a.GameStartMenuScript = GameStartMenuScript
 end)
