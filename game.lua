@@ -469,8 +469,6 @@ function Game:explore()
   end
 end
 
--- TODO: the logic here for getting a script for a map should probably belong in map_scripts.lua
--- we could use a map to store them. but it might be awkward with swamp N?S?
 function Game:exploreStaticMap()
   waitUntil(function() return self:onStaticMap() end, 240)
   self:dealWithMapChange()
@@ -505,10 +503,6 @@ function Game:exploreStart()
       if self.exploreDest == nil or not self.exploreDest:equals(newImportantLoc) then
         print("I see something new at: ", newImportantLoc)
         self:chooseNewDestinationDirectly(self.overworld.importantLocations[1].location)
-        -- TODO: once we make it into the new destination, we have some work to do
-        --   we have to adjust the warps
-        --   record somehow that we have been here
-        --   we have to remove this location from self.overworld.importantLocations
       end
     end
   else
@@ -573,7 +567,6 @@ function Game:exploreMove()
     self:chooseNewDestination(function (k) return self:chooseRandomBorderTile(k) end)
   else
     self:castRepel()
-    -- TODO: this is no longer a boolean! dafuq
     local madeItThere = self:goTo(self.exploreDest) == GotoExitValues.AT_LOCATION
     -- if we are there, we need to nil this out so we can pick up a new destination
     if madeItThere then self.exploreDest = nil end

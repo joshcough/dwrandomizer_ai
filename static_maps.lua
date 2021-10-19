@@ -364,11 +364,6 @@ function StaticMap:mkGraph (haveKeys)
         end
       end
     end
-
-    if self.mapId == TantegelThroneRoom and #res > 0 then
-      print(x,y, res)
-    end
-
     return res
   end
 
@@ -384,11 +379,6 @@ function StaticMap:mkGraph (haveKeys)
     elseif y == 0               then insertNeighbor(NeighborType.BORDER_UP)
     elseif y == self.height - 1 then insertNeighbor(NeighborType.BORDER_DOWN)
     end
-
-    if self.mapId == Tantegel and #res > 0 and x < 2 then
-      print(x,y, res)
-    end
-
     return res
   end
 

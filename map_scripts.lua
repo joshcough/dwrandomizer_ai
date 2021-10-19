@@ -428,9 +428,6 @@ Scripts = class(function(a,mem)
         Consecutive("Enter Charlock", {
           Goto(OverWorldId, charlockLocation.x + 3, charlockLocation.y),
           UseItem(RainbowDrop),
-          -- TODO: probably need to put the bridge into the overworld graph here somehow
-          -- not unlike addWarp, but, yet, unlike it... lol
-          -- we probably just need to set the tile to a bridge, and then (unfortunately) rebuild the graph.
           GotoPoint(charlockLocation)
         }),
         DoNothing
