@@ -1,43 +1,100 @@
+require "Class"
+enum = require("enum")
+
+SlimeId         = 0
+RedSlimeId      = 1
+DrakeeId        = 2
+GhostId         = 3
+MagicianId      = 4
+MagidrakeeId    = 5
+ScorpionId      = 6
+DruinId         = 7
+PoltergeistId   = 8
+DrollId         = 9
+DrakeemaId      = 10
+SkeletonId      = 11
+WarlockId       = 12
+MetalScorpionId = 13
+WolfId          = 14
+WraithId        = 15
+MetalSlimeId    = 16
+SpecterId       = 17
+WolflordId      = 18
+DruinlordId     = 19
+DrollmagiId     = 20
+WyvernId        = 21
+RogueScorpionId = 22
+WraithKnightId  = 23
+GolemId         = 24
+GoldmanId       = 25
+KnightId        = 26
+MagiwyvernId    = 27
+DemonKnightId   = 28
+WerewolfId      = 29
+GreenDragonId   = 30
+StarwyvernId    = 31
+WizardId        = 32
+AxeKnightId     = 33
+BlueDragonId    = 34
+StonemanId      = 35
+ArmoredKnightId = 36
+RedDragonId     = 37
+Dragonlord1Id   = 38
+Dragonlord2Id   = 39
+
+Enemy = class(function(a, name, str, agi, hpMin, hpMax, exp, gold, sleepRes, stopspellResMax, hurtRes, evasion)
+  a.name = name
+  a.str = str
+  a.agi = agi
+  a.hpMin = hpMin
+  a.hpMax = hpMax
+  a.exp = exp
+  a.gold = gold
+  a.sleepRes = sleepRes
+  a.stopspellResMax = stopspellResMax
+  a.hurtRes = hurtRes
+  a.evasion = evasion
+end)
 
 Enemies = {
-  "Slime",  -- 0
-  "Red Slime",
-  "Drakee",
-  "Ghost",
-  "Magician",
-  "Magidrakee", -- 5
-  "Scorpion",
-  "Druin",
-  "Poltergeist",
-  "Droll",
-  "Drakeema",  --10
-  "Skeleton",
-  "Warlock",
-  "Metal Scorpion",
-  "Wolf",
-  "Wraith",  --15
-  "Metal Slime",
-  "Specter",
-  "Wolflord",
-  "Druinlord",
-  "Drollmagi",  --20
-  "Wyvern",
-  "Rogue Scorpion",
-  "Wraith Knight",
-  "Golem",
-  "Goldman",  -- 25
-  "Knight",
-  "Magiwyvern",
-  "Demon Knight",
-  "Werewolf",
-  "Green Dragon",  -- 30
-  "Starwyvern",
-  "Wizard",
-  "Axe Knight",
-  "Blue Dragon",
-  "Stoneman", --35
-  "Armored Knight",
-  "Red Dragon",
-  "Dragonlord",  --first form
-  "Dragonlord"  --second form
+  [SlimeId        ] = Enemy("Slime",            5,   3,   2,   2,   1,   2,  0,  0,  0,  1),
+  [RedSlimeId     ] = Enemy("Red Slime",        7,   3,   3,   3,   2,   4,  0,  0,  0,  1),
+  [DrakeeId       ] = Enemy("Drakee",           9,   6,   4,   5,   3,   6,  0,  0,  0,  1),
+  [GhostId        ] = Enemy("Ghost",           11,   8,   6,   7,   4,   8,  0,  1,  0,  4),
+  [MagicianId     ] = Enemy("Magician",        11,  12,   9,  12,   8,  16,  0,  1,  0,  1),
+  [MagidrakeeId   ] = Enemy("Magidrakee",      14,  14,  10,  13,  12,  20,  0,  1,  0,  1),
+  [ScorpionId     ] = Enemy("Scorpion",        18,  16,  10,  13,  16,  25,  0,  2,  0,  1),
+  [DruinId        ] = Enemy("Druin",           20,  18,  17,  22,  14,  21,  0,  2,  0,  2),
+  [PoltergeistId  ] = Enemy("Poltergeist",     18,  20,  18,  23,  15,  19,  0,  2,  0,  6),
+  [DrollId        ] = Enemy("Droll",           24,  24,  15,  20,  18,  30,  0,  3,  0,  2),
+  [DrakeemaId     ] = Enemy("Drakeema",        22,  26,  12,  16,  20,  25,  2,  3,  0,  6),
+  [SkeletonId     ] = Enemy("Skeleton",        28,  22,  18,  24,  25,  42,  0,  3,  0,  4),
+  [WarlockId      ] = Enemy("Warlock",         28,  22,  21,  28,  28,  50,  3,  4,  0,  2),
+  [MetalScorpionId] = Enemy("Metal Scorpion",  36,  42,  14,  18,  31,  48,  0,  4,  0,  2),
+  [WolfId         ] = Enemy("Wolf",            40,  30,  25,  33,  40,  60,  1,  4,  0,  2),
+  [WraithId       ] = Enemy("Wraith",          44,  34,  30,  39,  42,  62,  7,  5,  0,  4),
+  [MetalSlimeId   ] = Enemy("Metal Slime",     10, 255,   3,   3, 255,   6, 15,  5, 15,  1),
+  [SpecterId      ] = Enemy("Specter",         40,  38,  25,  33,  47,  75,  3,  5,  0,  4),
+  [WolflordId     ] = Enemy("Wolflord",        50,  36,  28,  37,  52,  80,  4,  6,  0,  2),
+  [DruinlordId    ] = Enemy("Druinlord",       47,  40,  27,  35,  58,  95, 15,  6,  0,  4),
+  [DrollmagiId    ] = Enemy("Drollmagi",       52,  50,  33,  44,  58, 110,  2,  6,  0,  1),
+  [WyvernId       ] = Enemy("Wyvern",          56,  48,  28,  37,  64, 105,  4,  7,  0,  2),
+  [RogueScorpionId] = Enemy("Rogue Scorpion",  60,  90,  30,  40,  70, 110,  7,  7,  0,  2),
+  [WraithKnightId ] = Enemy("Wraith Knight",   68,  56,  30,  40,  72, 120,  5,  7,  3,  4),
+  [GolemId        ] = Enemy("Golem",          120,  60, 115, 153, 255,  10, 15,  8, 15,  0),
+  [GoldmanId      ] = Enemy("Goldman",         48,  40,  27,  35,   6, 255, 13,  8,  0,  1),
+  [KnightId       ] = Enemy("Knight",          76,  78,  36,  47,  78, 150,  6,  8,  0,  1),
+  [MagiwyvernId   ] = Enemy("Magiwyvern",      78,  68,  36,  48,  83, 135,  2,  9,  0,  2),
+  [DemonKnightId  ] = Enemy("Demon Knight",    79,  64,  29,  38,  90, 148, 15,  9, 15, 15),
+  [WerewolfId     ] = Enemy("Werewolf",        86,  70,  53,  70,  95, 155,  7,  9,  0,  7),
+  [GreenDragonId  ] = Enemy("Green Dragon",    88,  74,  54,  72, 135, 160,  7, 10,  2,  2),
+  [StarwyvernId   ] = Enemy("Starwyvern",      86,  80,  56,  74, 105, 169,  8, 10,  1,  2),
+  [WizardId       ] = Enemy("Wizard",          80,  70,  49,  65, 120, 185, 15, 10, 15,  2),
+  [AxeKnightId    ] = Enemy("Axe Knight",      94,  82,  51,  67, 130, 165, 15, 11,  1,  1),
+  [BlueDragonId   ] = Enemy("Blue Dragon",     98,  84,  74,  98, 180, 150, 15, 11,  7,  2),
+  [StonemanId     ] = Enemy("Stoneman",       100,  40, 102, 135, 155, 148,  2, 11,  7,  1),
+  [ArmoredKnightId] = Enemy("Armored Knight", 105,  86,  75,  99, 172, 152, 15, 12,  1,  2),
+  [RedDragonId    ] = Enemy("Red Dragon",     120,  90,  80, 106, 255, 143, 15, 12, 15,  2),
+  [Dragonlord1Id  ] = Enemy("Dragonlord1",     90,  75,  75, 100,   0,   0, 15, 15, 15,  0),
+  [Dragonlord2Id  ] = Enemy("Dragonlord2",    140, 200, 150, 165,   0,   0, 15, 15, 15,  0),
 }

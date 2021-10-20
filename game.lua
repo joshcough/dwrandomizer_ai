@@ -9,6 +9,7 @@ require 'player_data'
 require 'static_maps'
 
 Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsWithoutKeys)
+  -- map related stuff
   a.scripts = Scripts(memory)
   a.memory = memory
   a.warps = warps
@@ -16,10 +17,17 @@ Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsW
   a.maps = maps
   a.graphsWithKeys = graphsWithKeys
   a.graphsWithoutKeys = graphsWithoutKeys
-  a.playerData = memory:readPlayerData()
+
+  -- events/signals that happen in game
   a.inBattle = false
-  a.exploreDest = nil
   a.repelTimerWindowOpen = false
+  a.mapChanged = false
+  a.leveledUp = false
+  a.dead = false
+  a.enemyKilled = false
+
+  -- various other things
+  a.exploreDest = nil
   a.unlockedDoors = {}
   a.weaponAndArmorShops = memory:readWeaponAndArmorShops()
   a.searchSpots = memory:readSearchSpots()
@@ -27,10 +35,6 @@ Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsW
   a.lastPrintedPercentage = 0
   -- we start on the menu screen, so on no map at all.
   a.currentMapId = 0
-  a.mapChanged = false
-  a.leveledUp = false
-  a.dead = false
-  a.enemyKilled = false
 end)
 
 function newGame(memory)
@@ -441,7 +445,7 @@ function Game:stateMachine()
   if self.dead then self:dealWithDeath()
   elseif self.mapChanged then self:dealWithMapChange()
   elseif self:getMapId() == 0 then
-    print("I think we are still on map 0 man!")
+    -- print("I think we are still on map 0 man!")
     self:interpretScript(self.scripts.GameStartMenuScript)
   else self:explore()
   end
@@ -458,13 +462,13 @@ function Game:explore()
   local atDestination = self.exploreDest ~= nil and self.exploreDest:equals(loc)
 
   if atDestination then
-    print("we are already at our destination...so gonna pick a new one... currently at: " .. tostring(loc))
+    -- print("we are already at our destination...so gonna pick a new one... currently at: " .. tostring(loc))
     if loc.mapId == OverWorldId then
       -- if the location is in overworld.importantLocations, then we have to remove it.
       -- TODO: this code is awful
       if self:atFirstImportantLocation()
       then
-        print("removing important location")
+        -- print("removing important location")
         self.overworld.importantLocations = list.delete(self.overworld.importantLocations, 1)
         self.exploreDest = nil
         self:exploreStaticMap()
@@ -498,7 +502,7 @@ function Game:exploreStaticMap()
 end
 
 function Game:exploreStart()
-  print("no destination yet, about to get one")
+  -- print("no destination yet, about to get one")
   local loc = self:getLocation()
   -- TODO: if there are multiple new locations, we should pick the closest one.
   local seeSomethingNew = #(self.overworld.importantLocations) > 0
@@ -506,7 +510,7 @@ function Game:exploreStart()
     local newImportantLoc = self.overworld.importantLocations[1].location
     -- if the the new location we have spotted on the overworld is tantegel itself, ignore it.
     if newImportantLoc:equals(self.scripts.tantegelLocation) then
-      print("I see a castle, but its just tantegel, so I'm ignoring it")
+      -- print("I see a castle, but its just tantegel, so I'm ignoring it")
       self.overworld.importantLocations = list.delete(self.overworld.importantLocations, 1)
     elseif self.overworld.importantLocations[1].type == ImportantLocationType.CHARLOCK then
       print("I see Charlock!")
@@ -522,7 +526,7 @@ function Game:exploreStart()
   else
     self:chooseNewDestination(function (k) return self:chooseClosestBorderTile(k) end)
   end
-  print("done setting destination: " .. tostring(self.exploreDest))
+  print("new destination is: " .. tostring(self.exploreDest))
 end
 
 -- what we really should do here is pick a random walkable border tile
@@ -559,7 +563,7 @@ function Game:chooseNewDestination(tileSelectionStrat)
 end
 
 function Game:chooseNewDestinationDirectly(newDestination)
-  print("new destination", newDestination, self.overworld:getOverworldMapTileAt(newDestination.x, newDestination.y))
+  -- print("new destination", newDestination, self.overworld:getOverworldMapTileAt(newDestination.x, newDestination.y))
   self.exploreDest = newDestination
 end
 
@@ -590,7 +594,7 @@ end
 function Game:startEncounter()
  if (self:getMapId() > 0) then
     local enemyId = self:getEnemyId()
-    -- print ("entering battle vs a " .. Enemies[enemyId])
+    print ("entering battle vs a " .. tostring(Enemies[enemyId - 1]))
     -- actually, set every encounter to a slime. lol!
     -- self.memory:setEnemyId(0)
     self.inBattle = true
@@ -604,8 +608,10 @@ end
 function Game:executeBattle()
   function battleStarted() return self.inBattle end
   function battleEnded()
-    -- print("self.enemyKilled", self.enemyKilled, "self.dead", self.dead)
-    return self.enemyKilled or self.dead
+    -- print("self.enemyKilled", self.enemyKilled, "self.dead", self.dead, "self.inBattle: ", self.inBattle)
+    return self.enemyKilled  -- i killed the enemy
+      or   self.dead         -- the enemy killed me
+      or   not self.inBattle -- the enemy ran
   end
 
   waitUntil(battleStarted, 120, "battle has started")
@@ -620,10 +626,6 @@ function Game:executeBattle()
   end
 
   self.enemyKilled = false
-
---   if self.dead then
---     self:dealWithDeath()
---   end
 end
 
 -- TODO: this is broken
@@ -667,7 +669,7 @@ function Game:dealWithMapChange()
   local newMapId = self:getMapId()
 
   if newMapId < 1 then
-    print("The map changed, but dood, we are on map 0, so must be the menu or something...")
+    -- print("The map changed, but dood, we are on map 0, so must be the menu or something...")
     return
   end
 
@@ -709,9 +711,9 @@ function Game:dealWithMapChange()
       print("adding warp to SwampSouthEntrance")
       self:addWarp(Warp(newLoc, SwampSouthEntrance))
     end
-  elseif oldMapId == Tantegel then
-    print("leaving Tantegel")
-    self:addWarp(Warp(TantegelEntrance, self.maps[Tantegel].overworldCoordinates[1]))
+--   elseif oldMapId == Tantegel then
+--     print("leaving Tantegel")
+--     self:addWarp(Warp(TantegelEntrance, self.maps[Tantegel].overworldCoordinates[1]))
   end
 
   self.currentMapId = newMapId
@@ -799,12 +801,12 @@ function Game:deathBySwamp()
 end
 
 function Game:enemyDefeated()
-  -- print("i killed his ass!")
+  -- print("Killed an enemy.")
   self.enemyKilled = true
 end
 
 function Game:playerDefeated()
-  print("he killed my ass!")
+  print("I just got killed.")
   self.dead = true
 end
 
