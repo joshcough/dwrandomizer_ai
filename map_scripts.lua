@@ -78,7 +78,6 @@ Search         = ActionScript("SEARCH")
 DeathWarp      = ActionScript("DEATH_WARP")
 SavePrincess   = ActionScript("RESCUE_PRINCESS")
 DragonLord     = ActionScript("DRAGONLORD")
-Save           = ActionScript("SAVE")
 TalkToOldMan   = ActionScript("TALK_TO_OLD_MAN")
 ShopKeeper     = ActionScript("TALK_TO_SHOP_KEEPER")
 InnKeeper      = ActionScript("TALK_TO_INN_KEEPER")
@@ -87,7 +86,6 @@ SaveUnlockedDoor = class(ActionScript, function(a, loc)
   ActionScript.init(a, "SAVE_UNLOCKED_DOOR: " .. tostring(loc))
   a.loc = loc
 end)
-
 
 UseItem = class(ActionScript, function(a, item)
   ActionScript.init(a, "UseItem: " .. tostring(item))
@@ -381,7 +379,7 @@ Scripts = class(function(a,mem)
 
   saveWithKingScript =
     Consecutive("Leaving Throne room via wings", {
-      Goto(TantegelThroneRoom, 3, 4), Save
+      Goto(TantegelThroneRoom, 3, 4), OpenMenu, HoldA(180), PressB(2)
     })
 
   exploreGraveScript =

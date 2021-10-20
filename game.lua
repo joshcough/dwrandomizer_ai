@@ -28,6 +28,9 @@ Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsW
   -- we start on the menu screen, so on no map at all.
   a.currentMapId = 0
   a.mapChanged = false
+  a.leveledUp = false
+  a.dead = false
+  a.enemyKilled = false
 end)
 
 function newGame(memory)
@@ -80,7 +83,7 @@ function Game:printVisibleGrid()
 end
 
 -- these are reasons that we have exited the followPath function
-GotoExitValues = enum.new("Follow Path Exit Values", {"AT_LOCATION", "IN_BATTLE", "REPEL_TIMER", "NO_PATH", "BUG"})
+GotoExitValues = enum.new("Follow Path Exit Values", {"AT_LOCATION", "IN_BATTLE", "REPEL_TIMER", "DEAD", "NO_PATH", "BUG"})
 
 function Game:goTo(dest)
   local loc = self:getLocation()
@@ -105,7 +108,9 @@ function Game:goTo(dest)
       then
         -- we got interruped by a battle. after finishing the battle, continue going.
         self:executeBattle()
-        self:goTo(dest)
+        if self.dead then return GotoExitValues.DEAD
+        else self:goTo(dest)
+        end
     else
       return res -- TODO: can we even do anything with the others? NO_PATH, BUG? AT_LOCATION?
     end
@@ -127,7 +132,7 @@ function Game:followPath(path)
     elseif c.direction == "Stairs" then self:interpretScript(self.scripts.TakeStairs)
     else
       local startingLoc = self:getLocation()
-      holdButtonUntil(c.direction, function ()
+      holdButtonUntil(c.direction, "we are at " .. tostring(c.to), function ()
         dest = c.to
         local loc = self:getLocation()
         if loc.mapId == 1 and not loc:equals(startingLoc) then
@@ -139,7 +144,7 @@ function Game:followPath(path)
           end
         end
         -- print("current point: ", memory:getLocation(), "c.to: ", c.to, "equal?: ", p:equals(c.to))
-        return loc:equals(c.to) or self.inBattle or self.repelTimerWindowOpen
+        return loc:equals(c.to) or self.inBattle or self.repelTimerWindowOpen or self.dead
       end)
     end
   end
@@ -171,7 +176,6 @@ function Game:interpretScript(s)
       elseif s == DeathWarp    then self:deathWarp()
       elseif s == SavePrincess then self:savePrincess()
       elseif s == DragonLord   then self:fightDragonLord()
-      elseif s == Save         then self:saveWithKing()
       elseif s == ShopKeeper   then self:talkToShopKeeper()
       elseif s == InnKeeper    then self:talkToInnKeeper()
       -- == doesn't work on these, so we need is_a
@@ -221,17 +225,13 @@ function Game:evaluateCondition(s)
   end
 end
 
+-- TODO: could move some of this into map_scripts
 function Game:closeRepelTimerWindow()
   if self.repelTimerWindowOpen then
     waitFrames(30)
     pressB(2)
     self.repelTimerWindowOpen = false
   end
-end
-
-function Game:openMenu()
-  holdA(30)
-  waitFrames(10)
 end
 
 -- TODO: i have no idea how i am going to do this yet.
@@ -242,11 +242,9 @@ end
 function Game:savePrincess ()
 end
 
--- todo: this one shouldn't really be that hard either
+-- TODO: this is all messed up.
 function Game:fightDragonLord ()
-  print("open menu")
-  self:openMenu()
-  -- TODO: this is all messed up.
+--   self:openMenu()
 --   pressA(30)
 --   pressA(30)
 --   pressDown(2)
@@ -425,7 +423,8 @@ function convertPathToCommands(pathIn, maps)
 end
 
 function Game:stateMachine()
-  if self.mapChanged then self:dealWithMapChange()
+  if self.dead then self:dealWithDeath()
+  elseif self.mapChanged then self:dealWithMapChange()
   elseif self:getMapId() == 0 then
     print("I think we are still on map 0 man!")
     self:interpretScript(self.scripts.GameStartMenuScript)
@@ -470,7 +469,7 @@ function Game:explore()
 end
 
 function Game:exploreStaticMap()
-  waitUntil(function() return self:onStaticMap() end, 240)
+  waitUntil(function() return self:onStaticMap() end, 240, "on static map")
   self:dealWithMapChange()
   local loc = self:getLocation()
   local script = self.scripts.MapScripts[loc.mapId]
@@ -497,7 +496,7 @@ function Game:exploreStart()
     elseif self.overworld.importantLocations[1].type == ImportantLocationType.CHARLOCK then
       print("I see Charlock!")
       self:interpretScript(self.scripts.EnterCharlock)
-      waitUntil(function() return self:onStaticMap() end, 240)
+      waitUntil(function() return self:onStaticMap() end, 240, "on static map")
       self:dealWithMapChange()
     else
       if self.exploreDest == nil or not self.exploreDest:equals(newImportantLoc) then
@@ -578,7 +577,7 @@ function Game:startEncounter()
     local enemyId = self:getEnemyId()
     print ("entering battle vs a " .. Enemies[enemyId])
     -- actually, set every encounter to a slime. lol!
-    self.memory:setEnemyId(0)
+    -- self.memory:setEnemyId(0)
     self.inBattle = true
   end
 end
@@ -588,23 +587,39 @@ function Game:onStaticMap()
 end
 
 function Game:executeBattle()
-  function battleEnded () return not self.inBattle end
-  waitUntil(battleEnded, 120)
-  clearController() -- TODO is this really needed? double check
-  holdAUntil(battleEnded, 240)
-  waitUntil(battleEnded, 60)
+  function battleStarted() return self.inBattle end
+  function battleEnded()
+    print("self.enemyKilled", self.enemyKilled, "self.dead", self.dead)
+    return self.enemyKilled or self.dead
+  end
+
+  waitUntil(battleStarted, 120, "battle has started")
+  holdAUntil(battleEnded, "battle has ended")
+  waitFrames(180)
+--   waitUntil(battleEnded, 180, "battle has ended")
   pressA(10)
+
   self.inBattle = false
+  if self.leveledUp then
+    holdA(180)
+    self.leveledUp = false
+  end
+
+  self.enemyKilled = false
+
+--   if self.dead then
+--     self:dealWithDeath()
+--   end
 end
 
 -- TODO: this is broken
 function Game:executeDragonLordBattle()
-  function battleEnded () return not self.inBattle end
-  waitUntil(battleEnded, 120)
-  holdAUntil(battleEnded, 240)
-  waitUntil(battleEnded, 60)
-  pressA(10)
-  self.inBattle = false
+--   function battleEnded () return not self.inBattle end
+--   waitUntil(battleEnded, 120)
+--   holdAUntil(battleEnded, 240)
+--   waitUntil(battleEnded, 60)
+--   pressA(10)
+--   self.inBattle = false
 end
 
 function Game:enemyRun()
@@ -629,6 +644,11 @@ function Game:onMapChange()
   self.mapChanged = true
 end
 
+function Game:dealWithDeath()
+  holdAUntil(function () return self:getMapId() == 5 end, "map is throne room", 240)
+  self.dead = false
+end
+
 function Game:dealWithMapChange()
   local newMapId = self:getMapId()
 
@@ -649,9 +669,7 @@ function Game:dealWithMapChange()
     end
   end
 
-  if newMapId == TantegelThroneRoom and oldMapId == 0 then
-    print("hmmmmm....") -- self:addWarp(Warp(newLoc, coordinatesList[1]))
-  elseif newMapId ~= 1 and newMapId ~= Tantegel then
+  if newMapId ~= 1 and newMapId ~= Tantegel then
     local coordinatesList = self.maps[newMapId].overworldCoordinates
     if coordinatesList ~= nil then
       if #coordinatesList == 1 then
@@ -742,12 +760,6 @@ function Game:castRepel(disregardTimer)
   end
 end
 
-function Game:saveWithKing()
-  self:openMenu()
-  holdA(180)
-  pressB(2)
-end
-
 function Game:useRainbowDrop()
   self:useItem(RainbowDrop)
   self.overworld:useRainbowDrop(self:getLocation())
@@ -760,6 +772,26 @@ end
 function Game:endRepelTimer()
   print("repel has ended")
   self.repelTimerWindowOpen = true
+end
+
+function Game:nextLevel()
+  print("i think i just leveled up.")
+  self.leveledUp = true
+end
+
+function Game:deathBySwamp()
+  print("i think i just died in a swamp.")
+  self.dead = true
+end
+
+function Game:enemyDefeated()
+  print("i killed his ass!")
+  self.enemyKilled = true
+end
+
+function Game:playerDefeated()
+  print("he killed my ass!")
+  self.dead = true
 end
 
 function Game:talkToShopKeeper()
