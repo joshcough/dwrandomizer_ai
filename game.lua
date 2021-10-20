@@ -20,6 +20,7 @@ Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsW
 
   -- events/signals that happen in game
   a.inBattle = false
+  a.enemy = nil
   a.repelTimerWindowOpen = false
   a.mapChanged = false
   a.leveledUp = false
@@ -202,6 +203,8 @@ function Game:interpretScript(s)
   elseif s:is_a(PressButtonScript) then pressButton(s.button.name, s.waitFrames)
   elseif s:is_a(HoldButtonScript) then holdButton(s.button.name, s.duration)
   elseif s:is_a(WaitFrames) then waitFrames(s.duration)
+  elseif s:is_a(WaitUntil) then
+    waitUntil(function() return self:evaluateCondition(s.condition) end, s.duration, s.msg)
   elseif s:is_a(DebugScript) then print(s.name)
   end
 end
@@ -282,10 +285,10 @@ function Game:addWarp(warp)
   -- TODO: this is just terrible....
   self.warps = table.concat(self.warps, list.map(self.warps, swapSrcAndDest))
 
-  -- TODO: these three lines just reload absolutely everything.
+  -- TODO: these two lines just reload absolutely everything.
   -- this is really not ideal, but, its probably fine for now.
   -- eventually we will want to do the minimal amount of work possible here.
-  self.maps = readAllStaticMaps(self.memory, self.warps)
+  for i = 2, 29 do self.maps[i]:resetWarps(self.warps) end
   self:resetGraphs()
 end
 
@@ -469,7 +472,7 @@ function Game:explore()
       if self:atFirstImportantLocation()
       then
         -- print("removing important location")
-        self.overworld.importantLocations = list.delete(self.overworld.importantLocations, 1)
+        self:removeFirstImportantLocation()
         self.exploreDest = nil
         self:exploreStaticMap()
      else
@@ -501,6 +504,10 @@ function Game:exploreStaticMap()
   end
 end
 
+function Game:removeFirstImportantLocation()
+  self.overworld.importantLocations = list.delete(self.overworld.importantLocations, 1)
+end
+
 function Game:exploreStart()
   -- print("no destination yet, about to get one")
   local loc = self:getLocation()
@@ -511,12 +518,11 @@ function Game:exploreStart()
     -- if the the new location we have spotted on the overworld is tantegel itself, ignore it.
     if newImportantLoc:equals(self.scripts.tantegelLocation) then
       -- print("I see a castle, but its just tantegel, so I'm ignoring it")
-      self.overworld.importantLocations = list.delete(self.overworld.importantLocations, 1)
+      self:removeFirstImportantLocation()
     elseif self.overworld.importantLocations[1].type == ImportantLocationType.CHARLOCK then
       print("I see Charlock!")
       self:interpretScript(self.scripts.EnterCharlock)
-      waitUntil(function() return self:onStaticMap() end, 240, "on static map")
-      self:dealWithMapChange()
+      self:removeFirstImportantLocation()
     else
       if self.exploreDest == nil or not self.exploreDest:equals(newImportantLoc) then
         print("I see something new at: ", newImportantLoc)
@@ -594,10 +600,10 @@ end
 function Game:startEncounter()
  if (self:getMapId() > 0) then
     local enemyId = self:getEnemyId()
-    print ("entering battle vs a " .. tostring(Enemies[enemyId - 1]))
-    -- actually, set every encounter to a slime. lol!
-    -- self.memory:setEnemyId(0)
+    local enemy = Enemies[enemyId]
+    print ("entering battle vs a " .. enemy.name .. " " .. tostring(enemy))
     self.inBattle = true
+    self.enemy = enemy
   end
 end
 
@@ -606,26 +612,17 @@ function Game:onStaticMap()
 end
 
 function Game:executeBattle()
-  function battleStarted() return self.inBattle end
-  function battleEnded()
-    -- print("self.enemyKilled", self.enemyKilled, "self.dead", self.dead, "self.inBattle: ", self.inBattle)
-    return self.enemyKilled  -- i killed the enemy
-      or   self.dead         -- the enemy killed me
-      or   not self.inBattle -- the enemy ran
-  end
+  self.enemy:executeBattle(self)
 
-  waitUntil(battleStarted, 120, "battle has started")
-  holdAUntil(battleEnded, "battle has ended")
-  waitFrames(180)
-  pressA(10)
-
-  self.inBattle = false
   if self.leveledUp then
     holdA(180)
     self.leveledUp = false
   end
 
+  self.inBattle = false
+  self.runSuccess = false
   self.enemyKilled = false
+  self.enemy = nil
 end
 
 -- TODO: this is broken
@@ -643,9 +640,14 @@ function Game:enemyRun()
   self.inBattle = false
 end
 
-function Game:playerRun()
+function Game:playerRunSuccess()
   print("you are running!")
-  self.inBattle = false
+  self.runSuccess = true
+end
+
+function Game:playerRunFailed()
+  print("you are NOT running!")
+  self.runSuccess = false
 end
 
 function Game:onPlayerMove()
@@ -661,6 +663,7 @@ function Game:onMapChange()
 end
 
 function Game:dealWithDeath()
+  waitFrames(120)
   holdAUntil(function () return self:getMapId() == 5 end, "map is throne room", 240)
   self.dead = false
 end
@@ -803,11 +806,13 @@ end
 function Game:enemyDefeated()
   -- print("Killed an enemy.")
   self.enemyKilled = true
+  self.inBattle = false
 end
 
 function Game:playerDefeated()
   print("I just got killed.")
   self.dead = true
+  self.inBattle = false
 end
 
 function Game:talkToShopKeeper()

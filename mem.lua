@@ -53,7 +53,7 @@ function Memory:setRepelTimer (n) return self:writeRAM(0xDB, n) end
 
 -- get the id of the current enemy, if it exists
 -- no idea what gets returned if not in battle
-function Memory:getEnemyId () return self.ram.readbyte(ENEMY_ID_ADDR)+1 end
+function Memory:getEnemyId () return self.ram.readbyte(ENEMY_ID_ADDR) end
 function Memory:setEnemyId (enemyId) return memory.writebyte(ENEMY_ID_ADDR, enemyId) end
 
 function Memory:setReturnWarpLocation(x, y)
