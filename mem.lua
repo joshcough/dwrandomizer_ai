@@ -62,11 +62,11 @@ function Memory:setReturnWarpLocation(x, y)
 end
 
 function Memory:getItemNumberOfHerbs ()
-  return self.ram.readbyte(0xbf)
+  return self.ram.readbyte(0xc0)
 end
 
 function Memory:getItemNumberOfKeys ()
-  return self.ram.readbyte(0xc0)
+  return self.ram.readbyte(0xbf)
 end
 
 function Memory:getItems()

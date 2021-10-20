@@ -309,7 +309,7 @@ function Chests:openChestAt(location)
 end
 
 function Chests:closeAll()
-  print("Closing all chests!")
+  -- print("Closing all chests!")
   for i = 1,31 do
     self.chests[i].currentlyOpen = false
   end

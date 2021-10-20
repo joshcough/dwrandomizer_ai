@@ -46,7 +46,7 @@ function Warp:swap()
 end
 
 function Warp:__tostring()
-  return "{src: " .. tostring(self.src) .. ", dest: " .. tostring(self.dest) .. "}"
+  return "{Warp src: " .. tostring(self.src) .. ", dest: " .. tostring(self.dest) .. "}"
 end
 
 function Warp:equals(w)
@@ -288,6 +288,10 @@ end
 
 function StaticMap:getTileAt(x, y)
   return self:getTileSet()[self.rows[y][x]]
+end
+
+function StaticMap:setTileAt(x, y, newTileId)
+  self.rows[y][x] = newTileId
 end
 
 PRINT_TILE_NAME    = 1

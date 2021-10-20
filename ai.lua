@@ -15,12 +15,16 @@ require 'static_maps'
 
 AI = class(function(a, game) a.game = game end)
 
-function AI:onEncounter()   return function(address) self.game:startEncounter() end end
-function AI:enemyRun()      return function(address) self.game:enemyRun()       end end
-function AI:playerRun()     return function(address) self.game:playerRun()      end end
-function AI:onPlayerMove()  return function(address) self.game:onPlayerMove()   end end
-function AI:onMapChange()   return function(address) self.game:onMapChange()    end end
-function AI:endRepelTimer() return function(address) self.game:endRepelTimer()  end end
+function AI:onEncounter()    return function(address) self.game:startEncounter() end end
+function AI:enemyRun()       return function(address) self.game:enemyRun()       end end
+function AI:playerRun()      return function(address) self.game:playerRun()      end end
+function AI:onPlayerMove()   return function(address) self.game:onPlayerMove()   end end
+function AI:onMapChange()    return function(address) self.game:onMapChange()    end end
+function AI:endRepelTimer()  return function(address) self.game:endRepelTimer()  end end
+function AI:nextLevel()      return function(address) self.game:nextLevel()      end end
+function AI:deathBySwamp()   return function(address) self.game:deathBySwamp()   end end
+function AI:enemyDefeated()  return function(address) self.game:enemyDefeated()  end end
+function AI:playerDefeated() return function(address) self.game:playerDefeated() end end
 
 function AI:register(memory)
   memory.registerexecute(0xcf44, self:onEncounter())
@@ -30,6 +34,10 @@ function AI:register(memory)
   memory.registerwrite  (0x3b,   self:onPlayerMove())
   memory.registerwrite  (0x45,   self:onMapChange())
   memory.registerexecute(0xca83, self:endRepelTimer())
+  memory.registerexecute(0xEA90, self:nextLevel())      -- LEA90:  LDA #MSC_LEVEL_UP       ;Level up music.
+  memory.registerexecute(0xCDE6, self:deathBySwamp())   -- LCDE6:  LDA #$00                ;Player is dead. set HP to 0.
+  memory.registerexecute(0xE98F, self:enemyDefeated())
+  memory.registerexecute(0xED9C, self:playerDefeated()) -- PlayerHasDied: LED9C:  LDA #MSC_DEATH          ;Death music.
 end
 
 -- TODO: obviously this will be removed later

@@ -392,7 +392,7 @@ Point = class(function(a, mapId, x, y)
 end)
 
 function Point:__tostring()
-  return "{mapId:" .. self.mapId .. ", x:" .. self.x .. ", y:" .. self.y .. "}"
+  return "{Point mapId:" .. self.mapId .. ", x:" .. self.x .. ", y:" .. self.y .. "}"
 end
 
 function Point:equals(p2)
@@ -417,7 +417,12 @@ Neighbor = class(function(a, mapId, x, y, type)
 end)
 
 function Neighbor:__tostring()
-  return"{mapId:" .. self.mapId .. ", x:" .. self.x .. ", y:" .. self.y .. "}" -- ", type: " .. tostring(self.type.name) .. "}"
+  return"{Neighbor mapId:" .. self.mapId .. ", x:" .. self.x .. ", y:" .. self.y .. "}" -- ", type: " .. tostring(self.type.name) .. "}"
+end
+
+function Neighbor:equalsPoint(p)
+  if p == nil then return false end
+  return self.mapId == p.mapId and self.x == p.x and self.y == p.y
 end
 
 Queue = class(function(a)

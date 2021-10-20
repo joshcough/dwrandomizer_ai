@@ -22,11 +22,18 @@ function waitFrames (n)
 end
 
 -- waits either maxFrames, or until f yields true
-function waitUntil (f, maxFrames)
+function waitUntil (f, maxFrames, msg)
+  -- print("Waiting until: " .. msg .. " for up to " .. maxFrames .. " frames.")
+  local nrFramesWaited = 0
   for i = 1,maxFrames do
-    if f() then return end
+    if f() then
+      -- print("Waited until: " .. msg .. " waited exactly " .. nrFramesWaited .. " frames, and condition is: " .. tostring(f()))
+      return
+    end
     emu.frameadvance()
+    nrFramesWaited = nrFramesWaited + 1
   end
+  -- print("Waited until: " .. msg .. " waited exactly " .. nrFramesWaited .. " frames, and condition is: " .. tostring(f()))
 end
 
 function clearController()
@@ -45,32 +52,34 @@ end
 
 function holdButton (button, frames)
   local nrFrames = 0
-  holdButtonUntil(button, function()
+  holdButtonUntil(button, "frame count is: " .. frames, function()
     nrFrames = nrFrames + 1
     return nrFrames >= frames
   end)
 end
 
-function holdButtonUntil(button, conditionFunction)
-  -- print("Holding " .. button)
+function holdButtonUntil(button, msg, conditionFunction)
+  -- print("Holding " .. button .. " until " .. msg)
   e = table.shallow_copy(emptyInputs)
   e[button] = true
   while not conditionFunction() do
     joypad.write(1, e)
     emu.frameadvance()
   end
-  -- print("Done holding " .. button)
+  -- print("Done holding " .. button .. " until " .. msg)
   clearController()
   emu.frameadvance()
 end
 
-function holdButtonUntilOrMaxFrames(button, conditionFunction, maxFrames)
-  -- print("Holding " .. button)
-  local nrFrames = 0
-  holdButtonUntil(button, function()
-    nrFrames = nrFrames + 1
-    return (nrFrames >= maxFrames) or conditionFunction()
-  end)
+function holdButtonUntilOrMaxFrames(button, msg, conditionFunction, maxFrames)
+  if maxFrames == nil then return holdButtonUntil(button, msg, conditionFunction)
+  else
+    local nrFrames = 0
+    holdButtonUntil(button, msg .. " or frame count is: " .. maxFrames, function()
+      nrFrames = nrFrames + 1
+      return (nrFrames >= maxFrames) or conditionFunction()
+    end)
+  end
 end
 
 
@@ -84,18 +93,18 @@ function pressUp (wait) pressButton(UP, wait) end
 function pressDown (wait) pressButton(DOWN, wait) end
 
 function holdStart (frames) holdButton(START, frames) end
-function holdStartUntil (f, maxFrames) holdButtonUntilOrMaxFrames(START, f, maxFrames) end
+function holdStartUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(START, msg, f, maxFrames) end
 function holdSelect (frames) holdButton(SELECT, frames) end
-function holdSelectUntil (f, maxFrames) holdButtonUntilOrMaxFrames(SELECT, f, maxFrames) end
+function holdSelectUntil (f, maxFrames) holdButtonUntilOrMaxFrames(SELECT, msg, f, maxFrames) end
 function holdA (frames) holdButton(A, frames) end
-function holdAUntil (f, maxFrames) holdButtonUntilOrMaxFrames(A, f, maxFrames) end
+function holdAUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(A, msg, f, maxFrames) end
 function holdB (frames) holdButton(B, frames) end
-function holdBUntil (f, maxFrames) holdButtonUntilOrMaxFrames(B, f, maxFrames) end
+function holdBUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(B, msg, f, maxFrames) end
 function holdLeft (frames) holdButton(LEFT, frames) end
-function holdLeftUntil (f, maxFrames) holdButtonUntilOrMaxFrames(LEFT, f, maxFrames) end
+function holdLeftUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(LEFT, msg, f, maxFrames) end
 function holdRight (frames) holdButton(RIGHT, frames) end
-function holdRightUntil (f, maxFrames) holdButtonUntilOrMaxFrames(RIGHT, f, maxFrames) end
+function holdRightUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(RIGHT, msg, f, maxFrames) end
 function holdUp (frames) holdButton(UP, frames) end
-function holdUpUntil (f, maxFrames) holdButtonUntilOrMaxFrames(UP, f, maxFrames) end
+function holdUpUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(UP, msg, f, maxFrames) end
 function holdDown (frames) holdButton(DOWN, frames) end
-function holdDownUntil (f, maxFrames) holdButtonUntilOrMaxFrames(DOWN, f, maxFrames) end
+function holdDownUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(DOWN, msg, f, maxFrames) end
