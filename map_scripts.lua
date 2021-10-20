@@ -378,7 +378,7 @@ Scripts = class(function(a,mem)
   })
 
   saveWithKingScript =
-    Consecutive("Leaving Throne room via wings", {
+    Consecutive("Save with the king", {
       Goto(TantegelThroneRoom, 3, 4), OpenMenu, HoldA(180), PressB(2)
     })
 
@@ -517,7 +517,10 @@ Scripts = class(function(a,mem)
       }),
       -- We probably died, and need to resume doing whatever it was we were last doing.
       -- So it seems like we need some sort of goal system in order to be able to resume.
-      leaveTantegalOnFoot
+      Consecutive("Talk to king after dying", {
+        HoldA(250),
+        leaveTantegalOnFoot
+      })
     )
 
   -- TODO: add static npc to basement and fix this up

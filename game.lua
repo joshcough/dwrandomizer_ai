@@ -88,7 +88,7 @@ GotoExitValues = enum.new("Follow Path Exit Values", {"AT_LOCATION", "IN_BATTLE"
 function Game:goTo(dest)
   local loc = self:getLocation()
   if loc:equals(dest) then
-    print("I was asked to go to: " .. tostring(dest) .. ", but I am already there!")
+    -- print("I was asked to go to: " .. tostring(dest) .. ", but I am already there!")
     return GotoExitValues.AT_LOCATION
   end
   local path = self:shortestPath(loc, dest)
@@ -203,6 +203,7 @@ function Game:interpretScript(s)
 end
 
 function Game:evaluateCondition(s)
+  -- print("evaluateCondition: ", s)
   -- base conditions
       if s:is_a(IsChestOpen) then return self.chests:isChestOpen(s.location)
   elseif s:is_a(IsDoorOpen)  then return self:isDoorOpen(s.location)
@@ -219,6 +220,9 @@ function Game:evaluateCondition(s)
   elseif s:is_a(All)      then return list.all(s.conditions, function(x) return self:evaluateCondition(x) end)
   elseif s:is_a(Contains) then return self:interpretScript(s.container):contains(s.v)
   elseif s:is_a(Not)      then return not self:evaluateCondition(s.condition)
+
+  -- TODO: hack. PlayerDataScript is not a ConditionScript...gross.
+  elseif s:is_a(PlayerDataScript) then return s.playerDataF(self:readPlayerData())
 
   -- this should be a type error, but, we dont get those in lua.
   else return false
@@ -278,6 +282,10 @@ function Game:addWarp(warp)
   -- this is really not ideal, but, its probably fine for now.
   -- eventually we will want to do the minimal amount of work possible here.
   self.maps = readAllStaticMaps(self.memory, self.warps)
+  self:resetGraphs()
+end
+
+function Game:resetGraphs()
   self.graphsWithKeys = readAllGraphs(self.memory, true, self.maps, self.warps)
   self.graphsWithoutKeys = readAllGraphs(self.memory, false, self.maps, self.warps)
 end
@@ -349,12 +357,19 @@ end
 
 function swapSrcAndDest(w) return w:swap() end
 
-function Game:isDoorOpen(point)
-  return containsPoint(self.unlockedDoors, point)
+function Game:isDoorOpen(loc)
+  return containsPoint(self.unlockedDoors, loc)
 end
 
-function Game:saveUnlockedDoor(point)
-  table.insert(self.unlockedDoors, point)
+function Game:saveUnlockedDoor(loc)
+  -- todo: if this is the throne room
+  -- then we need to set that tile to brick instead of a door
+  -- and then we will probably have to regenerate the graphs or whatever.
+  if (loc:equalsPoint(Point(TantegelThroneRoom, 4, 7))) then
+    self.maps[TantegelThroneRoom]:setTileAt(4, 7, 6) -- 6 for brick. TODO: we need names for things like that
+    self:resetGraphs()
+  end
+  table.insert(self.unlockedDoors, loc)
 end
 
 MovementCommand = class(function(a,direction,from,to)
@@ -557,7 +572,7 @@ function Game:getCombinedGraphs()
 end
 
 function Game:exploreMove()
-  print("we have a destination. about to move towards it from: ", self:getLocation(), " to ", self.exploreDest)
+  print("Moving from: ", self:getLocation(), " to ", self.exploreDest)
   -- TODO: we are calculating the shortest path twice... we need to do better than that
   -- here... if we cant find a path to the destination, then we want to just choose a new destination
   local path = self:shortestPath(self:getLocation(), self.exploreDest)
@@ -575,7 +590,7 @@ end
 function Game:startEncounter()
  if (self:getMapId() > 0) then
     local enemyId = self:getEnemyId()
-    print ("entering battle vs a " .. Enemies[enemyId])
+    -- print ("entering battle vs a " .. Enemies[enemyId])
     -- actually, set every encounter to a slime. lol!
     -- self.memory:setEnemyId(0)
     self.inBattle = true
@@ -589,14 +604,13 @@ end
 function Game:executeBattle()
   function battleStarted() return self.inBattle end
   function battleEnded()
-    print("self.enemyKilled", self.enemyKilled, "self.dead", self.dead)
+    -- print("self.enemyKilled", self.enemyKilled, "self.dead", self.dead)
     return self.enemyKilled or self.dead
   end
 
   waitUntil(battleStarted, 120, "battle has started")
   holdAUntil(battleEnded, "battle has ended")
   waitFrames(180)
---   waitUntil(battleEnded, 180, "battle has ended")
   pressA(10)
 
   self.inBattle = false
@@ -640,7 +654,7 @@ function Game:onPlayerMove()
 end
 
 function Game:onMapChange()
-  print("recording that the map has changed.")
+  -- print("recording that the map has changed.")
   self.mapChanged = true
 end
 
@@ -659,7 +673,7 @@ function Game:dealWithMapChange()
 
   local oldMapId = self.currentMapId
   local newLoc   = self:getLocation()
-  print("The map has changed! current position: " ..  tostring(newLoc) .. ", old map: " .. tostring(oldMapId))
+  -- print("The map has changed! current position: " ..  tostring(newLoc) .. ", old map: " .. tostring(oldMapId))
 
   if newMapId == OverWorldId then self.chests:closeAll()
   elseif newMapId > 1 and newMapId <= 29 then
@@ -732,7 +746,7 @@ function Game:cast(spell)
   local pd = self:readPlayerData()
   local spellIndex = pd.spells:spellIndex(spell)
   if spellIndex == nil then
-    print("can't cast " .. tostring(spell) .. ", spell hasn't been learned.")
+    -- print("can't cast " .. tostring(spell) .. ", spell hasn't been learned.")
     return
   elseif pd.stats.currentMP < spell.mp then
     print("can't cast " .. tostring(spell) .. ", not enough mp.")
@@ -785,7 +799,7 @@ function Game:deathBySwamp()
 end
 
 function Game:enemyDefeated()
-  print("i killed his ass!")
+  -- print("i killed his ass!")
   self.enemyKilled = true
 end
 

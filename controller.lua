@@ -23,17 +23,17 @@ end
 
 -- waits either maxFrames, or until f yields true
 function waitUntil (f, maxFrames, msg)
-  print("Waiting until: " .. msg .. " for up to " .. maxFrames .. " frames.")
+  -- print("Waiting until: " .. msg .. " for up to " .. maxFrames .. " frames.")
   local nrFramesWaited = 0
   for i = 1,maxFrames do
     if f() then
-      print("Waited until: " .. msg .. " waited exactly " .. nrFramesWaited .. " frames, and condition is: " .. tostring(f()))
+      -- print("Waited until: " .. msg .. " waited exactly " .. nrFramesWaited .. " frames, and condition is: " .. tostring(f()))
       return
     end
     emu.frameadvance()
     nrFramesWaited = nrFramesWaited + 1
   end
-  print("Waited until: " .. msg .. " waited exactly " .. nrFramesWaited .. " frames, and condition is: " .. tostring(f()))
+  -- print("Waited until: " .. msg .. " waited exactly " .. nrFramesWaited .. " frames, and condition is: " .. tostring(f()))
 end
 
 function clearController()
@@ -41,7 +41,7 @@ function clearController()
 end
 
 function pressButton (button, wait)
-  print("Pressing " .. button)
+  -- print("Pressing " .. button)
   e = table.shallow_copy(emptyInputs)
   e[button] = true
   joypad.write(1, e)
@@ -59,14 +59,14 @@ function holdButton (button, frames)
 end
 
 function holdButtonUntil(button, msg, conditionFunction)
-  print("Holding " .. button .. " until " .. msg)
+  -- print("Holding " .. button .. " until " .. msg)
   e = table.shallow_copy(emptyInputs)
   e[button] = true
   while not conditionFunction() do
     joypad.write(1, e)
     emu.frameadvance()
   end
-  print("Done holding " .. button .. " until " .. msg)
+  -- print("Done holding " .. button .. " until " .. msg)
   clearController()
   emu.frameadvance()
 end
