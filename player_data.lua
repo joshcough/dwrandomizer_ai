@@ -507,13 +507,14 @@ end
 -- === All Player data ===
 -- =======================
 
-PlayerData = class(function(a,loc,stats,equipment,spells,items,statuses)
+PlayerData = class(function(a,loc,stats,equipment,spells,items,statuses,levels)
   a.loc = loc
   a.stats = stats
   a.equipment = equipment
   a.spells = spells
   a.items = items
   a.statuses = statuses
+  a.levels = levels
 end)
 
 function PlayerData:equals(pd)
@@ -533,5 +534,19 @@ function PlayerData:__tostring()
   res = res .. tostring(self.spells)
   res = res .. tostring(self.items)
   res = res .. tostring(self.statuses)
+  res = res .. tostring(self.levels)
   return res
+end
+
+function PlayerData:xpToNextLevel()
+  return self.levels[self.stats.level + 1] - self.stats.xp
+end
+
+function PlayerData:totalXpToNextLevel(startLevel)
+  return self.levels[startLevel + 1] - self.levels[startLevel]
+end
+
+function PlayerData:totalXpToNextLevelFromCurrentLevel()
+  local startLevel = self.stats.level
+  return self.levels[startLevel + 1] - self.levels[startLevel]
 end

@@ -425,6 +425,10 @@ function Neighbor:equalsPoint(p)
   return self.mapId == p.mapId and self.x == p.x and self.y == p.y
 end
 
+function Neighbor:getPoint()
+  return Point(self.mapId, self.x, self.y)
+end
+
 Queue = class(function(a)
   a.stack = {}
 end)

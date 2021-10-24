@@ -42,7 +42,8 @@ RedDragonId     = 37
 Dragonlord1Id   = 38
 Dragonlord2Id   = 39
 
-Enemy = class(function(a, id, name, strength, agility, hpMin, hpMax, exp, gold, sleepRes, stopspellResMax, hurtRes, evasion)
+Enemy = class(function(a, id, name, strength, agility, hpMin, hpMax, exp,
+                       gold, sleepRes, stopspellResMax, hurtRes, evasion)
   a.id = id
   a.name = name
   a.strength = strength
@@ -55,9 +56,11 @@ Enemy = class(function(a, id, name, strength, agility, hpMin, hpMax, exp, gold, 
   a.stopspellResMax = stopspellResMax
   a.hurtRes = hurtRes
   a.evasion = evasion
+  a.locations = {}
 end)
 
 Enemies = {
+  --                        id               name              str  agi   min  max   xp gld  slp stp hurt evd
   [SlimeId        ] = Enemy(SlimeId        , "Slime",            5,   3,   2,   2,   1,   2,  0,  0,  0,  1),
   [RedSlimeId     ] = Enemy(RedSlimeId     , "Red Slime",        7,   3,   3,   3,   2,   4,  0,  0,  0,  1),
   [DrakeeId       ] = Enemy(DrakeeId       , "Drakee",           9,   6,   4,   5,   3,   6,  0,  0,  0,  1),
@@ -116,7 +119,53 @@ function Enemy:canBeDefeatedByPlayer(playerData)
   return (self.hpMin + self.hpMax) / 2 < avgDamage * 3
 end
 
+
+Grind = class(function(a, location, enemy)
+  a.location = location
+  a.enemy = enemy
+end)
+
+function Grind:__tostring()
+  return "Grinding: at: " .. tostring(self.location) .. ", vs: " .. tostring(self.enemy)
+end
+
+-- have we seen any enemies that we can kill (or have killed) ?
+-- does that enemy give "good" experience (where good is 10% or more of what it takes to get to the next level)
+--        hmmm.... .10% of the amount remaining? or 10% of the whole?
+--    if that is true, then walk to one of the locs where we've seen that enemy and just walk back and forth
+--    fighting it (and others) until we get to the next level
+function getGrindInfo(playerData)
+  local bestEnemy = nil
+  for _, enemy in ipairs(Enemies) do
+    if enemy:canBeDefeatedByPlayer(playerData) and
+      #(enemy.locations) > 0 and
+      (bestEnemy == nil or bestEnemy.exp < enemy.exp) and
+      enemy.exp > playerData:totalXpToNextLevelFromCurrentLevel() * 0.05
+    then bestEnemy = enemy
+    end
+  end
+  if bestEnemy ~= nil
+  then return Grind(chooseClosestTile(playerData.loc, bestEnemy.locations), bestEnemy)
+  else return nil
+  end
+end
+
+function chooseClosestTile(playerLoc, enemyLocations)
+  print("picking closest tile to the player for grinding")
+  local d = list.min(enemyLocations, function(t)
+    return math.abs(t.x - playerLoc.x) + math.abs(t.y - playerLoc.y)
+  end)
+  return d
+end
+
+
 function Enemy:executeBattle(game)
+
+  if not table.containsUsingDotEquals(self.locations, game:getLocation()) then
+    table.insert(self.locations, game:getLocation())
+    print("have now seen " .. self.name .. " at: ", tostring(self.locations))
+  end
+
   function battleStarted() return game.inBattle end
   function battleEnded()
     -- print("self.enemyKilled", self.enemyKilled, "self.dead", self.dead, "self.inBattle: ", self.inBattle)
@@ -130,19 +179,18 @@ function Enemy:executeBattle(game)
   local enemyCanBeDefeated =
     self:canBeDefeatedByPlayer(game:readPlayerData()) or self.id == MetalSlimeId
 
-  print("oneRoundDamageRange", self:oneRoundDamageRange(game:readPlayerData()))
-  print("canBeDefeatedByPlayer", enemyCanBeDefeated)
+  print("canBeDefeatedByPlayer", enemyCanBeDefeated, "oneRoundDamageRange", self:oneRoundDamageRange(game:readPlayerData()))
 
   if enemyCanBeDefeated then
-    print("the enemy can be defeated. fighting it.")
     holdAUntil(battleEnded, "battle has ended")
     waitFrames(180)
     pressA(10)
   else
-    print("the enemy cant be defeated. running.")
     while not game.runSuccess and not game.dead do
       pressDown(2)
       pressA(60)
     end
   end
+
+  print("xpToNextLevel: ", game:readPlayerData():xpToNextLevel())
 end

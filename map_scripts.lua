@@ -640,4 +640,5 @@ Scripts = class(function(a,mem)
   a.TakeStairs = TakeStairs
   a.EnterCharlock = EnterCharlock
   a.GameStartMenuScript = GameStartMenuScript
+  a.GotoPoint = GotoPoint
 end)

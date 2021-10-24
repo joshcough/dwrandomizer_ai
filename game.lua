@@ -450,7 +450,31 @@ function Game:stateMachine()
   elseif self:getMapId() == 0 then
     -- print("I think we are still on map 0 man!")
     self:interpretScript(self.scripts.GameStartMenuScript)
-  else self:explore()
+  else self:grindOrExplore()
+  end
+end
+
+function Game:grindOrExplore()
+  local pd = self:readPlayerData()
+  local currentLevel = pd.stats.level
+  local grind = getGrindInfo(pd)
+  if self:getMapId() == OverWorldId and grind ~= nil
+    -- we have a good monster to grind on, so, grind.
+    then self:grind(grind, currentLevel)
+    -- if haven't seen anything worth fighting... then i guess just explore...
+    else self:explore()
+  end
+end
+
+function Game:grind(grind, currentLevel)
+  print("GRINDING: ", tostring(grind))
+  -- TODO: if one is forest and the other is desert, we want to pick desert.
+  -- in general, we want to pick the tiles with the highest encounter rate.
+  local neighbor = self.overworld:grindableNeighbors(grind.location.x, grind.location.y)[1]
+
+  while(self.memory:getLevel() == currentLevel and not self.dead) do
+    self:goTo(grind.location)
+    self:goTo(neighbor)
   end
 end
 
