@@ -7,9 +7,13 @@ Script = class(function(a, name, body) a.name = name end)
 function Script:__tostring() return self.name end
 
 Value = class(Script, function(a, v)
-  Script.init(a, "(Value " .. tostring(i) .. ")")
+  Script.init(a, "(Value " .. tostring(v) .. ")")
   a.v = v
 end)
+
+function Value:equals(v2)
+  return self.v == v2.v
+end
 
 DebugScript = class(Script, function(a, msg) Script.init(a, msg) end)
 
@@ -35,6 +39,15 @@ Buttons = enum.new("Scripts to press buttons", {
 
 WaitFrames = class(Script, function(a, duration)
   Script.init(a, "Wait frames (" .. duration .. ")")
+  a.duration = duration
+end)
+
+WaitUntil = class(Script, function(a, msg, condition, duration)
+  Script.init(a, "Wait until (" .. msg .. ", condition: "
+                                .. tostring(condition) .. ", duration: "
+                                .. tostring(duration) .. ")")
+  a.msg = msg
+  a.condition = condition
   a.duration = duration
 end)
 
@@ -228,7 +241,8 @@ end)
 
 GetNrKeys   = PlayerDataScript("Number of magic keys player has.", function(pd) return pd.items.nrKeys end)
 GetGold     = PlayerDataScript("Amount of gold player has.", function(pd) return pd.stats.gold end)
-GetLocation = PlayerDataScript("Location of player", function(pd) return pd.stats.gold end)
+GetLocation = PlayerDataScript("Location of player", function(pd) return pd.loc end)
+GetMap      = PlayerDataScript("MAP", function(pd) return pd.loc.mapId end)
 GetItems    = PlayerDataScript("Player's Items", function(pd) return pd.items end)
 GetSpells   = PlayerDataScript("Player's Spells", function(pd) return pd.spells end)
 GetStatuses = PlayerDataScript("Game statuses", function(pd) return pd.statuses end)
@@ -266,6 +280,9 @@ function Consecutive:__tostring()
   end
   return res
 end
+
+OnStaticMap = All({Gt(GetMap, Value(1)), LtEq(GetMap, Value(29))})
+function OnMap(m) return Eq(GetMap, Value(m)) end
 
 Scripts = class(function(a,mem)
 
@@ -426,7 +443,8 @@ Scripts = class(function(a,mem)
         Consecutive("Enter Charlock", {
           Goto(OverWorldId, charlockLocation.x + 3, charlockLocation.y),
           UseItem(RainbowDrop),
-          GotoPoint(charlockLocation)
+          GotoPoint(charlockLocation),
+          WaitUntil("In Charlock", OnMap(Charlock), 240)
         }),
         DoNothing
       )
@@ -569,7 +587,7 @@ Scripts = class(function(a,mem)
       })
     )
 
-  cantlin = VisitShop(Cantlin, 25, 26)
+  cantlin = GotoOverworld(Cantlin) -- VisitShop(Cantlin, 25, 26)
 
   -- This is for maps that we don't really need a script for
   -- because they are handled by the first floor of the map, basically.
@@ -622,4 +640,5 @@ Scripts = class(function(a,mem)
   a.TakeStairs = TakeStairs
   a.EnterCharlock = EnterCharlock
   a.GameStartMenuScript = GameStartMenuScript
+  a.GotoPoint = GotoPoint
 end)

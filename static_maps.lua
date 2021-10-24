@@ -282,6 +282,10 @@ StaticMap = class(function(a, mapId, mapName, mapType, overworldCoordinates, wid
   a.seenByPlayer = false
 end)
 
+function StaticMap:resetWarps (allWarps)
+  self.warps = getWarpsForMap(self.mapId, allWarps)
+end
+
 function StaticMap:getTileSet ()
   return self.mapId < 15 and NON_DUNGEON_TILES or DUNGEON_TILES
 end

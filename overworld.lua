@@ -7,25 +7,40 @@ OverWorldId = 1
 --   [1] = {["name"] = "Overworld", ["size"] = {["w"]=120,["h"]=120}, ["romAddr"] = 0x1D6D},
 -- }
 
-OverworldTile = class(function(a,name,walkable)
+OverworldTile = class(function(a,id,name,walkable)
+  a.id = id
   a.name = name
   a.walkable = walkable
 end)
 
+GrassId    = 0
+DesertId   = 1
+HillsId    = 2
+MountainId = 3
+WaterId    = 4
+StoneId    = 5
+ForestId   = 6
+SwampId    = 7
+TownId     = 8
+CaveId     = 9
+CastleId   = 10
+BridgeId   = 11
+StairsId   = 12
+
 OVERWORLD_TILES = {
-  [0]   = OverworldTile("Grass   ", true),  -- "🟩",
-  [1]   = OverworldTile("Desert  ", true),  -- "🏜",
-  [2]   = OverworldTile("Hills   ", true),  -- "🏞"
-  [3]   = OverworldTile("Mountain", false), -- "⛰",
-  [4]   = OverworldTile("Water   ", false), -- "🌊",
-  [5]   = OverworldTile("Stone   ", false), -- "⬛",
-  [6]   = OverworldTile("Forest  ", true),  -- "🌳",
-  [7]   = OverworldTile("Swamp   ", true),
-  [8]   = OverworldTile("Town    ", true),
-  [9]   = OverworldTile("Cave    ", true),
-  [0xA] = OverworldTile("Castle  ", true),  -- "🏰"
-  [0xB] = OverworldTile("Bridge  ", true),  -- "🌉",
-  [0xC] = OverworldTile("Stairs  ", true),
+  [0]   = OverworldTile(GrassId,    "Grass   ", true),  -- "🟩",
+  [1]   = OverworldTile(DesertId,   "Desert  ", true),  -- "🏜",
+  [2]   = OverworldTile(HillsId,    "Hills   ", true),  -- "🏞"
+  [3]   = OverworldTile(MountainId, "Mountain", false), -- "⛰",
+  [4]   = OverworldTile(WaterId,    "Water   ", false), -- "🌊",
+  [5]   = OverworldTile(StoneId,    "Stone   ", false), -- "⬛",
+  [6]   = OverworldTile(ForestId,   "Forest  ", true),  -- "🌳",
+  [7]   = OverworldTile(SwampId,    "Swamp   ", true),
+  [8]   = OverworldTile(TownId,     "Town    ", true),
+  [9]   = OverworldTile(CaveId,     "Cave    ", true),
+  [0xA] = OverworldTile(CastleId,   "Castle  ", true),  -- "🏰"
+  [0xB] = OverworldTile(BridgeId,   "Bridge  ", true),  -- "🌉",
+  [0xC] = OverworldTile(StairsId,   "Stairs  ", true),
 }
 
 function getOverworldTileName(tileId)
@@ -158,6 +173,13 @@ function OverWorld:neighbors(x,y)
   if y > 0   and isWalkable(x, y-1) then insertNeighbor(x, y-1) end
   if y < 119 and isWalkable(x, y+1) then insertNeighbor(x, y+1) end
   return res
+end
+
+function OverWorld:grindableNeighbors(x,y)
+  return list.filter(self:neighbors(x,y), function(n)
+    local tileId = OVERWORLD_TILES[self.overworldRows[n.y][n.x]].id
+    return tileId < TownId or tileId == BridgeId
+  end)
 end
 
 function OverWorld:getKnownWorldTileAt(x,y)

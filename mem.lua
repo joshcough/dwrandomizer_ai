@@ -53,7 +53,7 @@ function Memory:setRepelTimer (n) return self:writeRAM(0xDB, n) end
 
 -- get the id of the current enemy, if it exists
 -- no idea what gets returned if not in battle
-function Memory:getEnemyId () return self.ram.readbyte(ENEMY_ID_ADDR)+1 end
+function Memory:getEnemyId () return self.ram.readbyte(ENEMY_ID_ADDR) end
 function Memory:setEnemyId (enemyId) return memory.writebyte(ENEMY_ID_ADDR, enemyId) end
 
 function Memory:setReturnWarpLocation(x, y)
@@ -115,8 +115,8 @@ function Memory:getMaxMP ()
 end
 
 function Memory:getXP()
-  local highB = self.ram.readbyte(0xba)
-  local lowB = self.ram.readbyte(0xbb)
+  local highB = self.ram.readbyte(0xbb)
+  local lowB = self.ram.readbyte(0xba)
   return (highB * 2^8 + lowB)
 end
 
@@ -167,9 +167,20 @@ function Memory:spells()
   return Spells(self.ram.readbyte(0xce),  self.ram.readbyte(0xcf))
 end
 
+function Memory:readLevels()
+  local res = {}
+  local i = 0xF35B+16
+  while i <= 0xF395+16 do
+    local next = self:readROM(i+1) * 256 + self:readROM(i)
+    table.insert(res, next)
+    i = i + 2
+  end
+  return res
+end
+
 function Memory:readPlayerData()
   return PlayerData(self:getLocation(), self:readStats(), self:getEquipment(),
-                    self:spells(), self:getItems(), self:getStatuses())
+                    self:spells(), self:getItems(), self:getStatuses(), self:readLevels())
 end
 
 function Memory:readWeaponAndArmorShops()
