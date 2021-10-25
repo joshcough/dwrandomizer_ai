@@ -499,7 +499,8 @@ Scripts = class(function(a,mem)
           OpenChestAt(Garinham, 9, 5),
           Goto(Garinham, 19, 0),
           TakeStairs
-        })
+        }),
+        DoNothing
       ),
     })
 

@@ -196,7 +196,8 @@ function Game:interpretScript(s)
   elseif s:is_a(PlayerDataScript) then return s.playerDataF(self:readPlayerData())
   elseif s:is_a(IfThenScript)
     then
-      local branch = self:evaluateCondition(s.condition) and s.trueBranch or s.falseBranch
+      local cond = self:evaluateCondition(s.condition)
+      local branch = cond and s.trueBranch or s.falseBranch
       return self:interpretScript(branch)
   elseif s:is_a(Consecutive)
     then for i,branch in pairs(s.scripts) do self:interpretScript(branch) end
@@ -275,7 +276,7 @@ end
 -- TODO: this whole function needs to get redone completely. this is just a hack.
 function Game:addWarp(warp)
   if table.containsUsingDotEquals(self.warps, warp) then
-    print("NOT Adding warp, it already exists!: " .. tostring(warp))
+    -- print("NOT Adding warp, it already exists!: " .. tostring(warp))
     return
   end
 

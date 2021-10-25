@@ -140,7 +140,7 @@ function getGrindInfo(playerData)
     if enemy:canBeDefeatedByPlayer(playerData) and
       #(enemy.locations) > 0 and
       (bestEnemy == nil or bestEnemy.exp < enemy.exp) and
-      enemy.exp > playerData:totalXpToNextLevelFromCurrentLevel() * 0.05
+      enemy.exp > playerData:totalXpToNextLevelFromCurrentLevel() * 0.1
     then bestEnemy = enemy
     end
   end
