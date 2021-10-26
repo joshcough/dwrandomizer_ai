@@ -841,13 +841,41 @@ function Game:playerDefeated()
 end
 
 function Game:talkToShopKeeper()
-  self.weaponAndArmorShops:visitShopAt(self:getLocation())
-  -- TODO: here, we just print out things that we know.
-  -- but really, we need to make a decision on if we should buy the upgrade
-  -- and if so, then go ahead and actualy buy it.
-  local pd = self:readPlayerData()
-  print(self.weaponAndArmorShops:getAllKnownUpgrades(pd))
-  print(self.weaponAndArmorShops:getAllKnownAffordableUpgrades(pd))
+  local loc = self:getLocation()
+  self.weaponAndArmorShops:visitShopAt(loc)
+  local shop = self.weaponAndArmorShops:getShopAt(loc)
+  -- Note: here, we keep re-reading the player data because its possible
+  -- that it might have changed when purchased something.
+  -- possible that we can no longer afford the best armor after we buy a weapon, for example.
+  local bestWeaponToBuy = shop:getMostExpensiveAffordableWeaponUpgrade(self:readPlayerData())
+  if(bestWeaponToBuy ~= nil) then
+    print("buying: ", bestWeaponToBuy)
+    self:buyItem(shop, bestWeaponToBuy.id)
+  end
+  local bestArmorToBuy  = shop:getMostExpensiveAffordableArmorUpgrade(self:readPlayerData())
+  if(bestArmorToBuy ~= nil) then
+    print("buying: ", tostring(bestArmorToBuy))
+    self:buyItem(shop, bestArmorToBuy.id)
+  end
+  local bestShieldToBuy = shop:getMostExpensiveAffordableShieldUpgrade(self:readPlayerData())
+  if(bestShieldToBuy ~= nil) then
+    print("buying: ", bestShieldToBuy)
+    self:buyItem(shop, bestShieldToBuy.id)
+  end
+end
+
+function Game:buyItem(shop, itemId)
+  local itemIndex = shop:indexOf(itemId)
+  self:interpretScript(self.scripts.Talk)
+  waitFrames(30)
+  pressA(30)
+  for i = 1, itemIndex-1 do pressDown(10) end
+  pressA(30)
+  pressA(30)
+  pressA(60)
+  pressDown(30)
+  pressA(30)
+  pressB(2)
 end
 
 function Game:talkToInnKeeper()

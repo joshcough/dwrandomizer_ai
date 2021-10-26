@@ -502,6 +502,8 @@ Scripts = class(function(a,mem)
         }),
         DoNothing
       ),
+      VisitShop(Garinham, 10, 16),
+      GotoOverworld(Garinham)
     })
 
   leaveTantegalOnFoot =
@@ -571,7 +573,8 @@ Scripts = class(function(a,mem)
       IfThenScript("Do we have two keys?", All(GtEq(GetNrKeys, Value(2)), Not(HasChestEverBeenOpened(Rimuldar, 24, 23))),
         Consecutive("Get chest Rimuldar", {Goto(Rimuldar, 24, 23), OpenChest}),
         DoNothing
-      )
+      ),
+      VisitShop(Rimuldar, 23, 9)
     })
 
   -- TODO: a lot of work needs to be done on this script
@@ -588,7 +591,12 @@ Scripts = class(function(a,mem)
       })
     )
 
-  cantlin = GotoOverworld(Cantlin) -- VisitShop(Cantlin, 25, 26)
+  cantlin = Consecutive( "Cantlin", {
+    VisitShop(Cantlin, 25, 26),
+    VisitShop(Cantlin, 26, 12),
+    -- this one has the guy that moves around
+    -- WeaponAndArmorShop({Point(Cantlin,   20,  3),  Point(Cantlin, 20, 4), Point(Cantlin, 20, 5), Point(Cantlin, 20, 6)}, getShopItems(c1))
+  })
 
   -- This is for maps that we don't really need a script for
   -- because they are handled by the first floor of the map, basically.
@@ -609,7 +617,7 @@ Scripts = class(function(a,mem)
     [TantegelThroneRoom] = throneRoomScript,
     [CharlockThroneRoom] = exploreCharlockThroneRoom,
     [Kol] = kol,
-    [Brecconary] = nil,
+    [Brecconary] =  VisitShop(Brecconary, 5, 6),
     [Garinham] = garinhamScript,
     [Cantlin] = cantlin,
     [Rimuldar] = rimuldar,
@@ -642,4 +650,5 @@ Scripts = class(function(a,mem)
   a.EnterCharlock = EnterCharlock
   a.GameStartMenuScript = GameStartMenuScript
   a.GotoPoint = GotoPoint
+  a.Talk = Talk
 end)

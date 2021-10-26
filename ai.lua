@@ -80,8 +80,6 @@ function main()
   local mem = Memory(memory, rom)
   -- cheat(mem)
 
-  print("levels: ", mem:readLevels())
-
   -- always save the maps man. if we dont do this
   -- we start getting out of date and bad stuff happens.
   saveStaticMaps(mem, table.concat(WARPS, list.map(WARPS, swapSrcAndDest)))
@@ -162,9 +160,8 @@ main()
 --   game:useItem(MagicKey)
 --   game:useItem(RainbowDrop)
 --
+--   print("levels: ", mem:readLevels())
 --   local pd = mem:readPlayerData()
 --   print("totalXpToNextLevelFromCurrentLevel:", pd:totalXpToNextLevelFromCurrentLevel())
---   print("totalXpToNextLevel(1):", pd:totalXpToNextLevel(1))
---   print("totalXpToNextLevel(2):", pd:totalXpToNextLevel(2))
---   print("totalXpToNextLevel(3):", pd:totalXpToNextLevel(3))
+--   print("totalXpToNextLevel(1):", pd:totalXpToNextLevel(1)) ...
 --   print("totalXpToNextLevel(4):", pd:totalXpToNextLevel(4))

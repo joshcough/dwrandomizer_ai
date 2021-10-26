@@ -19,7 +19,8 @@ SmallShieldShopId    = 14
 LargeShieldShopId    = 15
 SilverShieldShopId   = 16
 
-ShopItem = class(function(a,item,cost)
+ShopItem = class(function(a,id,item,cost)
+  a.id = id
   a.item = item
   a.cost = cost
 end)
@@ -29,23 +30,23 @@ function ShopItem:__tostring()
 end
 
 SHOP_ITEMS = {
-  [BambooPoleShopId]     = ShopItem(BambooPole, 10),
-  [ClubShopId]           = ShopItem(Club, 60),
-  [CopperSwordShopId]    = ShopItem(CopperSword, 180),
-  [HandAxeShopId]        = ShopItem(HandAxe, 560),
-  [BroadSwordShopId]     = ShopItem(BroadSword, 1500),
-  [FlameSwordShopId]     = ShopItem(FlameSword, 9800),
-  [ErdricksSwordShopId]  = ShopItem(ErdricksSword, 2),
-  [ClothesShopId]        = ShopItem(Clothes, 10),
-  [LeatherArmorShopId]   = ShopItem(LeatherArmor, 70),
-  [ChainMailShopId]      = ShopItem(ChainMail, 300),
-  [HalfPlateArmorShopId] = ShopItem(HalfPlateArmor, 1000),
-  [FullPlateArmorShopId] = ShopItem(FullPlateArmor, 3000),
-  [MagicArmorShopId]     = ShopItem(MagicArmor, 7700),
-  [ErdricksArmorShopId]  = ShopItem(ErdricksArmor, 2),
-  [SmallShieldShopId]    = ShopItem(SmallShield, 90),
-  [LargeShieldShopId]    = ShopItem(LargeShield, 800),
-  [SilverShieldShopId]   = ShopItem(SilverShield, 14800),
+  [BambooPoleShopId]     = ShopItem(BambooPoleShopId,     BambooPole,        10),
+  [ClubShopId]           = ShopItem(ClubShopId,           Club,              60),
+  [CopperSwordShopId]    = ShopItem(CopperSwordShopId,    CopperSword,      180),
+  [HandAxeShopId]        = ShopItem(HandAxeShopId,        HandAxe,          560),
+  [BroadSwordShopId]     = ShopItem(BroadSwordShopId,     BroadSword,      1500),
+  [FlameSwordShopId]     = ShopItem(FlameSwordShopId,     FlameSword,      9800),
+  [ErdricksSwordShopId]  = ShopItem(ErdricksSwordShopId,  ErdricksSword,      2),
+  [ClothesShopId]        = ShopItem(ClothesShopId,        Clothes,           10),
+  [LeatherArmorShopId]   = ShopItem(LeatherArmorShopId,   LeatherArmor,      70),
+  [ChainMailShopId]      = ShopItem(ChainMailShopId,      ChainMail,        300),
+  [HalfPlateArmorShopId] = ShopItem(HalfPlateArmorShopId, HalfPlateArmor,  1000),
+  [FullPlateArmorShopId] = ShopItem(FullPlateArmorShopId, FullPlateArmor,  3000),
+  [MagicArmorShopId]     = ShopItem(MagicArmorShopId,     MagicArmor,      7700),
+  [ErdricksArmorShopId]  = ShopItem(ErdricksArmorShopId,  ErdricksArmor,      2),
+  [SmallShieldShopId]    = ShopItem(SmallShieldShopId,    SmallShield,       90),
+  [LargeShieldShopId]    = ShopItem(LargeShieldShopId,    LargeShield,      800),
+  [SilverShieldShopId]   = ShopItem(SilverShieldShopId,   SilverShield,   14800),
 }
 
 -- TODO: for mobile NPCs, we probably need an NPC id of some sort.
@@ -109,19 +110,34 @@ function WeaponAndArmorShop:getAffordableUpgrades(playerData)
   return Upgrades(weapons, armors, shields)
 end
 
+function WeaponAndArmorShop:getMostExpensiveAffordableWeaponUpgrade(playerData)
+  local aff = self:getAffordableUpgrades(playerData)
+  return aff.weapons[#(aff.weapons)]
+end
+
+function WeaponAndArmorShop:getMostExpensiveAffordableArmorUpgrade(playerData)
+  local aff = self:getAffordableUpgrades(playerData)
+  return aff.armors[#(aff.armors)]
+end
+
+function WeaponAndArmorShop:getMostExpensiveAffordableShieldUpgrade(playerData)
+  local aff = self:getAffordableUpgrades(playerData)
+  return aff.shields[#(aff.shields)]
+end
+
+function WeaponAndArmorShop:indexOf(itemId)
+  return list.indexOf(self.slots, SHOP_ITEMS[itemId])
+end
+
 WeaponAndArmorShops = class(function(a, b, c1, c2, c3, g, k, r)
-  function getShopItems(ids)
-    return list.map(ids, function(id)
-      return SHOP_ITEMS[id]
-    end)
-  end
-  a.brecconary = WeaponAndArmorShop({Point(Brecconary, 5, 6)}, getShopItems(b))
-  a.cantlin1   = WeaponAndArmorShop({Point(Cantlin, 20, 3), Point(Cantlin, 20, 4), Point(Cantlin, 20, 5), Point(Cantlin, 20, 6)}, getShopItems(c1))
-  a.cantlin2   = WeaponAndArmorShop({Point(Cantlin, 25, 26)}, getShopItems(c2))
-  a.cantlin3   = WeaponAndArmorShop({Point(Cantlin, 26, 12)}, getShopItems(c3))
-  a.garinham   = WeaponAndArmorShop({Point(Garinham, 10, 16)}, getShopItems(g))
-  a.kol        = WeaponAndArmorShop({Point(Kol, 20, 12)}, getShopItems(k))
-  a.rimuldar   = WeaponAndArmorShop({Point(Rimuldar, 23, 9)}, getShopItems(r))
+  function getShopItems(ids) return list.map(ids, function(id) return SHOP_ITEMS[id] end) end
+  a.brecconary = WeaponAndArmorShop({Point(Brecconary, 5,  6)}, getShopItems(b))
+  a.cantlin1   = WeaponAndArmorShop({Point(Cantlin,   20,  3),  Point(Cantlin, 20, 4), Point(Cantlin, 20, 5), Point(Cantlin, 20, 6)}, getShopItems(c1))
+  a.cantlin2   = WeaponAndArmorShop({Point(Cantlin,   25, 26)}, getShopItems(c2))
+  a.cantlin3   = WeaponAndArmorShop({Point(Cantlin,   26, 12)}, getShopItems(c3))
+  a.garinham   = WeaponAndArmorShop({Point(Garinham,  10, 16)}, getShopItems(g))
+  a.kol        = WeaponAndArmorShop({Point(Kol,       20, 12)}, getShopItems(k))
+  a.rimuldar   = WeaponAndArmorShop({Point(Rimuldar,  23,  9)}, getShopItems(r))
 end)
 
 function WeaponAndArmorShops:__tostring()
