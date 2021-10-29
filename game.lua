@@ -459,6 +459,9 @@ function Game:grindOrExplore()
   local pd = self:readPlayerData()
   local currentLevel = pd.stats.level
   local grind = getGrindInfo(pd)
+
+  self:healIfNecessary()
+
   if self:getMapId() == OverWorldId and grind ~= nil
     -- we have a good monster to grind on, so, grind.
     then self:grind(grind, currentLevel)
@@ -648,6 +651,19 @@ function Game:executeBattle()
   self.runSuccess = false
   self.enemyKilled = false
   self.enemy = nil
+
+  self:healIfNecessary()
+
+end
+
+function Game:healIfNecessary()
+  local pd = self:readPlayerData()
+  if pd.stats.currentHP / pd.stats.maxHP < 0.5 then
+    self:cast(Healmore)
+  end
+  if pd.stats.currentHP / pd.stats.maxHP < 0.5 then
+    self:cast(Heal)
+  end
 end
 
 -- TODO: this is broken
@@ -847,30 +863,39 @@ function Game:talkToShopKeeper()
   -- Note: here, we keep re-reading the player data because its possible
   -- that it might have changed when purchased something.
   -- possible that we can no longer afford the best armor after we buy a weapon, for example.
-  local bestWeaponToBuy = shop:getMostExpensiveAffordableWeaponUpgrade(self:readPlayerData())
+  local pd = self:readPlayerData()
+  local bestWeaponToBuy = shop:getMostExpensiveAffordableWeaponUpgrade(pd)
   if(bestWeaponToBuy ~= nil) then
     print("buying: ", bestWeaponToBuy)
-    self:buyItem(shop, bestWeaponToBuy.id)
+    self:buyItem(shop, bestWeaponToBuy.id, pd.equipment.weapon ~= nil)
   end
-  local bestArmorToBuy  = shop:getMostExpensiveAffordableArmorUpgrade(self:readPlayerData())
+  pd = self:readPlayerData()
+  local bestArmorToBuy  = shop:getMostExpensiveAffordableArmorUpgrade(pd)
   if(bestArmorToBuy ~= nil) then
     print("buying: ", tostring(bestArmorToBuy))
-    self:buyItem(shop, bestArmorToBuy.id)
+    self:buyItem(shop, bestArmorToBuy.id, pd.equipment.armor ~= nil)
   end
-  local bestShieldToBuy = shop:getMostExpensiveAffordableShieldUpgrade(self:readPlayerData())
+  pd = self:readPlayerData()
+  local bestShieldToBuy = shop:getMostExpensiveAffordableShieldUpgrade(pd)
   if(bestShieldToBuy ~= nil) then
     print("buying: ", bestShieldToBuy)
-    self:buyItem(shop, bestShieldToBuy.id)
+    self:buyItem(shop, bestShieldToBuy.id, pd.equipment.shield ~= nil)
   end
 end
 
-function Game:buyItem(shop, itemId)
+function Game:buyItem(shop, itemId, sellExisting)
   local itemIndex = shop:indexOf(itemId)
   self:interpretScript(self.scripts.Talk)
   waitFrames(30)
   pressA(30)
   for i = 1, itemIndex-1 do pressDown(10) end
   pressA(30)
+
+  if sellExisting then
+    pressA(30)
+    pressA(30)
+  end
+
   pressA(30)
   pressA(60)
   pressDown(30)
