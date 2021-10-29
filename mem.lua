@@ -295,3 +295,24 @@ function Memory:printNPCs()
     print(npc)
   end
 end
+
+
+function Memory:printDoorsAndChests()
+  -- .alias DoorXPos         $600C   ;Through $601A. X and y positions of doors-->
+  -- .alias DoorYPos         $600D   ;Through $601B. opened on the current map.
+  -- .alias TrsrXPos         $601C   ;Through $602A. X and y positions of treasure-->
+  -- .alias TrsrYPos         $601D   ;Through $602B. chests picked up on the current map.
+  print("=== Doors:")
+  local i = 0x600C
+  while i <= 0x601A do
+    print(self:readRAM(i), self:readRAM(i+1))
+    i = i + 2
+  end
+
+  print("=== Chests:")
+  local i = 0x601C
+  while i <= 0x602A do
+    print(self:readRAM(i), self:readRAM(i+1))
+    i = i + 2
+  end
+end
