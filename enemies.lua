@@ -158,12 +158,11 @@ function chooseClosestTile(playerLoc, enemyLocations)
   return d
 end
 
-
 function Enemy:executeBattle(game)
 
   if not table.containsUsingDotEquals(self.locations, game:getLocation()) then
     table.insert(self.locations, game:getLocation())
-    print("have now seen " .. self.name .. " at: ", tostring(self.locations))
+    -- print("have now seen " .. self.name .. " at: ", tostring(self.locations))
   end
 
   function battleStarted() return game.inBattle end
@@ -192,5 +191,5 @@ function Enemy:executeBattle(game)
     end
   end
 
-  print("xpToNextLevel: ", game:readPlayerData():xpToNextLevel())
+  print("xpToNextLevel: ", game:readPlayerData():xpToNextLevel(), "self.stats.level", game:readPlayerData().stats.level)
 end
