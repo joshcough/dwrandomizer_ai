@@ -96,7 +96,7 @@ function main()
 
   -- always save the maps man. if we dont do this
   -- we start getting out of date and bad stuff happens.
-  saveStaticMaps(mem, table.concat(WARPS, list.map(WARPS, swapSrcAndDest)))
+  -- saveStaticMaps(mem, table.concat(WARPS, list.map(WARPS, swapSrcAndDest)))
 
   local game = newGame(mem)
   local ai = AI(game)
@@ -109,7 +109,6 @@ function main()
     game.overworld:getVisibleOverworldGrid(game:getX(), game:getY())
   end
 
-  emu.speedmode("normal")
   while true do
     game:stateMachine()
     emu.frameadvance()

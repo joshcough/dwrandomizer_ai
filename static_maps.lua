@@ -353,13 +353,9 @@ function StaticMap:mkGraph (haveKeys)
     if y > 0 and isWalkable(x, y-1) then insertNeighbor(x, y-1) end
     if y < self.height - 1 and isWalkable(x, y+1) then insertNeighbor(x, y+1) end
 
-    if self.warps[x] ~= nil then
-      if self.warps[x][y] ~= nil then
-        for _, w in pairs(self.warps[x][y]) do
-          table.insert(res, Neighbor(w.mapId, w.x, w.y, NeighborType.STAIRS))
-        end
-      end
-    end
+    -- really useful for debugging pathing. just plug in the location you care about
+    -- if self.mapId == 7 and x == 19 and y == 23 then print("n", res) end
+
     return res
   end
 
@@ -372,6 +368,10 @@ function StaticMap:mkGraph (haveKeys)
         end
       end
     end
+
+    -- really useful for debugging pathing. just plug in the location you care about
+    -- if self.mapId == 7 and x == 19 and y == 23 then print("w", res) end
+
     return res
   end
 
@@ -387,6 +387,10 @@ function StaticMap:mkGraph (haveKeys)
     elseif y == 0               then insertNeighbor(NeighborType.BORDER_UP)
     elseif y == self.height - 1 then insertNeighbor(NeighborType.BORDER_DOWN)
     end
+
+    -- really useful for debugging pathing. just plug in the location you care about
+    -- if self.mapId == 7 and x == 19 and y == 23 then print("b", res) end
+
     return res
   end
 
@@ -394,7 +398,7 @@ function StaticMap:mkGraph (haveKeys)
   for y = 0,self.height-1 do
     res[y] = {}
     for x = 0,self.width-1 do
-      res[y][x] = table.concatAll({neighbors(x,y), warpNeighbors(x,y), borderNeighbors(x,y)})
+      res[y][x] = table.concatAll({neighbors(x,y), borderNeighbors(x,y), warpNeighbors(x,y)})
     end
   end
   return Graph(res, haveKeys, self)

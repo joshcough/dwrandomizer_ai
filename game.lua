@@ -88,7 +88,15 @@ function Game:printVisibleGrid()
 end
 
 -- these are reasons that we have exited the followPath function
-GotoExitValues = enum.new("Follow Path Exit Values", {"AT_LOCATION", "IN_BATTLE", "REPEL_TIMER", "DEAD", "NO_PATH", "BUG"})
+GotoExitValues = enum.new("Follow Path Exit Values", {
+  "AT_LOCATION",
+  "IN_BATTLE",
+  "REPEL_TIMER",
+  "DEAD",
+  "MAP_CHANGED",
+  "NO_PATH",
+  "BUG"
+ })
 
 function Game:goTo(dest)
   local loc = self:getLocation()
@@ -116,6 +124,10 @@ function Game:goTo(dest)
         if self.dead then return GotoExitValues.DEAD
         else self:goTo(dest)
         end
+    elseif res == GotoExitValues.MAP_CHANGED
+      then
+        self:dealWithMapChange()
+        self:goTo(dest)
     else
       return res -- TODO: can we even do anything with the others? NO_PATH, BUG? AT_LOCATION?
     end
@@ -155,13 +167,14 @@ function Game:followPath(path)
         -- ideally we'd have a way to go around towns and caves
         -- but until then, we can catch it here and abort this so that we don't
         -- run into a wall and are never able to recover.
-        return loc:equals(c.to) or self.inBattle or self.repelTimerWindowOpen or self.dead
+        return loc:equals(c.to) or self.inBattle or self.repelTimerWindowOpen or self.dead or self.mapChanged
       end)
     end
   end
 
   if self.inBattle then return GotoExitValues.IN_BATTLE
   elseif self.repelTimerWindowOpen then return GotoExitValues.REPEL_TIMER
+  elseif self.mapChanged then return GotoExitValues.MAP_CHANGED
   -- we think we have completed the path, and this should always be the case
   -- but, do a last second double check just in case.
   elseif self:getLocation():equals(dest) then return GotoExitValues.AT_LOCATION
@@ -468,7 +481,7 @@ end
 function Game:grindOrExplore()
   local pd = self:readPlayerData()
   local currentLevel = pd.stats.level
-  local grind = getGrindInfo(pd)
+  local grind = getGrindInfo(pd, self.overworld)
 
   self:healIfNecessary()
 
@@ -721,6 +734,7 @@ function Game:dealWithDeath()
 end
 
 function Game:dealWithMapChange()
+  -- print("dealing with map change")
   local oldMapId = self.currentMapId
   local newMapId = self:getMapId()
   local newLoc   = self:getLocation()
@@ -883,12 +897,12 @@ function Game:talkToShopKeeper()
 
   local upgrades = shop:getAffordableUpgrades(self:readPlayerData())
 
-  if #upgrades > 0 then
-    self:buyUpgrades(shop)
-  else
+  if upgrades:isEmpty() then
     print("No upgrades here.")
     pressB(20)
     pressB(2)
+  else
+    self:buyUpgrades(shop)
   end
 end
 
@@ -933,7 +947,6 @@ function Game:buyItem(shop, itemId, sellExisting)
     pressA(30)
   end
 
-  pressA(30)
   pressA(60)
   pressDown(30)
   pressA(30)
