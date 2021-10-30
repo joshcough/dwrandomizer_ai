@@ -184,23 +184,37 @@ function Memory:readPlayerData()
 end
 
 function Memory:readWeaponAndArmorShops()
-  function readSlots(start, stop)
+  function readSlots(start)
     local slots = {}
-    for i = start,stop do table.insert(slots, self:readROM(i)) end
-    return slots
+    local counter = 1
+    local nextSlot = self:readROM(start)
+    while nextSlot ~= 253 and counter <= 6 do
+      table.insert(slots, nextSlot)
+      nextSlot = self:readROM(start+counter)
+      counter = counter + 1
+    end
+    return {slots, start+counter}
+  end
+
+  local t = {}
+  local addr = 0x19A8
+  for i = 1,7 do
+    local rs = readSlots(addr)
+    t[i] = rs[1]
+    addr = rs[2]
   end
 
   -- TODO: these might have to be redone
   -- because one shop sometimes has 5 things, and sometimes 6
   -- and all the shops end with a special delimiter (253 i think)
   return WeaponAndArmorShops(
-    readSlots(0x19A8, 0x19AC), -- Brecconary
-    readSlots(0x19B4, 0x19B8), -- Cantlin1
-    readSlots(0x19BA, 0x19BE), -- Cantlin2
-    readSlots(0x19C0, 0x19C4), -- Cantlin3
-    readSlots(0x19AE, 0x19B2), -- Garinham
-    readSlots(0x19A1, 0x19A6), -- Kol
-    readSlots(0x19C6, 0x19CA)  -- Rimuldar
+    t[1], -- Brecconary
+    t[3], -- Cantlin1
+    t[4], -- Cantlin2
+    t[2], -- Cantlin3
+    t[5], -- Garinham
+    t[6], -- Kol
+    t[7]  -- Rimuldar
   )
 end
 

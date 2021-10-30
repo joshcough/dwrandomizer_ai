@@ -126,7 +126,7 @@ Grind = class(function(a, location, enemy)
 end)
 
 function Grind:__tostring()
-  return "Grinding: at: " .. tostring(self.location) .. ", vs: " .. tostring(self.enemy)
+  return "Grinding: at: " .. tostring(self.location) .. ", vs: " .. tostring(self.enemy.name)
 end
 
 -- have we seen any enemies that we can kill (or have killed) ?
@@ -136,10 +136,13 @@ end
 --    fighting it (and others) until we get to the next level
 function getGrindInfo(playerData)
   local bestEnemy = nil
+  -- TODO: filter out swamps from the locations
+  -- if there are no non-swamp locations, we wont grind there.
   for _, enemy in ipairs(Enemies) do
     if enemy:canBeDefeatedByPlayer(playerData) and
       #(enemy.locations) > 0 and
       (bestEnemy == nil or bestEnemy.exp < enemy.exp) and
+      enemy ~= Enemies[DemonKnightId] and
       enemy.exp > playerData:totalXpToNextLevelFromCurrentLevel() * 0.1
     then bestEnemy = enemy
     end

@@ -293,20 +293,25 @@ Scripts = class(function(a,mem)
 --   print("charlockLocation", charlockLocation)
 --   print("tantegelLocation", a.tantegelLocation)
 
-
-  function VisitShop(mapId, x, y)
-    return Consecutive("Visiting shop at: " .. tostring(Point(mapId, x, y)), {Goto(mapId, x, y), ShopKeeper})
-  end
-
-  function VisitInn(mapId, x, y)
-    return Consecutive("Visiting inn at: " .. tostring(Point(mapId, x, y)), {Goto(mapId, x, y), InnKeeper})
-  end
-
   OpenMenu = Consecutive("Open Menu", { HoldA(30), WaitFrames(10) })
   OpenItemMenu = Consecutive("Open Item Menu", { OpenMenu, PressRight(2), PressDown(2), PressA(2), WaitFrames(30) })
   OpenSpellMenu = Consecutive("Open Spell Menu", { OpenMenu, PressRight(2), PressA(2), WaitFrames(30) })
   Talk = Consecutive("Talk", { HoldA(30), WaitFrames(10), PressA(2) })
   TakeStairs = Consecutive("Take Stairs", { OpenMenu, HoldDown(2), HoldDown(2), HoldA(60) })
+
+  function VisitShop(mapId, x, y)
+    return Consecutive("Visiting shop at: " .. tostring(Point(mapId, x, y)), {
+      Goto(mapId, x, y),
+      Talk,
+      WaitFrames(30),
+      PressA(30),
+      ShopKeeper
+    })
+  end
+
+  function VisitInn(mapId, x, y)
+    return Consecutive("Visiting inn at: " .. tostring(Point(mapId, x, y)), {Goto(mapId, x, y), InnKeeper})
+  end
 
   function OpenDoor(loc)
    return IfThenScript(
@@ -325,6 +330,7 @@ Scripts = class(function(a,mem)
       OpenMenu,
       PressUp(2),
       PressA(40),
+      PressA(10),
       Search
     })
   end
@@ -559,9 +565,16 @@ Scripts = class(function(a,mem)
   kol =
     Consecutive("Kol", {
       VisitShop(Kol, 20, 12),
+      -- todo: dont search if we already have
+      -- unless we are doing a ghetto grind
       SearchAt(Kol, 9, 6),
+      -- todo: we dont really know how to visit inns yet either.
       VisitInn(Kol, 19, 2),
-      VisitShop(Kol, 12, 21)
+      -- TODO: we can't go to this one yet
+      -- because its not a weapon and armor shop
+      -- and thats currently all we know how to handle
+      -- VisitShop(Kol, 12, 21),
+      GotoOverworld(Kol)
     })
 
   rimuldar =
@@ -593,9 +606,10 @@ Scripts = class(function(a,mem)
 
   cantlin = Consecutive( "Cantlin", {
     VisitShop(Cantlin, 25, 26),
-    VisitShop(Cantlin, 26, 12),
+   --  VisitShop(Cantlin, 26, 12), -- TODO: this one we can only do if we hve keys:
     -- this one has the guy that moves around
     -- WeaponAndArmorShop({Point(Cantlin,   20,  3),  Point(Cantlin, 20, 4), Point(Cantlin, 20, 5), Point(Cantlin, 20, 6)}, getShopItems(c1))
+    GotoOverworld(Cantlin)
   })
 
   -- This is for maps that we don't really need a script for

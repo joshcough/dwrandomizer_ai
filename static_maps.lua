@@ -495,6 +495,9 @@ function saveStaticMaps(memory, allWarps)
 end
 
 function readStaticMapFromRom(memory, mapId, allWarps)
+--   local statuses = memory:getStatuses()
+--   local haveLeftThroneRoom = statuses.leftThroneRoom
+
   local mapData = STATIC_MAP_METADATA[mapId]
 
   -- returns the tile id for the given (x,y) for the current map
