@@ -190,42 +190,49 @@ function Game:interpretScript(s)
   if     self.inBattle then self:executeBattle()
   -- TODO: consider casting repel right here instead of just closing window
   elseif self.repelTimerWindowOpen then self:closeRepelTimerWindow()
-  elseif s:is_a(Value) then return s.v
-  elseif s:is_a(ActionScript)
-    then
-      -- on these ones, simple `==` will do
-      if     s == DoNothing    then return
-      elseif s == OpenChest    then self:markChestOpened()
-      elseif s == Search       then self:searchGroundScript()
-      elseif s == DeathWarp    then self:deathWarp()
-      elseif s == SavePrincess then self:savePrincess()
-      elseif s == DragonLord   then self:fightDragonLord()
-      elseif s == ShopKeeper   then self:talkToShopKeeper()
-      elseif s == InnKeeper    then self:talkToInnKeeper()
-      -- == doesn't work on these, so we need is_a
-      elseif s:is_a(SaveUnlockedDoor) then self:saveUnlockedDoor(s.loc)
-      elseif s:is_a(CastSpell)        then self:cast(s.spell)
-      elseif s:is_a(UseItem)          then
-        -- this is a little special because we have to fix up the overworld to add the bridge
-        if s.item == RainbowDrop then self:useRainbowDrop()
-        else self:useItem(s.item)
+  elseif s:is_a(Script) then
+        if s:is_a(Value) then return s.v
+    elseif s:is_a(ActionScript)
+      then
+        -- on these ones, simple `==` will do
+        if     s == DoNothing    then return
+        elseif s == OpenChest    then self:markChestOpened()
+        elseif s == Search       then self:searchGroundScript()
+        elseif s == DeathWarp    then self:deathWarp()
+        elseif s == SavePrincess then self:savePrincess()
+        elseif s == DragonLord   then self:fightDragonLord()
+        elseif s == ShopKeeper   then self:talkToShopKeeper()
+        -- == doesn't work on these, so we need is_a
+        elseif s:is_a(SaveUnlockedDoor) then self:saveUnlockedDoor(s.loc)
+        elseif s:is_a(CastSpell)        then self:cast(s.spell)
+        elseif s:is_a(UseItem)          then
+          -- this is a little special because we have to fix up the overworld to add the bridge
+          if s.item == RainbowDrop then self:useRainbowDrop()
+          else self:useItem(s.item)
+          end
         end
-      end
-  elseif s:is_a(Goto) then self:goTo(s.location)
-  elseif s:is_a(PlayerDataScript) then return s.playerDataF(self:readPlayerData())
-  elseif s:is_a(IfThenScript)
-    then
-      local cond = self:evaluateCondition(s.condition)
-      local branch = cond and s.trueBranch or s.falseBranch
-      return self:interpretScript(branch)
-  elseif s:is_a(Consecutive)
-    then for i,branch in pairs(s.scripts) do self:interpretScript(branch) end
-  elseif s:is_a(PressButtonScript) then pressButton(s.button.name, s.waitFrames)
-  elseif s:is_a(HoldButtonScript) then holdButton(s.button.name, s.duration)
-  elseif s:is_a(WaitFrames) then waitFrames(s.duration)
-  elseif s:is_a(WaitUntil) then
-    waitUntil(function() return self:evaluateCondition(s.condition) end, s.duration, s.msg)
-  elseif s:is_a(DebugScript) then print(s.name)
+    elseif s:is_a(Goto) then self:goTo(s.location)
+    elseif s:is_a(PlayerDataScript) then return s.playerDataF(self:readPlayerData())
+    elseif s:is_a(PlayerDirScript)  then return self.memory:readPlayerDirection()
+    elseif s:is_a(IfThenScript)
+      then
+        local cond = self:evaluateCondition(s.condition)
+        local branch = cond and s.trueBranch or s.falseBranch
+        return self:interpretScript(branch)
+    elseif s:is_a(Consecutive)
+      then for i,branch in pairs(s.scripts) do self:interpretScript(branch) end
+    elseif s:is_a(PressButtonScript) then pressButton(s.button.name, s.waitFrames)
+    elseif s:is_a(HoldButtonScript) then holdButton(s.button.name, s.duration)
+    elseif s:is_a(HoldButtonUntilScript) then holdButtonUntil(s.button.name, tostring(s.condition), function ()
+      return self:evaluateCondition(s.condition)
+    end)
+    elseif s:is_a(WaitFrames) then waitFrames(s.duration)
+    elseif s:is_a(WaitUntil) then
+      waitUntil(function() return self:evaluateCondition(s.condition) end, s.duration, s.msg)
+    elseif s:is_a(DebugScript) then print(s.name)
+    end
+  else
+    print("Script is not a script! " .. tostring(s))
   end
 end
 
@@ -951,8 +958,4 @@ function Game:buyItem(shop, itemId, sellExisting)
   pressDown(30)
   pressA(30)
   pressB(2)
-end
-
-function Game:talkToInnKeeper()
-  print("TODO: talkToInnKeeper")
 end

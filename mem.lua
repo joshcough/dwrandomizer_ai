@@ -1,4 +1,5 @@
 require 'Class'
+require 'controller'
 require 'helpers'
 require 'player_data'
 require 'shops'
@@ -328,5 +329,15 @@ function Memory:printDoorsAndChests()
   while i <= 0x602A do
     print(self:readRAM(i), self:readRAM(i+1))
     i = i + 2
+  end
+end
+
+-- .alias CharDirection    $602F   ;Player's facing direction, 0-up, 1-right, 2-down, 3-left.
+function Memory:readPlayerDirection()
+  local dir = self:readRAM(0x602F)
+  if     dir == 0 then return UP
+  elseif dir == 1 then return RIGHT
+  elseif dir == 2 then return DOWN
+  else                 return LEFT
   end
 end

@@ -162,6 +162,7 @@ function getGrindInfo(playerData, overworld)
     if enemy:canBeDefeatedByPlayer(playerData) and
       #(nonSwampLocationsWithNonSwampNeighbors) > 0 and
       (bestEnemy == nil or bestEnemy.exp < enemy.exp) and
+      enemy ~= Enemies[GoldmanId] and
       enemy ~= Enemies[DemonKnightId] and
       enemy.exp > playerData:totalXpToNextLevelFromCurrentLevel() * 0.1
     then

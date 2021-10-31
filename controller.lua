@@ -41,7 +41,7 @@ function clearController()
 end
 
 function pressButton (button, wait)
-  -- print("Pressing " .. button)
+  -- print("Pressing " .. button .. " and waiting .. " .. tostring(wait))
   e = table.shallow_copy(emptyInputs)
   e[button] = true
   joypad.write(1, e)
@@ -81,7 +81,6 @@ function holdButtonUntilOrMaxFrames(button, msg, conditionFunction, maxFrames)
     end)
   end
 end
-
 
 function pressStart (wait) pressButton(START, wait) end
 function pressSelect (wait) pressButton(SELECT, wait) end
