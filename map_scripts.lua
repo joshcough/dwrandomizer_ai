@@ -112,7 +112,7 @@ end)
 
 ConditionScript = class(Script, function(a, name) Script.init(a, name) end)
 
-function AtLocation(location) return DotEq(GetLocation, location) end
+function AtLocation(mapId, x, y) return DotEq(GetLocation, Point(mapId, x, y)) end
 
 IsChestOpen = class(ConditionScript, function(a, location)
   ConditionScript.init(a, "IS_CHEST_OPEN")
