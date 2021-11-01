@@ -126,26 +126,52 @@ Grind = class(function(a, location, enemy)
 end)
 
 function Grind:__tostring()
-  return "Grinding: at: " .. tostring(self.location) .. ", vs: " .. tostring(self.enemy)
+  return "Grinding: at: " .. tostring(self.location) .. ", vs: " .. tostring(self.enemy.name)
 end
+
+-- TODO: pretty major one... if we attempt to grind in a dungeon, this is going to all break
+-- because the code is assuming the overworld. see `overworld:grindableNeighbors`
+-- it really shouldn't be that way. we need a static map version of grindableNeighbors as well.
 
 -- have we seen any enemies that we can kill (or have killed) ?
 -- does that enemy give "good" experience (where good is 10% or more of what it takes to get to the next level)
 --        hmmm.... .10% of the amount remaining? or 10% of the whole?
 --    if that is true, then walk to one of the locs where we've seen that enemy and just walk back and forth
 --    fighting it (and others) until we get to the next level
-function getGrindInfo(playerData)
+function getGrindInfo(playerData, overworld)
   local bestEnemy = nil
+  local bestEnemyLocs = nil
+
+  -- filter out swamps from the locations
+  -- and the neighbors of the locations (because we want back and forth and dont want to grind on one)
+  -- we only need to worry about the neighbors if they are _all_ swamp.
+  -- if one is non-swamp, then we would want to pick that one to walk back and forth on
+  -- if there are no non-swamp locations, we wont grind there.
+  function filterOutSwamps(locs)
+    return list.filter(locs, function(l) return overworld:getOverworldMapTileAt(l.x, l.y) ~= Swamp end)
+  end
+
   for _, enemy in ipairs(Enemies) do
+    local nonSwampLocations = filterOutSwamps(enemy.locations)
+    --- return only the locations who are not a swamp and have at least one non-swamp neighbor
+    local nonSwampLocationsWithNonSwampNeighbors = list.filter(nonSwampLocations, function(loc)
+      local gn = overworld:grindableNeighbors(loc.x, loc.y)
+      return #gn > 0
+    end)
+
     if enemy:canBeDefeatedByPlayer(playerData) and
-      #(enemy.locations) > 0 and
+      #(nonSwampLocationsWithNonSwampNeighbors) > 0 and
       (bestEnemy == nil or bestEnemy.exp < enemy.exp) and
+      enemy ~= Enemies[GoldmanId] and
+      enemy ~= Enemies[DemonKnightId] and
       enemy.exp > playerData:totalXpToNextLevelFromCurrentLevel() * 0.1
-    then bestEnemy = enemy
+    then
+      bestEnemy = enemy
+      bestEnemyLocs = nonSwampLocationsWithNonSwampNeighbors
     end
   end
   if bestEnemy ~= nil
-  then return Grind(chooseClosestTile(playerData.loc, bestEnemy.locations), bestEnemy)
+  then return Grind(chooseClosestTile(playerData.loc, bestEnemyLocs), bestEnemy)
   else return nil
   end
 end
@@ -158,12 +184,11 @@ function chooseClosestTile(playerLoc, enemyLocations)
   return d
 end
 
-
 function Enemy:executeBattle(game)
 
   if not table.containsUsingDotEquals(self.locations, game:getLocation()) then
     table.insert(self.locations, game:getLocation())
-    print("have now seen " .. self.name .. " at: ", tostring(self.locations))
+    -- print("have now seen " .. self.name .. " at: ", tostring(self.locations))
   end
 
   function battleStarted() return game.inBattle end
@@ -192,5 +217,5 @@ function Enemy:executeBattle(game)
     end
   end
 
-  print("xpToNextLevel: ", game:readPlayerData():xpToNextLevel())
+  print("xpToNextLevel: ", game:readPlayerData():xpToNextLevel(), "self.stats.level", game:readPlayerData().stats.level)
 end

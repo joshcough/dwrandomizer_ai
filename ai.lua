@@ -10,12 +10,10 @@ require 'overworld'
 require 'static_maps'
 
 -- TODO:
--- keep track of where we see enemies (so that eventually we can find the right zone to grind in)
 -- keep track of monster abilities (so that we can make better decisions about running/fighting)
 -- fix the shortestPath algorithm as to avoid swamps in the overworld if possible.
 --   so, need weighting and therefore like... A* or something similar.
 -- ive seen it soft lock opening a chest... maybe use the menuing x/y coordinates to fix this.
--- actually be able to purchase and equip items
 -- fight the dragon lord
 -- save the princess
 -- use heal in battle
@@ -54,20 +52,27 @@ end
 -- but for now it just helps me survive to test exploration
 -- give ourself gold, xp, best equipment, etc
 function cheat(mem)
-  -- xp
-  mem:writeRAM(0xbb, 65535 / 256)
-  mem:writeRAM(0xba, 65535 % 256)
-  -- gold
-  mem:writeRAM(0xbd, 65535 / 256)
-  mem:writeRAM(0xbc, 65535 % 256)
+  cheat_giveMaxXP()
+  cheat_giveMaxGold()
+
   mem:writeRAM(0xbe, 255) -- best equipment
   -- mem:writeRAM(0xbe, 0) -- no equipment
-  mem:writeRAM(0xbf, 5)   -- 5 herbs
-  mem:writeRAM(0xc0, 5)   -- 5 keys
+  mem:writeRAM(0xbf, 5)   -- 5 keys
+  mem:writeRAM(0xc0, 5)   -- 5 herbs
   mem:writeRAM(0xc1, RainbowDropByte)
   -- mem:writeRAM(0xc1, SilverHarpByte)
   -- TODO: this doesn't seem to be working properly.
   mem:writeRAM(0xdb, 0xff) -- repel always on
+end
+
+function cheat_giveMaxXP(mem)
+  mem:writeRAM(0xbb, 65535 / 256)
+  mem:writeRAM(0xba, 65535 % 256)
+end
+
+function cheat_giveMaxGold(mem)
+  mem:writeRAM(0xbd, 65535 / 256)
+  mem:writeRAM(0xbc, 65535 % 256)
 end
 
 -------------------
@@ -82,7 +87,7 @@ function main()
 
   -- always save the maps man. if we dont do this
   -- we start getting out of date and bad stuff happens.
-  saveStaticMaps(mem, table.concat(WARPS, list.map(WARPS, swapSrcAndDest)))
+  -- saveStaticMaps(mem, table.concat(WARPS, list.map(WARPS, swapSrcAndDest)))
 
   local game = newGame(mem)
   local ai = AI(game)
@@ -95,7 +100,6 @@ function main()
     game.overworld:getVisibleOverworldGrid(game:getX(), game:getY())
   end
 
-  emu.speedmode("normal")
   while true do
     game:stateMachine()
     emu.frameadvance()
@@ -165,3 +169,5 @@ main()
 --   print("totalXpToNextLevelFromCurrentLevel:", pd:totalXpToNextLevelFromCurrentLevel())
 --   print("totalXpToNextLevel(1):", pd:totalXpToNextLevel(1)) ...
 --   print("totalXpToNextLevel(4):", pd:totalXpToNextLevel(4))
+
+--   print(mem:readWeaponAndArmorShops())

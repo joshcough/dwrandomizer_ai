@@ -1,4 +1,5 @@
 require 'Class'
+require 'controller'
 require 'helpers'
 require 'player_data'
 require 'shops'
@@ -183,24 +184,54 @@ function Memory:readPlayerData()
                     self:spells(), self:getItems(), self:getStatuses(), self:readLevels())
 end
 
+-- ShopItemsTbl:
+-- ;Koll weapons and armor shop.
+-- L9991:  .byte $02, $03, $0A, $0B, $0E, $FD
+-- ;Brecconary weapons and armor shop.
+-- L9997:  .byte $00, $01, $02, $07, $08, $0E, $FD
+-- ;Garinham weapons and armor shop.
+-- L999E:  .byte $01, $02, $03, $08, $09, $0A, $0F, $FD
+-- ;Cantlin weapons and armor shop 1.
+-- L99A6:  .byte $00, $01, $02, $08, $09, $0F, $FD
+-- ;Cantlin weapons and armor shop 2.
+-- L99AD:  .byte $03, $04, $0B, $0C, $FD
+-- ;Cantlin weapons and armor shop 3.
+-- L99B2:  .byte $05, $10, $FD
+-- ;Rimuldar weapons and armor shop.
+-- L99B5:  .byte $02, $03, $04, $0A, $0B, $0C, $FD
 function Memory:readWeaponAndArmorShops()
-  function readSlots(start, stop)
+  function readSlots(start)
     local slots = {}
-    for i = start,stop do table.insert(slots, self:readROM(i)) end
-    return slots
+    local counter = 1
+    local nextSlot = self:readROM(start)
+    while nextSlot ~= 253 and counter <= 6 do
+      table.insert(slots, nextSlot)
+      nextSlot = self:readROM(start+counter)
+      counter = counter + 1
+    end
+    return {slots, start+counter}
+  end
+
+  local t = {}
+  -- 19A1-19CB | Weapon Shop Inventory |
+  local addr = 0x19A1
+  for i = 1,7 do
+    local rs = readSlots(addr)
+    t[i] = rs[1]
+    addr = rs[2]
   end
 
   -- TODO: these might have to be redone
   -- because one shop sometimes has 5 things, and sometimes 6
   -- and all the shops end with a special delimiter (253 i think)
   return WeaponAndArmorShops(
-    readSlots(0x19A8, 0x19AC), -- Brecconary
-    readSlots(0x19B4, 0x19B8), -- Cantlin1
-    readSlots(0x19BA, 0x19BE), -- Cantlin2
-    readSlots(0x19C0, 0x19C4), -- Cantlin3
-    readSlots(0x19AE, 0x19B2), -- Garinham
-    readSlots(0x19A1, 0x19A6), -- Kol
-    readSlots(0x19C6, 0x19CA)  -- Rimuldar
+    t[2], -- Brecconary
+    t[4], -- Cantlin1
+    t[5], -- Cantlin2
+    t[6], -- Cantlin3
+    t[3], -- Garinham
+    t[1], -- Kol
+    t[7]  -- Rimuldar
   )
 end
 
@@ -293,5 +324,36 @@ function Memory:printNPCs()
   local npcs = self:readNPCs()
   for _, npc in ipairs(npcs) do
     print(npc)
+  end
+end
+
+
+function Memory:printDoorsAndChests()
+  -- .alias DoorXPos         $600C   ;Through $601A. X and y positions of doors-->
+  -- .alias DoorYPos         $600D   ;Through $601B. opened on the current map.
+  -- .alias TrsrXPos         $601C   ;Through $602A. X and y positions of treasure-->
+  -- .alias TrsrYPos         $601D   ;Through $602B. chests picked up on the current map.
+  print("=== Doors:")
+  local i = 0x600C
+  while i <= 0x601A do
+    print(self:readRAM(i), self:readRAM(i+1))
+    i = i + 2
+  end
+
+  print("=== Chests:")
+  local i = 0x601C
+  while i <= 0x602A do
+    print(self:readRAM(i), self:readRAM(i+1))
+    i = i + 2
+  end
+end
+
+-- .alias CharDirection    $602F   ;Player's facing direction, 0-up, 1-right, 2-down, 3-left.
+function Memory:readPlayerDirection()
+  local dir = self:readRAM(0x602F)
+  if     dir == 0 then return UP
+  elseif dir == 1 then return RIGHT
+  elseif dir == 2 then return DOWN
+  else                 return LEFT
   end
 end

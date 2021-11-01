@@ -27,20 +27,34 @@ CastleId   = 10
 BridgeId   = 11
 StairsId   = 12
 
+Grass    = OverworldTile(GrassId,    "Grass   ", true)  -- "🟩",
+Desert   = OverworldTile(DesertId,   "Desert  ", true)  -- "🏜",
+Hills    = OverworldTile(HillsId,    "Hills   ", true)  -- "🏞"
+Mountain = OverworldTile(MountainId, "Mountain", false) -- "⛰",
+Water    = OverworldTile(WaterId,    "Water   ", false) -- "🌊",
+Stone    = OverworldTile(StoneId,    "Stone   ", false) -- "⬛",
+Forest   = OverworldTile(ForestId,   "Forest  ", true)  -- "🌳",
+Swamp    = OverworldTile(SwampId,    "Swamp   ", true)
+Town     = OverworldTile(TownId,     "Town    ", true)
+Cave     = OverworldTile(CaveId,     "Cave    ", true)
+Castle   = OverworldTile(CastleId,   "Castle  ", true)  -- "🏰"
+Bridge   = OverworldTile(BridgeId,   "Bridge  ", true)  -- "🌉",
+Stairs   = OverworldTile(StairsId,   "Stairs  ", true)
+
 OVERWORLD_TILES = {
-  [0]   = OverworldTile(GrassId,    "Grass   ", true),  -- "🟩",
-  [1]   = OverworldTile(DesertId,   "Desert  ", true),  -- "🏜",
-  [2]   = OverworldTile(HillsId,    "Hills   ", true),  -- "🏞"
-  [3]   = OverworldTile(MountainId, "Mountain", false), -- "⛰",
-  [4]   = OverworldTile(WaterId,    "Water   ", false), -- "🌊",
-  [5]   = OverworldTile(StoneId,    "Stone   ", false), -- "⬛",
-  [6]   = OverworldTile(ForestId,   "Forest  ", true),  -- "🌳",
-  [7]   = OverworldTile(SwampId,    "Swamp   ", true),
-  [8]   = OverworldTile(TownId,     "Town    ", true),
-  [9]   = OverworldTile(CaveId,     "Cave    ", true),
-  [0xA] = OverworldTile(CastleId,   "Castle  ", true),  -- "🏰"
-  [0xB] = OverworldTile(BridgeId,   "Bridge  ", true),  -- "🌉",
-  [0xC] = OverworldTile(StairsId,   "Stairs  ", true),
+  [Grass.id]    = Grass,
+  [Desert.id]   = Desert,
+  [Hills.id]    = Hills,
+  [Mountain.id] = Mountain,
+  [Water.id]    = Water,
+  [Stone.id]    = Stone,
+  [Forest.id]   = Forest,
+  [Swamp.id]    = Swamp,
+  [Town.id]     = Town,
+  [Cave.id]     = Cave,
+  [Castle.id]   = Castle,
+  [Bridge.id]   = Bridge,
+  [Stairs.id]   = Stairs,
 }
 
 function getOverworldTileName(tileId)
@@ -177,8 +191,9 @@ end
 
 function OverWorld:grindableNeighbors(x,y)
   return list.filter(self:neighbors(x,y), function(n)
-    local tileId = OVERWORLD_TILES[self.overworldRows[n.y][n.x]].id
-    return tileId < TownId or tileId == BridgeId
+    local tileId = self:getOverworldMapTileIdAt(n.x, n.y)
+    local res = (tileId ~= SwampId and tileId < TownId) or tileId == BridgeId
+    return res
   end)
 end
 
@@ -201,6 +216,9 @@ function OverWorld:knownWorldBorder()
         -- TODO: potentially adding this more than once if more than one neighbor is nil
         for i = 1, #(nbrs) do
           local p = nbrs[i]
+          -- this is saying: if one of your neighbors is nil
+          -- then YOU are on the border. you are a border tile.
+          -- because you bump up against the unknown, basically.
           if self:getKnownWorldTileAt(p.x,p.y) == nil then
             table.insert(res, Point(OverWorldId, x, y))
           end

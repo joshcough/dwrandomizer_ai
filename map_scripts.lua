@@ -1,4 +1,5 @@
 require 'Class'
+require 'controller'
 enum = require("enum")
 require 'player_data'
 require 'static_maps'
@@ -52,7 +53,7 @@ WaitUntil = class(Script, function(a, msg, condition, duration)
 end)
 
 PressButtonScript = class(Script, function(a, button, waitFrames)
-  Script.init(a, button.name)
+  Script.init(a, button.name .. "(" .. waitFrames .. ")")
   a.button = button
   a.waitFrames = waitFrames
 end)
@@ -67,19 +68,34 @@ function PressSelect(waitFrames) return PressButtonScript(Buttons.select, waitFr
 function PressStart(waitFrames)  return PressButtonScript(Buttons.start, waitFrames) end
 
 HoldButtonScript = class(Script, function(a, button, duration)
-  Script.init(a, button.name)
+  Script.init(a, button.name .. " for " .. duration .. " frames.")
   a.button = button
   a.duration = duration
 end)
 
-function HoldA     (duration) return HoldButtonScript(Buttons.A, duration) end
-function HoldB     (duration) return HoldButtonScript(Buttons.B, duration) end
-function HoldUp    (duration) return HoldButtonScript(Buttons.up, duration) end
-function HoldDown  (duration) return HoldButtonScript(Buttons.down, duration) end
-function HoldLeft  (duration) return HoldButtonScript(Buttons.left, duration) end
-function HoldRight (duration) return HoldButtonScript(Buttons.right, duration) end
-function HoldSelect(duration) return HoldButtonScript(Buttons.select, duration) end
-function HoldStart (duration) return HoldButtonScript(Buttons.start, duration) end
+function HoldA      (duration) return HoldButtonScript(Buttons.A,      duration) end
+function HoldB      (duration) return HoldButtonScript(Buttons.B,      duration) end
+function HoldUp     (duration) return HoldButtonScript(Buttons.up,     duration) end
+function HoldDown   (duration) return HoldButtonScript(Buttons.down,   duration) end
+function HoldLeft   (duration) return HoldButtonScript(Buttons.left,   duration) end
+function HoldRight  (duration) return HoldButtonScript(Buttons.right,  duration) end
+function HoldSelect (duration) return HoldButtonScript(Buttons.select, duration) end
+function HoldStart  (duration) return HoldButtonScript(Buttons.start,  duration) end
+
+HoldButtonUntilScript = class(Script, function(a, button, condition)
+  Script.init(a, button.name .. " until " .. tostring(condition))
+  a.button = button
+  a.condition = condition
+end)
+
+function HoldAUntil      (condition) return HoldButtonUntilScript(Buttons.A,      condition) end
+function HoldBUntil      (condition) return HoldButtonUntilScript(Buttons.B,      condition) end
+function HoldUpUntil     (condition) return HoldButtonUntilScript(Buttons.up,     condition) end
+function HoldDownUntil   (condition) return HoldButtonUntilScript(Buttons.down,   condition) end
+function HoldLeftUntil   (condition) return HoldButtonUntilScript(Buttons.left,   condition) end
+function HoldRightUntil  (condition) return HoldButtonUntilScript(Buttons.right,  condition) end
+function HoldSelectUntil (condition) return HoldButtonUntilScript(Buttons.select, condition) end
+function HoldStartUntil  (condition) return HoldButtonUntilScript(Buttons.start,  condition) end
 
 ActionScript = class(Script, function(a, name)
   Script.init(a, name)
@@ -93,7 +109,6 @@ SavePrincess   = ActionScript("RESCUE_PRINCESS")
 DragonLord     = ActionScript("DRAGONLORD")
 TalkToOldMan   = ActionScript("TALK_TO_OLD_MAN")
 ShopKeeper     = ActionScript("TALK_TO_SHOP_KEEPER")
-InnKeeper      = ActionScript("TALK_TO_INN_KEEPER")
 
 SaveUnlockedDoor = class(ActionScript, function(a, loc)
   ActionScript.init(a, "SAVE_UNLOCKED_DOOR: " .. tostring(loc))
@@ -112,7 +127,7 @@ end)
 
 ConditionScript = class(Script, function(a, name) Script.init(a, name) end)
 
-function AtLocation(location) return DotEq(GetLocation, location) end
+function AtLocation(mapId, x, y) return DotEq(GetLocation, Point(mapId, x, y)) end
 
 IsChestOpen = class(ConditionScript, function(a, location)
   ConditionScript.init(a, "IS_CHEST_OPEN")
@@ -247,6 +262,10 @@ GetItems    = PlayerDataScript("Player's Items", function(pd) return pd.items en
 GetSpells   = PlayerDataScript("Player's Spells", function(pd) return pd.spells end)
 GetStatuses = PlayerDataScript("Game statuses", function(pd) return pd.statuses end)
 
+PlayerDirScript = class(Script, function(a)
+  Script.init(a, "HEADING")
+end)
+
 function StatusScript(statusFld)
   return PlayerDataScript("Status: " .. statusFld, function(pd) return pd.statuses[statusFld] end)
 end
@@ -293,20 +312,38 @@ Scripts = class(function(a,mem)
 --   print("charlockLocation", charlockLocation)
 --   print("tantegelLocation", a.tantegelLocation)
 
-
-  function VisitShop(mapId, x, y)
-    return Consecutive("Visiting shop at: " .. tostring(Point(mapId, x, y)), {Goto(mapId, x, y), ShopKeeper})
-  end
-
-  function VisitInn(mapId, x, y)
-    return Consecutive("Visiting inn at: " .. tostring(Point(mapId, x, y)), {Goto(mapId, x, y), InnKeeper})
-  end
-
   OpenMenu = Consecutive("Open Menu", { HoldA(30), WaitFrames(10) })
   OpenItemMenu = Consecutive("Open Item Menu", { OpenMenu, PressRight(2), PressDown(2), PressA(2), WaitFrames(30) })
   OpenSpellMenu = Consecutive("Open Spell Menu", { OpenMenu, PressRight(2), PressA(2), WaitFrames(30) })
   Talk = Consecutive("Talk", { HoldA(30), WaitFrames(10), PressA(2) })
-  TakeStairs = Consecutive("Take Stairs", { OpenMenu, HoldDown(2), HoldDown(2), HoldA(60) })
+  TakeStairs = Consecutive("Take Stairs", { OpenMenu, PressDown(2), PressDown(2), PressA(60) })
+
+  FaceUp    = HoldUpUntil   (Eq(PlayerDirScript(), Value(UP)))
+  FaceDown  = HoldDownUntil (Eq(PlayerDirScript(), Value(DOWN)))
+  FaceLeft  = HoldLeftUntil (Eq(PlayerDirScript(), Value(LEFT)))
+  FaceRight = HoldRightUntil(Eq(PlayerDirScript(), Value(RIGHT)))
+
+  function VisitShop(mapId, x, y)
+    return Consecutive("Visiting shop at: " .. tostring(Point(mapId, x, y)), {
+      Goto(mapId, x, y),
+      Talk,
+      WaitFrames(30),
+      PressA(30),
+      ShopKeeper
+    })
+  end
+
+  function VisitInn(mapId, x, y, directionScript)
+    return Consecutive("Visiting inn at: " .. tostring(Point(mapId, x, y)), {
+      Goto(mapId, x, y),
+      directionScript,
+      Talk,
+      PressA(30),
+      PressA(180),
+      PressA(30),
+      PressB(2)
+    })
+  end
 
   function OpenDoor(loc)
    return IfThenScript(
@@ -325,16 +362,10 @@ Scripts = class(function(a,mem)
       OpenMenu,
       PressUp(2),
       PressA(40),
+      PressA(10),
       Search
     })
   end
-
-  TakeStairs = Consecutive("Taking stairs", {
-    OpenMenu,
-    PressDown(2),
-    PressDown(2),
-    PressA(60),
-  })
 
   function IfHaveKeys(name, t, f)
     return IfThenScript(name, Gt(GetNrKeys, Value(2)), t, f)
@@ -558,10 +589,16 @@ Scripts = class(function(a,mem)
 
   kol =
     Consecutive("Kol", {
-      VisitShop(Kol, 20, 12),
       SearchAt(Kol, 9, 6),
-      VisitInn(Kol, 19, 2),
-      VisitShop(Kol, 12, 21)
+      VisitShop(Kol, 20, 12),
+      -- todo: dont search if we already have
+      -- unless we are doing a ghetto grind
+      VisitInn(Kol, 19, 2, FaceDown),
+      -- TODO: we can't go to this one yet
+      -- because its not a weapon and armor shop
+      -- and thats currently all we know how to handle
+      -- VisitShop(Kol, 12, 21),
+      GotoOverworld(Kol)
     })
 
   rimuldar =
@@ -593,9 +630,11 @@ Scripts = class(function(a,mem)
 
   cantlin = Consecutive( "Cantlin", {
     VisitShop(Cantlin, 25, 26),
-    VisitShop(Cantlin, 26, 12),
+    -- VisitShop(Cantlin, 26, 12), -- TODO: this one we can only do if we hve keys:
     -- this one has the guy that moves around
-    -- WeaponAndArmorShop({Point(Cantlin,   20,  3),  Point(Cantlin, 20, 4), Point(Cantlin, 20, 5), Point(Cantlin, 20, 6)}, getShopItems(c1))
+    -- WeaponAndArmorShop({Point(Cantlin, 20, 3), Point(Cantlin, 20, 4), Point(Cantlin, 20, 5), Point(Cantlin, 20, 6)}, getShopItems(c1))
+    VisitInn(Cantlin, 8, 5, FaceUp),
+    GotoOverworld(Cantlin)
   })
 
   -- This is for maps that we don't really need a script for

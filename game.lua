@@ -88,7 +88,15 @@ function Game:printVisibleGrid()
 end
 
 -- these are reasons that we have exited the followPath function
-GotoExitValues = enum.new("Follow Path Exit Values", {"AT_LOCATION", "IN_BATTLE", "REPEL_TIMER", "DEAD", "NO_PATH", "BUG"})
+GotoExitValues = enum.new("Follow Path Exit Values", {
+  "AT_LOCATION",
+  "IN_BATTLE",
+  "REPEL_TIMER",
+  "DEAD",
+  "MAP_CHANGED",
+  "NO_PATH",
+  "BUG"
+ })
 
 function Game:goTo(dest)
   local loc = self:getLocation()
@@ -116,6 +124,10 @@ function Game:goTo(dest)
         if self.dead then return GotoExitValues.DEAD
         else self:goTo(dest)
         end
+    elseif res == GotoExitValues.MAP_CHANGED
+      then
+        self:dealWithMapChange()
+        self:goTo(dest)
     else
       return res -- TODO: can we even do anything with the others? NO_PATH, BUG? AT_LOCATION?
     end
@@ -149,13 +161,14 @@ function Game:followPath(path)
           end
         end
         -- print("current point: ", memory:getLocation(), "c.to: ", c.to, "equal?: ", p:equals(c.to))
-        return loc:equals(c.to) or self.inBattle or self.repelTimerWindowOpen or self.dead
+        return loc:equals(c.to) or self.inBattle or self.repelTimerWindowOpen or self.dead or self.mapChanged
       end)
     end
   end
 
   if self.inBattle then return GotoExitValues.IN_BATTLE
   elseif self.repelTimerWindowOpen then return GotoExitValues.REPEL_TIMER
+  elseif self.mapChanged then return GotoExitValues.MAP_CHANGED
   -- we think we have completed the path, and this should always be the case
   -- but, do a last second double check just in case.
   elseif self:getLocation():equals(dest) then return GotoExitValues.AT_LOCATION
@@ -171,42 +184,49 @@ function Game:interpretScript(s)
   if     self.inBattle then self:executeBattle()
   -- TODO: consider casting repel right here instead of just closing window
   elseif self.repelTimerWindowOpen then self:closeRepelTimerWindow()
-  elseif s:is_a(Value) then return s.v
-  elseif s:is_a(ActionScript)
-    then
-      -- on these ones, simple `==` will do
-      if     s == DoNothing    then return
-      elseif s == OpenChest    then self:markChestOpened()
-      elseif s == Search       then self:searchGroundScript()
-      elseif s == DeathWarp    then self:deathWarp()
-      elseif s == SavePrincess then self:savePrincess()
-      elseif s == DragonLord   then self:fightDragonLord()
-      elseif s == ShopKeeper   then self:talkToShopKeeper()
-      elseif s == InnKeeper    then self:talkToInnKeeper()
-      -- == doesn't work on these, so we need is_a
-      elseif s:is_a(SaveUnlockedDoor) then self:saveUnlockedDoor(s.loc)
-      elseif s:is_a(CastSpell)        then self:cast(s.spell)
-      elseif s:is_a(UseItem)          then
-        -- this is a little special because we have to fix up the overworld to add the bridge
-        if s.item == RainbowDrop then self:useRainbowDrop()
-        else self:useItem(s.item)
+  elseif s:is_a(Script) then
+        if s:is_a(Value) then return s.v
+    elseif s:is_a(ActionScript)
+      then
+        -- on these ones, simple `==` will do
+        if     s == DoNothing    then return
+        elseif s == OpenChest    then self:markChestOpened()
+        elseif s == Search       then self:searchGroundScript()
+        elseif s == DeathWarp    then self:deathWarp()
+        elseif s == SavePrincess then self:savePrincess()
+        elseif s == DragonLord   then self:fightDragonLord()
+        elseif s == ShopKeeper   then self:talkToShopKeeper()
+        -- == doesn't work on these, so we need is_a
+        elseif s:is_a(SaveUnlockedDoor) then self:saveUnlockedDoor(s.loc)
+        elseif s:is_a(CastSpell)        then self:cast(s.spell)
+        elseif s:is_a(UseItem)          then
+          -- this is a little special because we have to fix up the overworld to add the bridge
+          if s.item == RainbowDrop then self:useRainbowDrop()
+          else self:useItem(s.item)
+          end
         end
-      end
-  elseif s:is_a(Goto) then self:goTo(s.location)
-  elseif s:is_a(PlayerDataScript) then return s.playerDataF(self:readPlayerData())
-  elseif s:is_a(IfThenScript)
-    then
-      local cond = self:evaluateCondition(s.condition)
-      local branch = cond and s.trueBranch or s.falseBranch
-      return self:interpretScript(branch)
-  elseif s:is_a(Consecutive)
-    then for i,branch in pairs(s.scripts) do self:interpretScript(branch) end
-  elseif s:is_a(PressButtonScript) then pressButton(s.button.name, s.waitFrames)
-  elseif s:is_a(HoldButtonScript) then holdButton(s.button.name, s.duration)
-  elseif s:is_a(WaitFrames) then waitFrames(s.duration)
-  elseif s:is_a(WaitUntil) then
-    waitUntil(function() return self:evaluateCondition(s.condition) end, s.duration, s.msg)
-  elseif s:is_a(DebugScript) then print(s.name)
+    elseif s:is_a(Goto) then self:goTo(s.location)
+    elseif s:is_a(PlayerDataScript) then return s.playerDataF(self:readPlayerData())
+    elseif s:is_a(PlayerDirScript)  then return self.memory:readPlayerDirection()
+    elseif s:is_a(IfThenScript)
+      then
+        local cond = self:evaluateCondition(s.condition)
+        local branch = cond and s.trueBranch or s.falseBranch
+        return self:interpretScript(branch)
+    elseif s:is_a(Consecutive)
+      then for i,branch in pairs(s.scripts) do self:interpretScript(branch) end
+    elseif s:is_a(PressButtonScript) then pressButton(s.button.name, s.waitFrames)
+    elseif s:is_a(HoldButtonScript) then holdButton(s.button.name, s.duration)
+    elseif s:is_a(HoldButtonUntilScript) then holdButtonUntil(s.button.name, tostring(s.condition), function ()
+      return self:evaluateCondition(s.condition)
+    end)
+    elseif s:is_a(WaitFrames) then waitFrames(s.duration)
+    elseif s:is_a(WaitUntil) then
+      waitUntil(function() return self:evaluateCondition(s.condition) end, s.duration, s.msg)
+    elseif s:is_a(DebugScript) then print(s.name)
+    end
+  else
+    print("Script is not a script! " .. tostring(s))
   end
 end
 
@@ -228,6 +248,7 @@ function Game:evaluateCondition(s)
   elseif s:is_a(All)      then return list.all(s.conditions, function(x) return self:evaluateCondition(x) end)
   elseif s:is_a(Contains) then return self:interpretScript(s.container):contains(s.v)
   elseif s:is_a(Not)      then return not self:evaluateCondition(s.condition)
+  elseif s:is_a(Value)    then return s.v
 
   -- TODO: hack. PlayerDataScript is not a ConditionScript...gross.
   elseif s:is_a(PlayerDataScript) then return s.playerDataF(self:readPlayerData())
@@ -267,6 +288,7 @@ end
 
 function Game:markChestOpened ()
   self.chests:openChestAt(self:getLocation())
+  -- print(self.memory:printDoorsAndChests())
 end
 
 function Game:searchGroundScript ()
@@ -360,7 +382,9 @@ function Game:shortestPath(startNode, endNode)
     return pathR[1]:equals(s) and pathR or {}
   end
 
-  return reconstruct(startNode, endNode, solve(startNode))
+  local r = reconstruct(startNode, endNode, solve(startNode))
+  -- print("shortestPath", tostring(r))
+  return r
 end
 
 function swapSrcAndDest(w) return w:swap() end
@@ -458,7 +482,10 @@ end
 function Game:grindOrExplore()
   local pd = self:readPlayerData()
   local currentLevel = pd.stats.level
-  local grind = getGrindInfo(pd)
+  local grind = getGrindInfo(pd, self.overworld)
+
+  self:healIfNecessary()
+
   if self:getMapId() == OverWorldId and grind ~= nil
     -- we have a good monster to grind on, so, grind.
     then self:grind(grind, currentLevel)
@@ -626,7 +653,7 @@ function Game:startEncounter()
  if (self:getMapId() > 0) then
     local enemyId = self:getEnemyId()
     local enemy = Enemies[enemyId]
-    print ("entering battle vs a " .. enemy.name .. " " .. tostring(enemy))
+    print ("entering battle vs a " .. enemy.name)
     self.inBattle = true
     self.enemy = enemy
   end
@@ -648,6 +675,20 @@ function Game:executeBattle()
   self.runSuccess = false
   self.enemyKilled = false
   self.enemy = nil
+
+  self:healIfNecessary()
+
+end
+
+function Game:healIfNecessary()
+  local pd = self:readPlayerData()
+  if pd.stats.currentHP / pd.stats.maxHP < 0.5 then
+    self:cast(Healmore)
+  end
+  pd = self:readPlayerData()
+  if pd.stats.currentHP / pd.stats.maxHP < 0.5 then
+    self:cast(Heal)
+  end
 end
 
 -- TODO: this is broken
@@ -694,15 +735,26 @@ function Game:dealWithDeath()
 end
 
 function Game:dealWithMapChange()
+  -- print("dealing with map change")
+  local oldMapId = self.currentMapId
   local newMapId = self:getMapId()
+  local newLoc   = self:getLocation()
+
+  -- catch transition from 0 to 5!
+  -- this means that the game is just starting
+  -- we have to do some monkey business here becuase when you are on the menu screen,
+  -- the game thinks that you have already left the throne room.
+  if oldMapId == 0 or oldMap == nil then
+    local b = self:readPlayerData().statuses.leftThroneRoom
+    self.maps[TantegelThroneRoom]:setTileAt(4, 7, b and 6 or 11)
+    self:resetGraphs()
+  end
 
   if newMapId < 1 then
     -- print("The map changed, but dood, we are on map 0, so must be the menu or something...")
     return
   end
 
-  local oldMapId = self.currentMapId
-  local newLoc   = self:getLocation()
   -- print("The map has changed! current position: " ..  tostring(newLoc) .. ", old map: " .. tostring(oldMapId))
 
   if newMapId == OverWorldId then self.chests:closeAll()
@@ -731,6 +783,11 @@ function Game:dealWithMapChange()
     end
   elseif oldMapId == SwampCave then
     print("leaving swamp cave")
+    -- we can see a bunch of new land now (potentially on another continent)
+    -- we have to call this so that the knownWorld gets updated properly to see the new land.
+    self.overworld:getVisibleOverworldGrid(newLoc.x, newLoc.y)
+
+    -- we also need to add the warp to the overworld
     local coordinatesList = self.maps[SwampCave].overworldCoordinates
     if newLoc:equals(coordinatesList[1]) then
       print("adding warp to SwampNorthEntrance")
@@ -739,9 +796,6 @@ function Game:dealWithMapChange()
       print("adding warp to SwampSouthEntrance")
       self:addWarp(Warp(newLoc, SwampSouthEntrance))
     end
---   elseif oldMapId == Tantegel then
---     print("leaving Tantegel")
---     self:addWarp(Warp(TantegelEntrance, self.maps[Tantegel].overworldCoordinates[1]))
   end
 
   self.currentMapId = newMapId
@@ -844,40 +898,76 @@ function Game:talkToShopKeeper()
   local loc = self:getLocation()
   self.weaponAndArmorShops:visitShopAt(loc)
   local shop = self.weaponAndArmorShops:getShopAt(loc)
+
+  local upgrades = shop:getAffordableUpgrades(self:readPlayerData())
+
+  if upgrades:isEmpty() then
+    print("No upgrades here.")
+    pressB(20)
+    pressB(2)
+  else
+    self:buyUpgrades(shop)
+  end
+end
+
+function Game:buyUpgrades(shop)
+  print(tostring(shop))
   -- Note: here, we keep re-reading the player data because its possible
   -- that it might have changed when purchased something.
   -- possible that we can no longer afford the best armor after we buy a weapon, for example.
-  local bestWeaponToBuy = shop:getMostExpensiveAffordableWeaponUpgrade(self:readPlayerData())
+  local pd = self:readPlayerData()
+  local bestWeaponToBuy = shop:getMostExpensiveAffordableWeaponUpgrade(pd)
   if(bestWeaponToBuy ~= nil) then
-    print("buying: ", bestWeaponToBuy)
-    self:buyItem(shop, bestWeaponToBuy.id)
+    print("buying weapon: ", tostring(bestWeaponToBuy))
+    self:buyItem(shop, bestWeaponToBuy.id, pd.equipment.weapon ~= nil)
   end
-  local bestArmorToBuy  = shop:getMostExpensiveAffordableArmorUpgrade(self:readPlayerData())
+  pd = self:readPlayerData()
+  local bestArmorToBuy  = shop:getMostExpensiveAffordableArmorUpgrade(pd)
   if(bestArmorToBuy ~= nil) then
-    print("buying: ", tostring(bestArmorToBuy))
-    self:buyItem(shop, bestArmorToBuy.id)
+    if(bestWeaponToBuy ~= nil) then
+      -- print("i bought a weapon, and am trying to say to buy armor")
+      pressA(60) -- we already bought something, and we want to buy more
+    end
+    print("buying armor: ", tostring(bestArmorToBuy))
+    self:buyItem(shop, bestArmorToBuy.id, pd.equipment.armor ~= nil)
   end
-  local bestShieldToBuy = shop:getMostExpensiveAffordableShieldUpgrade(self:readPlayerData())
+  pd = self:readPlayerData()
+  local bestShieldToBuy = shop:getMostExpensiveAffordableShieldUpgrade(pd)
   if(bestShieldToBuy ~= nil) then
-    print("buying: ", bestShieldToBuy)
-    self:buyItem(shop, bestShieldToBuy.id)
+    if(bestWeaponToBuy ~= nil or bestArmorToBuy ~= nil) then
+      -- print("i bought a weapon or armor, and am trying to say to buy a shield")
+      pressA(60) -- we already bought something, and we want to buy more
+    end
+    print("buying shield: ", tostring(bestShieldToBuy))
+    self:buyItem(shop, bestShieldToBuy.id, pd.equipment.shield ~= nil)
   end
+
+  -- we bought something, but finally we want to say no to buying anything else
+  if (bestWeaponToBuy ~= nil or bestArmorToBuy ~= nil or bestShieldToBuy ~= nil) then
+    pressDown(30)
+    pressA(30)
+    pressB(2)
+  end
+
 end
 
-function Game:buyItem(shop, itemId)
+function Game:buyItem(shop, itemId, sellExisting)
   local itemIndex = shop:indexOf(itemId)
-  self:interpretScript(self.scripts.Talk)
-  waitFrames(30)
-  pressA(30)
+  -- print("itemIndex: ", itemIndex)
+
+  -- todo: i think i can make this into a script
+  -- by just adding `NTimes(n, script)` to the language.
+  -- the rest of this should be easy too, but
+  -- it will need to take a boolean argument `sellExisting`
+  -- and we will need to deal with it being like
+  -- just a regular boolean or a `Value(bool)` or soemthing like that
   for i = 1, itemIndex-1 do pressDown(10) end
   pressA(30)
-  pressA(30)
-  pressA(60)
-  pressDown(30)
-  pressA(30)
-  pressB(2)
-end
 
-function Game:talkToInnKeeper()
-  print("TODO: talkToInnKeeper")
+  if sellExisting then
+    pressA(30)
+    pressA(30)
+  end
+
+  pressA(60)
 end

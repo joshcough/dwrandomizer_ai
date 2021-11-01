@@ -81,6 +81,10 @@ function Upgrades:__tostring()
   return f({f(self.weapons), f(self.armors), f(self.shields)})
 end
 
+function Upgrades:isEmpty()
+  return #(self.weapons) == 0 and #(self.armors) == 0 and #(self.shields) == 0
+end
+
 -- returns the items that are upgrades from the current equipment.
 function WeaponAndArmorShop:getUpgrades(equip)
   local weapons = {}
