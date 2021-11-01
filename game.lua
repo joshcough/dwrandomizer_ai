@@ -928,7 +928,8 @@ function Game:buyUpgrades(shop)
   local bestArmorToBuy  = shop:getMostExpensiveAffordableArmorUpgrade(pd)
   if(bestArmorToBuy ~= nil) then
     if(bestWeaponToBuy ~= nil) then
-      pressA(30) -- we already bought something, and we want to buy more
+      -- print("i bought a weapon, and am trying to say to buy armor")
+      pressA(60) -- we already bought something, and we want to buy more
     end
     print("buying armor: ", tostring(bestArmorToBuy))
     self:buyItem(shop, bestArmorToBuy.id, pd.equipment.armor ~= nil)
@@ -937,7 +938,8 @@ function Game:buyUpgrades(shop)
   local bestShieldToBuy = shop:getMostExpensiveAffordableShieldUpgrade(pd)
   if(bestShieldToBuy ~= nil) then
     if(bestWeaponToBuy ~= nil or bestArmorToBuy ~= nil) then
-      pressA(30) -- we already bought something, and we want to buy more
+      -- print("i bought a weapon or armor, and am trying to say to buy a shield")
+      pressA(60) -- we already bought something, and we want to buy more
     end
     print("buying shield: ", tostring(bestShieldToBuy))
     self:buyItem(shop, bestShieldToBuy.id, pd.equipment.shield ~= nil)
@@ -954,6 +956,7 @@ end
 
 function Game:buyItem(shop, itemId, sellExisting)
   local itemIndex = shop:indexOf(itemId)
+  -- print("itemIndex: ", itemIndex)
 
   -- todo: i think i can make this into a script
   -- by just adding `NTimes(n, script)` to the language.
