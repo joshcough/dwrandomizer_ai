@@ -216,6 +216,9 @@ function OverWorld:knownWorldBorder()
         -- TODO: potentially adding this more than once if more than one neighbor is nil
         for i = 1, #(nbrs) do
           local p = nbrs[i]
+          -- this is saying: if one of your neighbors is nil
+          -- then YOU are on the border. you are a border tile.
+          -- because you bump up against the unknown, basically.
           if self:getKnownWorldTileAt(p.x,p.y) == nil then
             table.insert(res, Point(OverWorldId, x, y))
           end

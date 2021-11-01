@@ -316,7 +316,7 @@ Scripts = class(function(a,mem)
   OpenItemMenu = Consecutive("Open Item Menu", { OpenMenu, PressRight(2), PressDown(2), PressA(2), WaitFrames(30) })
   OpenSpellMenu = Consecutive("Open Spell Menu", { OpenMenu, PressRight(2), PressA(2), WaitFrames(30) })
   Talk = Consecutive("Talk", { HoldA(30), WaitFrames(10), PressA(2) })
-  TakeStairs = Consecutive("Take Stairs", { OpenMenu, HoldDown(2), HoldDown(2), HoldA(60) })
+  TakeStairs = Consecutive("Take Stairs", { OpenMenu, PressDown(2), PressDown(2), PressA(60) })
 
   FaceUp    = HoldUpUntil   (Eq(PlayerDirScript(), Value(UP)))
   FaceDown  = HoldDownUntil (Eq(PlayerDirScript(), Value(DOWN)))
@@ -366,13 +366,6 @@ Scripts = class(function(a,mem)
       Search
     })
   end
-
-  TakeStairs = Consecutive("Taking stairs", {
-    OpenMenu,
-    PressDown(2),
-    PressDown(2),
-    PressA(60),
-  })
 
   function IfHaveKeys(name, t, f)
     return IfThenScript(name, Gt(GetNrKeys, Value(2)), t, f)
@@ -596,10 +589,10 @@ Scripts = class(function(a,mem)
 
   kol =
     Consecutive("Kol", {
-     VisitShop(Kol, 20, 12),
+      SearchAt(Kol, 9, 6),
+      VisitShop(Kol, 20, 12),
       -- todo: dont search if we already have
       -- unless we are doing a ghetto grind
-      SearchAt(Kol, 9, 6),
       VisitInn(Kol, 19, 2, FaceDown),
       -- TODO: we can't go to this one yet
       -- because its not a weapon and armor shop
@@ -637,9 +630,10 @@ Scripts = class(function(a,mem)
 
   cantlin = Consecutive( "Cantlin", {
     VisitShop(Cantlin, 25, 26),
-   --  VisitShop(Cantlin, 26, 12), -- TODO: this one we can only do if we hve keys:
+    -- VisitShop(Cantlin, 26, 12), -- TODO: this one we can only do if we hve keys:
     -- this one has the guy that moves around
-    -- WeaponAndArmorShop({Point(Cantlin,   20,  3),  Point(Cantlin, 20, 4), Point(Cantlin, 20, 5), Point(Cantlin, 20, 6)}, getShopItems(c1))
+    -- WeaponAndArmorShop({Point(Cantlin, 20, 3), Point(Cantlin, 20, 4), Point(Cantlin, 20, 5), Point(Cantlin, 20, 6)}, getShopItems(c1))
+    VisitInn(Cantlin, 8, 5, FaceUp),
     GotoOverworld(Cantlin)
   })
 

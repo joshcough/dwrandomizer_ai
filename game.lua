@@ -750,8 +750,8 @@ function Game:dealWithMapChange()
   -- this means that the game is just starting
   -- we have to do some monkey business here becuase when you are on the menu screen,
   -- the game thinks that you have already left the throne room.
-  if oldMapId == 0 then
-    local b = self:readPlayerData().statuses.haveLeftThroneRoom
+  if oldMapId == 0 or oldMap == nil then
+    local b = self:readPlayerData().statuses.leftThroneRoom
     self.maps[TantegelThroneRoom]:setTileAt(4, 7, b and 6 or 11)
     self:resetGraphs()
   end
@@ -789,6 +789,11 @@ function Game:dealWithMapChange()
     end
   elseif oldMapId == SwampCave then
     print("leaving swamp cave")
+    -- we can see a bunch of new land now (potentially on another continent)
+    -- we have to call this so that the knownWorld gets updated properly to see the new land.
+    self.overworld:getVisibleOverworldGrid(newLoc.x, newLoc.y)
+
+    -- we also need to add the warp to the overworld
     local coordinatesList = self.maps[SwampCave].overworldCoordinates
     if newLoc:equals(coordinatesList[1]) then
       print("adding warp to SwampNorthEntrance")
