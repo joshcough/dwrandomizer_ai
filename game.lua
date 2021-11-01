@@ -161,12 +161,6 @@ function Game:followPath(path)
           end
         end
         -- print("current point: ", memory:getLocation(), "c.to: ", c.to, "equal?: ", p:equals(c.to))
-        -- todo: i think we need to detect a map change here.
-        -- if we are holding the button we are at c.to, but the map changes
-        -- that must mean we stepped from the overworld into a town or a cave.
-        -- ideally we'd have a way to go around towns and caves
-        -- but until then, we can catch it here and abort this so that we don't
-        -- run into a wall and are never able to recover.
         return loc:equals(c.to) or self.inBattle or self.repelTimerWindowOpen or self.dead or self.mapChanged
       end)
     end
@@ -900,8 +894,6 @@ function Game:playerDefeated()
   self.inBattle = false
 end
 
--- TODO: this is broken because it can't buy multiple things in one talk session.
--- not even sure it can buy multiple things from one guy at all.
 function Game:talkToShopKeeper()
   local loc = self:getLocation()
   self.weaponAndArmorShops:visitShopAt(loc)

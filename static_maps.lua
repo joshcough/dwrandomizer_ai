@@ -352,10 +352,8 @@ function StaticMap:mkGraph (haveKeys)
     if x < self.width - 1 and isWalkable(x+1, y) then insertNeighbor(x+1, y) end
     if y > 0 and isWalkable(x, y-1) then insertNeighbor(x, y-1) end
     if y < self.height - 1 and isWalkable(x, y+1) then insertNeighbor(x, y+1) end
-
     -- really useful for debugging pathing. just plug in the location you care about
     -- if self.mapId == 7 and x == 19 and y == 23 then print("n", res) end
-
     return res
   end
 
@@ -368,10 +366,8 @@ function StaticMap:mkGraph (haveKeys)
         end
       end
     end
-
     -- really useful for debugging pathing. just plug in the location you care about
     -- if self.mapId == 7 and x == 19 and y == 23 then print("w", res) end
-
     return res
   end
 
@@ -387,10 +383,8 @@ function StaticMap:mkGraph (haveKeys)
     elseif y == 0               then insertNeighbor(NeighborType.BORDER_UP)
     elseif y == self.height - 1 then insertNeighbor(NeighborType.BORDER_DOWN)
     end
-
     -- really useful for debugging pathing. just plug in the location you care about
     -- if self.mapId == 7 and x == 19 and y == 23 then print("b", res) end
-
     return res
   end
 

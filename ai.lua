@@ -9,27 +9,11 @@ require 'map_scripts'
 require 'overworld'
 require 'static_maps'
 
-
--- after we reset the script (anywhere)
--- when we dont have keys we can't get out of the throne room after we die
--- this means it must think there is a door there and not a brick
--- so is there some problem with haveLeftThroneRoom
--- maybe when we generate the graphs when the script loads back up?
--- haveLeftThroneRoom should be true...  i dono man
-
--- also
--- we tried to grind on a green dragon forever
--- in a spot where there was no green dragon!   why?!?!
--- wait, WTF.... there WAS... but... we must have fought 20+ battles...maybe 40.
--- what does this mean?
-
 -- TODO:
--- keep track of where we see enemies (so that eventually we can find the right zone to grind in)
 -- keep track of monster abilities (so that we can make better decisions about running/fighting)
 -- fix the shortestPath algorithm as to avoid swamps in the overworld if possible.
 --   so, need weighting and therefore like... A* or something similar.
 -- ive seen it soft lock opening a chest... maybe use the menuing x/y coordinates to fix this.
--- actually be able to purchase and equip items
 -- fight the dragon lord
 -- save the princess
 -- use heal in battle
