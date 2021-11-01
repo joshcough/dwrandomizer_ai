@@ -914,27 +914,42 @@ function Game:talkToShopKeeper()
 end
 
 function Game:buyUpgrades(shop)
+  print(tostring(shop))
   -- Note: here, we keep re-reading the player data because its possible
   -- that it might have changed when purchased something.
   -- possible that we can no longer afford the best armor after we buy a weapon, for example.
   local pd = self:readPlayerData()
   local bestWeaponToBuy = shop:getMostExpensiveAffordableWeaponUpgrade(pd)
   if(bestWeaponToBuy ~= nil) then
-    print("buying weapon: ", bestWeaponToBuy)
+    print("buying weapon: ", tostring(bestWeaponToBuy))
     self:buyItem(shop, bestWeaponToBuy.id, pd.equipment.weapon ~= nil)
   end
   pd = self:readPlayerData()
   local bestArmorToBuy  = shop:getMostExpensiveAffordableArmorUpgrade(pd)
   if(bestArmorToBuy ~= nil) then
+    if(bestWeaponToBuy ~= nil) then
+      pressA(30) -- we already bought something, and we want to buy more
+    end
     print("buying armor: ", tostring(bestArmorToBuy))
     self:buyItem(shop, bestArmorToBuy.id, pd.equipment.armor ~= nil)
   end
   pd = self:readPlayerData()
   local bestShieldToBuy = shop:getMostExpensiveAffordableShieldUpgrade(pd)
   if(bestShieldToBuy ~= nil) then
-    print("buying shield: ", bestShieldToBuy)
+    if(bestWeaponToBuy ~= nil or bestArmorToBuy ~= nil) then
+      pressA(30) -- we already bought something, and we want to buy more
+    end
+    print("buying shield: ", tostring(bestShieldToBuy))
     self:buyItem(shop, bestShieldToBuy.id, pd.equipment.shield ~= nil)
   end
+
+  -- we bought something, but finally we want to say no to buying anything else
+  if (bestWeaponToBuy ~= nil or bestArmorToBuy ~= nil or bestShieldToBuy ~= nil) then
+    pressDown(30)
+    pressA(30)
+    pressB(2)
+  end
+
 end
 
 function Game:buyItem(shop, itemId, sellExisting)
@@ -955,7 +970,4 @@ function Game:buyItem(shop, itemId, sellExisting)
   end
 
   pressA(60)
-  pressDown(30)
-  pressA(30)
-  pressB(2)
 end

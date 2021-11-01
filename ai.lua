@@ -68,20 +68,27 @@ end
 -- but for now it just helps me survive to test exploration
 -- give ourself gold, xp, best equipment, etc
 function cheat(mem)
-  -- xp
-  mem:writeRAM(0xbb, 65535 / 256)
-  mem:writeRAM(0xba, 65535 % 256)
-  -- gold
-  mem:writeRAM(0xbd, 65535 / 256)
-  mem:writeRAM(0xbc, 65535 % 256)
+  cheat_giveMaxXP()
+  cheat_giveMaxGold()
+
   mem:writeRAM(0xbe, 255) -- best equipment
   -- mem:writeRAM(0xbe, 0) -- no equipment
-  mem:writeRAM(0xbf, 5)   -- 5 herbs
-  mem:writeRAM(0xc0, 5)   -- 5 keys
+  mem:writeRAM(0xbf, 5)   -- 5 keys
+  mem:writeRAM(0xc0, 5)   -- 5 herbs
   mem:writeRAM(0xc1, RainbowDropByte)
   -- mem:writeRAM(0xc1, SilverHarpByte)
   -- TODO: this doesn't seem to be working properly.
   mem:writeRAM(0xdb, 0xff) -- repel always on
+end
+
+function cheat_giveMaxXP(mem)
+  mem:writeRAM(0xbb, 65535 / 256)
+  mem:writeRAM(0xba, 65535 % 256)
+end
+
+function cheat_giveMaxGold(mem)
+  mem:writeRAM(0xbd, 65535 / 256)
+  mem:writeRAM(0xbc, 65535 % 256)
 end
 
 -------------------

@@ -184,6 +184,21 @@ function Memory:readPlayerData()
                     self:spells(), self:getItems(), self:getStatuses(), self:readLevels())
 end
 
+-- ShopItemsTbl:
+-- ;Koll weapons and armor shop.
+-- L9991:  .byte $02, $03, $0A, $0B, $0E, $FD
+-- ;Brecconary weapons and armor shop.
+-- L9997:  .byte $00, $01, $02, $07, $08, $0E, $FD
+-- ;Garinham weapons and armor shop.
+-- L999E:  .byte $01, $02, $03, $08, $09, $0A, $0F, $FD
+-- ;Cantlin weapons and armor shop 1.
+-- L99A6:  .byte $00, $01, $02, $08, $09, $0F, $FD
+-- ;Cantlin weapons and armor shop 2.
+-- L99AD:  .byte $03, $04, $0B, $0C, $FD
+-- ;Cantlin weapons and armor shop 3.
+-- L99B2:  .byte $05, $10, $FD
+-- ;Rimuldar weapons and armor shop.
+-- L99B5:  .byte $02, $03, $04, $0A, $0B, $0C, $FD
 function Memory:readWeaponAndArmorShops()
   function readSlots(start)
     local slots = {}
@@ -198,7 +213,8 @@ function Memory:readWeaponAndArmorShops()
   end
 
   local t = {}
-  local addr = 0x19A8
+  -- 19A1-19CB | Weapon Shop Inventory |
+  local addr = 0x19A1
   for i = 1,7 do
     local rs = readSlots(addr)
     t[i] = rs[1]
@@ -209,12 +225,12 @@ function Memory:readWeaponAndArmorShops()
   -- because one shop sometimes has 5 things, and sometimes 6
   -- and all the shops end with a special delimiter (253 i think)
   return WeaponAndArmorShops(
-    t[1], -- Brecconary
-    t[3], -- Cantlin1
-    t[4], -- Cantlin2
-    t[2], -- Cantlin3
-    t[5], -- Garinham
-    t[6], -- Kol
+    t[2], -- Brecconary
+    t[4], -- Cantlin1
+    t[5], -- Cantlin2
+    t[6], -- Cantlin3
+    t[3], -- Garinham
+    t[1], -- Kol
     t[7]  -- Rimuldar
   )
 end
