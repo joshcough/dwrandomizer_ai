@@ -249,6 +249,10 @@ function list.map(t, f)
   return res
 end
 
+function list.foreach(t, f)
+  for i = 1, #(t) do f(t[i]) end
+end
+
 function list.join(t)
   local res = {}
   for i = 1, #(t) do

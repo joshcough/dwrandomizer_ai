@@ -1,5 +1,6 @@
 require 'helpers'
 require 'Class'
+require 'graph'
 
 OverWorldId = 1
 
@@ -56,6 +57,10 @@ OVERWORLD_TILES = {
   [Bridge.id]   = Bridge,
   [Stairs.id]   = Stairs,
 }
+
+function getOverworldTile(tileId)
+  return OVERWORLD_TILES[tileId]
+end
 
 function getOverworldTileName(tileId)
   return OVERWORLD_TILES[tileId] and OVERWORLD_TILES[tileId].name or "unknown"
@@ -123,6 +128,8 @@ OverWorld = class(function(a,rows)
   a.knownWorld = {}
   a.nrTilesSeen = 0
   a.importantLocations = {}
+--   a.newGraph = {}
+  a.newGraph = NewGraph(a)
 end)
 
 function OverWorld:percentageOfWorldSeen()
@@ -165,7 +172,52 @@ function OverWorld:updateKnownWorld(x, y, tileId)
         table.insert(self.importantLocations, ImportantLocation(x, y, tileId))
       end
   end
+
+  self.newGraph:discover(OverWorldId, x, y)
 end
+
+
+-- for the actual graph for the overworld...
+-- when we discover a new tile (by just moving around), we need to get its neighbors and put them in the graph.
+-- however, we can only get the neighbors that we've actually seen.
+-- for example if we move left to uncover tile at x=10, one of its neighbors is x=9, but we've never seen that
+-- so we can't add it to the graph.
+-- finally we take another step to uncover x=9, then we need to go back and update the neighbors of x=10 to include x=9
+--
+-- so basically when we uncover a tile, we need to update its neighbors in the graph
+-- but also update its neighbors neighbors! but only for those neighbors that we have seen.
+--
+-- but how do we know what we have seen?
+--
+-- one possible approach is to fill in the entire graph with one of these constructors:
+--
+-- GraphNodeUnknown | GraphNodeKnown
+--
+-- if its known, it would have neighbors in it, like
+--
+-- GraphNodeKnown{ neighbors: { ... } }
+--
+-- and obviously when we uncover a new tile, it would be GraphNodeUnknown in the graph, and we'd change it to GraphNodeKnown
+-- and we would get its "Neighbors4" and for each of those at are GraphNodeKnown, we would put them into its neighbors
+-- and also for each of those that are GraphNodeKnown, we would include this node into their neighbors.
+
+
+
+
+-- function OverWorld:knownWorldGraph()
+--   local res = {}
+--   for y,row in pairs(self.knownWorld) do
+--     for x,tile in pairs(row) do
+--       local overworldTile = OVERWORLD_TILES[self.overworldRows[y][x]]
+--       if overworldTile.walkable then
+--         if res[y] == nil then res[y] = {} end
+--         res[y][x] = self:neighbors(x,y)
+--       end
+--     end
+--   end
+--   return res
+-- end
+
 
 --         x,y-1
 -- x-1,y   x,y     x+1,y
@@ -288,4 +340,23 @@ function OverWorld:printVisibleGrid (currentX, currentY)
     end
     print(row .. " |")
   end
+end
+
+function OverWorld:newNeighbors(x,y)
+  function isWalkable(x,y)
+    if self.overworldRows[y] == nil then return false end
+    if self.overworldRows[y][x] == nil then return false end
+    return OVERWORLD_TILES[self.overworldRows[y][x]].walkable
+  end
+  local res = {}
+
+  function insertNeighbor(x,y,dir)
+    table.insert(res,NewNeighbor(OverWorldId, x, y, dir))
+  end
+
+  if x > 0   and isWalkable(x-1, y) then insertNeighbor(x-1, y, NewNeighborDir.LEFT) end
+  if x < 119 and isWalkable(x+1, y) then insertNeighbor(x+1, y, NewNeighborDir.RIGHT) end
+  if y > 0   and isWalkable(x, y-1) then insertNeighbor(x, y-1, NewNeighborDir.UP) end
+  if y < 119 and isWalkable(x, y+1) then insertNeighbor(x, y+1, NewNeighborDir.DOWN) end
+  return res
 end

@@ -17,6 +17,7 @@ Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsW
   a.maps = maps
   a.graphsWithKeys = graphsWithKeys
   a.graphsWithoutKeys = graphsWithoutKeys
+--   a.newGraph = NewGraph(overworld.newGraph)
 
   -- events/signals that happen in game
   a.inBattle = false

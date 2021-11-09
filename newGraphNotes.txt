@@ -1,0 +1,88 @@
+
+lets say we load the whole graph up right away and do everything just off the graph
+what would that look like?
+
+well, whenever we encounter a new cave/town
+then we must set the neighbors properly. lets think about that a sec
+
+lets assume tantegel is at (20,30) of the overworld
+then in the graph there is (1,20,30) (because 1 is the overworld id)
+when we first leave the castle we add things to the neighors of
+
+ The four spots around tantegel:
+
+ (1,19,30) -> Tangegel Entrance (i forgot what that is, something like (4, 10,29), so we'll just go with that 
+ (1,21,30) -> (4, 10,29)
+ (1,20,29) -> (4, 10,29)
+ (1,20,31) -> (4, 10,29)
+
+ And all the border of tangegel to the overworld
+ (4, 10,29) -> (1,20,30)
+ ...
+
+ however...maybe we just already set the border neighbors.
+ because until we discover the town, there wont be a path to it from the overworld
+ so it shouldn't matter that there are paths out of it from inside.
+ because we'd just never be able to use that fact anyway, until we find the town.
+ this would simplify things a bit. we'd only ever have to fixup the graph when we enter a town/cave.
+
+
+similarly, every time we open a door we need to set some stuff. 
+lets start by thinking about the throne room. i can't rememver the coordinate of the door
+but lets just call it (5,5,8) (throne room map id is 5)
+
+when its opened, we need to update these:
+
+(5,5,8) -> {(5,5,7), (5,5,9)}
+
+in the case of the throne room, we would never set it back to empty (5,5,8) -> {}
+because that door never closes, but for any other door we would set it back to empty when we reach the overworld.
+so it would look simply like this 
+  (5,5,8) -> {}
+
+
+however.... this kinda fucks up the whole pathing thing when doors are in the way!
+we have a whole notion of "haveKeys" or whatever, and so maybe we maintain two different graphs?
+one where all the doors are open, and one where the doors are all closed? 
+im not actually sure that is right though...hmmm
+
+but lets try it
+
+
+so in all the cases above for the overworld, we would apply those changes to _both_ graphs.
+and maybe we never have to apply door changes to either graph. 
+if we have keys, we just use the graph without doors... and if we don't, we use the graph with doors.
+
+i actually think that kinda works...but is it necessary? 
+
+
+
+======
+
+for the actual graph for the overworld...
+when we discover a new tile (by just moving around), we need to get its neighbors and put them in the graph.
+however, we can only get the neighbors that we've actually seen.
+for example if we move left to uncover tile at x=10, one of its neighbors is x=9, but we've never seen that
+so we can't add it to the graph.
+finally we take another step to uncover x=9, then we need to go back and update the neighbors of x=10 to include x=9
+
+so basically when we uncover a tile, we need to update its neighbors in the graph
+but also update its neighbors neighbors! but only for those neighbors that we have seen.
+
+but how do we know what we have seen?
+
+one possible approach is to fill in the entire graph with one of these constructors:
+
+GraphNodeUnknown | GraphNodeKnown
+
+if its known, it would have neighbors in it, like
+
+GraphNodeKnown{ neighbors: { ... } }
+
+and obviously when we uncover a new tile, it would be GraphNodeUnknown in the graph, and we'd change it to GraphNodeKnown
+and we would get its "Neighbors4" and for each of those at are GraphNodeKnown, we would put them into its neighbors
+and also for each of those that are GraphNodeKnown, we would include this node into their neighbors.
+
+
+
+
