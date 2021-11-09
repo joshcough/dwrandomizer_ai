@@ -39,8 +39,8 @@ Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsW
 end)
 
 function newGame(memory)
-  local overworld = OverWorld(readOverworldFromROM(memory))
   local warps = table.concat(WARPS, list.map(WARPS, swapSrcAndDest))
+  local overworld = OverWorld(readOverworldFromROM(memory), warps)
   local maps = readAllStaticMaps(memory, warps)
   local graphsWithKeys = readAllGraphs(memory, true, maps, warps)
   local graphsWithoutKeys = readAllGraphs(memory, false, maps, warps)
@@ -99,6 +99,7 @@ GotoExitValues = enum.new("Follow Path Exit Values", {
  })
 
 function Game:goTo(dest)
+  print("in goto, dest: " .. tostring(dest))
   local loc = self:getLocation()
   if loc:equals(dest) then
     -- print("I was asked to go to: " .. tostring(dest) .. ", but I am already there!")
@@ -298,7 +299,7 @@ end
 -- TODO: this whole function needs to get redone completely. this is just a hack.
 function Game:addWarp(warp)
   if table.containsUsingDotEquals(self.warps, warp) then
-    -- print("NOT Adding warp, it already exists!: " .. tostring(warp))
+    print("NOT Adding warp, it already exists!: " .. tostring(warp))
     return
   end
 
@@ -369,6 +370,7 @@ function Game:shortestPath(startNode, endNode)
     local path = {}
     local at = e
     while not (at == nil) do
+      print("at:" .. tostring(at))
       if prev[at.mapId] == nil or prev[at.mapId][at.x] == nil or prev[at.mapId][at.x][at.y] == nil
         then
           table.insert(path, at)
@@ -379,6 +381,14 @@ function Game:shortestPath(startNode, endNode)
       end
     end
     local pathR = table.reverse(path)
+
+-- Got this error:
+--     GRINDING:  Grinding: at: <Point mapId:1, x:54, y:100>, vs: Red Dragon
+--     ERROR: Could not create path from: <Point mapId:1, x:117, y:58> to: <Point mapId:1, x:54, y:100>
+--     Lua thread bombed out: ...l/Cellar/fceux/2.4.0/share/fceux/luaScripts/game.lua:382: attempt to call method 'equals' (a nil value)
+-- it died out on this line
+-- probably because it doesn't know how to make a path through the swamp cave i guess.
+
     return pathR[1]:equals(s) and pathR or {}
   end
 
@@ -421,12 +431,18 @@ function convertPathToCommands(pathIn, maps)
     local res = {}
 
     function move(next)
+--       if p2.type == NeighborType.OVERWORLD_WARP then
+--         if p2.y < p1.y then return MovementCommand(UP, p1, next) end
+--         if p2.y > p1.y then return MovementCommand(DOWN, p1, next) end
+--         if p2.x < p1.x then return MovementCommand(LEFT, p1, next) end
+--         if p2.x > p1.x then return MovementCommand(RIGHT, p1, next) end
+--       end
       if p2.type == NeighborType.STAIRS then return MovementCommand("Stairs", p1, p2) end
       if p2.type == NeighborType.BORDER_LEFT then return MovementCommand(LEFT, p1, p2) end
       if p2.type == NeighborType.BORDER_RIGHT then return MovementCommand(RIGHT, p1, p2) end
       if p2.type == NeighborType.BORDER_UP then return MovementCommand(UP, p1, p2) end
       if p2.type == NeighborType.BORDER_DOWN then return MovementCommand(DOWN, p1, p2) end
-      if p2.type == NeighborType.SAME_MAP then
+      if p2.type == NeighborType.SAME_MAP or p2.type == NeighborType.OVERWORLD_WARP then
         if p2.y < p1.y then return MovementCommand(UP, p1, next) end
         if p2.y > p1.y then return MovementCommand(DOWN, p1, next) end
         if p2.x < p1.x then return MovementCommand(LEFT, p1, next) end
@@ -482,15 +498,24 @@ end
 function Game:grindOrExplore()
   local pd = self:readPlayerData()
   local currentLevel = pd.stats.level
+
+  self.overworld.warps = self.warps
   local grind = getGrindInfo(pd, self.overworld)
 
   self:healIfNecessary()
+  print("done healing")
 
   if self:getMapId() == OverWorldId and grind ~= nil
     -- we have a good monster to grind on, so, grind.
-    then self:grind(grind, currentLevel)
+    then
+      print("calling goTo with point: " .. tostring(Point(Tantegel, 18, 26)))
+      self:goTo(Point(OverWorldId, 61, 87))
+      self:goTo(Point(Tantegel, 18, 26))
+      -- self:grind(grind, currentLevel)
     -- if haven't seen anything worth fighting... then i guess just explore...
-    else self:explore()
+    else
+      print("exploring...")
+      self:explore()
   end
 end
 
@@ -498,7 +523,8 @@ function Game:grind(grind, currentLevel)
   print("GRINDING: ", tostring(grind))
   -- TODO: if one is forest and the other is desert, we want to pick desert.
   -- in general, we want to pick the tiles with the highest encounter rate.
-  local neighbor = self.overworld:grindableNeighbors(grind.location.x, grind.location.y)[1]
+  -- also todo: we _can_ grind on swamp if we have edricks armor. so fix up grindableNeighbors to check that.
+  local neighbor = self.overworld:grindableNeighbors(grind.location.x, grind.location.y, self.warps)[1]
 
   while(self.memory:getLevel() == currentLevel and not self.dead) do
     self:goTo(grind.location)
@@ -599,16 +625,16 @@ end
 function Game:chooseClosestBorderTile(borderOfKnownWorld)
   print("picking closest border tile")
   local loc = self:getLocation()
-  local d = list.min(borderOfKnownWorld, function(t)
-    return math.abs(t.x - loc.x) + math.abs(t.y - loc.y)
+  local borderWithNoSwamp = list.filter(borderOfKnownWorld, function(loc)
+    return self.overworld:getOverworldMapTileIdAt(loc.x, loc.y) ~= SwampId
   end)
-  return d
+  return loc:chooseClosestTile(borderWithNoSwamp)
 end
 
 function Game:chooseNewDestination(tileSelectionStrat)
   -- otherwise, we either dont have a destination so we need to get one
   -- or we are at our destination already, so we need a new one
-  local borderOfKnownWorld = self.overworld:knownWorldBorder()
+  local borderOfKnownWorld = self.overworld:knownWorldBorder(self.warps)
 --   table.print(borderOfKnownWorld)
   local nrBorderTiles = #borderOfKnownWorld
   -- TODO: this is an error case that i might need to deal with somehow.
@@ -626,9 +652,10 @@ function Game:chooseNewDestinationDirectly(newDestination)
 end
 
 function Game:getCombinedGraphs()
+  print("in Game:getCombinedGraphs(), self.warps:", self.warps)
   local staticGraphs = self:haveKeys() and self.graphsWithKeys or self.graphsWithoutKeys
   local graphs = {}
-  graphs[1] = Graph(self.overworld:knownWorldGraph(), self:haveKeys())
+  graphs[1] = Graph(self.overworld:knownWorldGraph(self.warps), self:haveKeys())
   for i, g in pairs(staticGraphs) do graphs[i] = g end
   return graphs
 end

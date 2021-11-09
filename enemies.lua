@@ -138,7 +138,7 @@ end
 --        hmmm.... .10% of the amount remaining? or 10% of the whole?
 --    if that is true, then walk to one of the locs where we've seen that enemy and just walk back and forth
 --    fighting it (and others) until we get to the next level
-function getGrindInfo(playerData, overworld)
+function getGrindInfo(playerData, overworld, warps)
   local bestEnemy = nil
   local bestEnemyLocs = nil
 
@@ -155,7 +155,7 @@ function getGrindInfo(playerData, overworld)
     local nonSwampLocations = filterOutSwamps(enemy.locations)
     --- return only the locations who are not a swamp and have at least one non-swamp neighbor
     local nonSwampLocationsWithNonSwampNeighbors = list.filter(nonSwampLocations, function(loc)
-      local gn = overworld:grindableNeighbors(loc.x, loc.y)
+      local gn = overworld:grindableNeighbors(loc.x, loc.y, warps)
       return #gn > 0
     end)
 
@@ -178,10 +178,7 @@ end
 
 function chooseClosestTile(playerLoc, enemyLocations)
   print("picking closest tile to the player for grinding")
-  local d = list.min(enemyLocations, function(t)
-    return math.abs(t.x - playerLoc.x) + math.abs(t.y - playerLoc.y)
-  end)
-  return d
+  return playerLoc:chooseClosestTile(enemyLocations)
 end
 
 function Enemy:executeBattle(game)

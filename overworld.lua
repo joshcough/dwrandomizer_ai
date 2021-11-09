@@ -118,8 +118,9 @@ function readOverworldFromROM (memory)
   return rows
 end
 
-OverWorld = class(function(a,rows)
+OverWorld = class(function(a,rows,warps)
   a.overworldRows = rows
+  a.warps = warps
   a.knownWorld = {}
   a.nrTilesSeen = 0
   a.importantLocations = {}
@@ -167,10 +168,23 @@ function OverWorld:updateKnownWorld(x, y, tileId)
   end
 end
 
+function OverWorld:setWarps(warps)
+  print("in OverWorld:setWarps, warps: " .. tostring(self.warps))
+  self.warps = list.filter(self.warps, function(warp) return warp.src.mapId == OverWorldId end)
+end
+
 --         x,y-1
 -- x-1,y   x,y     x+1,y
 --         x,y+1
 function OverWorld:neighbors(x,y)
+  print("in OverWorld:neighbors, warps: " .. tostring(self.warps))
+  local filteredWarps = list.filter(self.warps, function(warp)
+    return warp.src.mapId == OverWorldId
+  end)
+  print("in OverWorld:neighbors, filteredWarps: " .. tostring(filteredWarps))
+  local filteredWarpSrcs = list.map(filteredWarps, function(warp) return warp.src end)
+  print("in OverWorld:neighbors, filteredWarpSrcs: " .. tostring(filteredWarpSrcs))
+
   function isWalkable(x,y)
     if self.overworldRows[y] == nil then return false end
     if self.overworldRows[y][x] == nil then return false end
@@ -178,8 +192,18 @@ function OverWorld:neighbors(x,y)
   end
   local res = {}
 
+  function warpFor(x,y)
+    return list.findUsingDotEquals(filteredWarpSrcs, Point(OverWorldId, x, y))
+  end
+
   function insertNeighbor(x,y)
-    table.insert(res,Neighbor(OverWorldId, x, y, NeighborType.SAME_MAP))
+    -- i think what we want to do here is check if x,y is in the warps,
+    -- and if so, add the destination of the warp, not x,y itself.
+    local w = warpFor(x,y)
+    if w ~= nil
+      then table.insert(res,Neighbor(OverWorldId, x, y, NeighborType.OVERWORLD_WARP, w))
+      else table.insert(res,Neighbor(OverWorldId, x, y, NeighborType.SAME_MAP))
+    end
   end
 
   if x > 0   and isWalkable(x-1, y) then insertNeighbor(x-1, y) end
@@ -190,7 +214,7 @@ function OverWorld:neighbors(x,y)
 end
 
 function OverWorld:grindableNeighbors(x,y)
-  return list.filter(self:neighbors(x,y), function(n)
+  return list.filter(self:neighbors(x,y,self.warps), function(n)
     local tileId = self:getOverworldMapTileIdAt(n.x, n.y)
     local res = (tileId ~= SwampId and tileId < TownId) or tileId == BridgeId
     return res
@@ -207,6 +231,7 @@ end
 -- because we need to pick one of THOSE to walk to. not one of the ones that we've already seen.
 -- returns all the walkable tiles on the border of the known world
 function OverWorld:knownWorldBorder()
+  print("OverWorld:knownWorldBorder", self.warps)
   local res = {}
   for y,row in pairs(self.knownWorld) do
     for x,tile in pairs(row) do
@@ -230,6 +255,10 @@ function OverWorld:knownWorldBorder()
 end
 
 -- returns a graph for all the tiles in the known world.
+-- todo: i think this needs the warp neighbors, right?
+-- but really i think instead of like... assiging a towns tile to have a neighbor of the next map
+-- maybe i should assign all its neighbors tiles to have that!
+-- and then this might just fix the problem of accidentally running into towns/caves.
 function OverWorld:knownWorldGraph()
   local res = {}
   for y,row in pairs(self.knownWorld) do

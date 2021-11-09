@@ -415,6 +415,15 @@ function Point:equals(p2)
   return self.mapId == p2.mapId and self.x == p2.x and self.y == p2.y
 end
 
+-- TODO: this is broken because it doesnt bother checking if we are on the same map or not!
+function Point:chooseClosestTile(locs)
+  return list.min(locs, function(t)
+    local distance = math.abs(t.x - self.x) + math.abs(t.y - self.y)
+    print("distance to " .. tostring(t) .. " from " .. tostring(self) .. " is " .. tostring(distance))
+    return distance
+  end)
+end
+
 NeighborType = enum.new("Neighbor Type", {
   "SAME_MAP",
   "STAIRS",
@@ -422,13 +431,15 @@ NeighborType = enum.new("Neighbor Type", {
   "BORDER_RIGHT",
   "BORDER_UP",
   "BORDER_DOWN",
+  "OVERWORLD_WARP",
 })
 
-Neighbor = class(function(a, mapId, x, y, type)
+Neighbor = class(function(a, mapId, x, y, type, warp)
   a.mapId = mapId
   a.x = x
   a.y = y
   a.type = type
+  a.warp = warp
 end)
 
 function Neighbor:__tostring()
