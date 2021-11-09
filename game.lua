@@ -184,7 +184,7 @@ function Game:interpretScript(s)
   if     self.inBattle then self:executeBattle()
   -- TODO: consider casting repel right here instead of just closing window
   elseif self.repelTimerWindowOpen then self:closeRepelTimerWindow()
-  elseif s:is_a(Script) then
+  elseif s ~= nil and s:is_a(Script) then
         if s:is_a(Value) then return s.v
     elseif s:is_a(ActionScript)
       then
@@ -394,7 +394,7 @@ function Game:isDoorOpen(loc)
 end
 
 function Game:saveUnlockedDoor(loc)
-  -- todo: if this is the throne room
+  -- if this is the throne room
   -- then we need to set that tile to brick instead of a door
   -- and then we will probably have to regenerate the graphs or whatever.
   if (loc:equalsPoint(Point(TantegelThroneRoom, 4, 7))) then
@@ -681,14 +681,34 @@ function Game:executeBattle()
 end
 
 function Game:healIfNecessary()
-  local pd = self:readPlayerData()
-  if pd.stats.currentHP / pd.stats.maxHP < 0.5 then
-    self:cast(Healmore)
+  function needHealing()
+    local pd = self:readPlayerData()
+    return pd.stats.currentHP / pd.stats.maxHP < 0.5
   end
-  pd = self:readPlayerData()
-  if pd.stats.currentHP / pd.stats.maxHP < 0.5 then
-    self:cast(Heal)
+
+  function needMP()
+    local pd = self:readPlayerData()
+    local currentMP = pd.stats.currentMP
+    return (pd.spells:contains(Healmore) and currentMP < 8) or
+           (pd.spells:contains(Heal)     and currentMP < 3) or
+           (pd.spells:contains(Hurtmore) and currentMP < 5) or
+           (pd.spells:contains(Hurt)     and currentMP < 2)
   end
+
+  function castMaybe(spell) if needHealing() then  self:cast(spell) end end
+
+  castMaybe(Healmore)
+  castMaybe(Heal)
+
+--   local hl = self:healingLocations()
+--   for i = 1, #hl do
+--     print("healing location #" .. i)
+--     print(hl[i])
+--   end
+-- if we need mp, we should go the the closest healing location
+--   print("closest healing location:")
+--   print(self:closestHealingLocation())
+
 end
 
 -- TODO: this is broken
@@ -742,7 +762,7 @@ function Game:dealWithMapChange()
 
   -- catch transition from 0 to 5!
   -- this means that the game is just starting
-  -- we have to do some monkey business here becuase when you are on the menu screen,
+  -- we have to do some monkey business here because when you are on the menu screen,
   -- the game thinks that you have already left the throne room.
   if oldMapId == 0 or oldMap == nil then
     local b = self:readPlayerData().statuses.leftThroneRoom
@@ -796,6 +816,9 @@ function Game:dealWithMapChange()
       print("adding warp to SwampSouthEntrance")
       self:addWarp(Warp(newLoc, SwampSouthEntrance))
     end
+  elseif oldMapId == Tantegel then
+    print("leaving Tantegel")
+    self:addWarp(Warp(TantegelEntrance, self.maps[Tantegel].overworldCoordinates[1]))
   end
 
   self.currentMapId = newMapId
@@ -970,4 +993,54 @@ function Game:buyItem(shop, itemId, sellExisting)
   end
 
   pressA(60)
+end
+
+
+HealingLocationType = enum.new("HealingLocationType", { "INN", "OLD_MAN" })
+
+HealingLocation = class(function(a, loc, heading, type)
+  a.loc = loc
+  a.mapId = loc.mapId
+  a.x = loc.x
+  a.y = loc.y
+  a.heading = heading
+  a.type = type
+end)
+
+function HealingLocation:__tostring()
+  return "<HealingLocation - loc: " .. tostring(self.loc) .. ", type: " .. tostring(self.type) .. ">"
+end
+
+OldMan        = HealingLocation(Point(Tantegel,   18, 26), FaceRight, HealingLocationType.OLD_MAN)
+KolInn        = HealingLocation(Point(Kol,        19,  2), FaceDown,  HealingLocationType.INN)
+CantlinInn    = HealingLocation(Point(Cantlin,     8,  5), FaceUp,    HealingLocationType.INN)
+RimuldarInn   = HealingLocation(Point(Rimuldar,   19,  2), FaceLeft,  HealingLocationType.INN)
+BrecconaryInn = HealingLocation(Point(Brecconary,  8, 21), FaceRight, HealingLocationType.INN)
+GarinhamInn   = HealingLocation(Point(Garinham,   15, 15), FaceRight, HealingLocationType.INN)
+
+-- for all the towns that we have seen, return the locations of the inns
+-- if we have a heal spell, then tantegel castle old man that refills mp
+function Game:healingLocations()
+  local res = {}
+  -- TODO: these aren't actually working. is it possible that seenByPlayer is never being set properly?
+  if self.maps[Brecconary].seenByPlayer then table.insert(res, BrecconaryInn) end
+  if self.maps[Kol].seenByPlayer        then table.insert(res, KolInn)        end
+  if self.maps[Garinham].seenByPlayer   then table.insert(res, GarinhamInn)   end
+  if self.maps[Cantlin].seenByPlayer    then table.insert(res, CantlinInn)    end
+  if self.maps[Rimuldar].seenByPlayer   then table.insert(res, RimuldarInn)   end
+  local spells = self:readPlayerData().spells
+  if spells:contains(Heal) or spells:contains(Healmore) then table.insert(res, OldMan) end
+  return res
+end
+
+function Game:closestHealingLocation()
+  local loc = self:getLocation()
+  local locs = self:healingLocations()
+  return list.min(locs, function(dest)
+    print("getting shortest path to from " .. tostring(loc) .. " to " .. tostring(dest.loc))
+    local path = self:shortestPath(loc, dest.loc)
+    local distance = #path
+    print("distance from " .. tostring(loc) .. " to " .. tostring(dest) .. " is " .. tostring(distance))
+    return distance
+  end)
 end

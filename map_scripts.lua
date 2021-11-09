@@ -266,6 +266,11 @@ PlayerDirScript = class(Script, function(a)
   Script.init(a, "HEADING")
 end)
 
+FaceUp    = HoldUpUntil   (Eq(PlayerDirScript(), Value(UP)))
+FaceDown  = HoldDownUntil (Eq(PlayerDirScript(), Value(DOWN)))
+FaceLeft  = HoldLeftUntil (Eq(PlayerDirScript(), Value(LEFT)))
+FaceRight = HoldRightUntil(Eq(PlayerDirScript(), Value(RIGHT)))
+
 function StatusScript(statusFld)
   return PlayerDataScript("Status: " .. statusFld, function(pd) return pd.statuses[statusFld] end)
 end
@@ -317,11 +322,6 @@ Scripts = class(function(a,mem)
   OpenSpellMenu = Consecutive("Open Spell Menu", { OpenMenu, PressRight(2), PressA(2), WaitFrames(30) })
   Talk = Consecutive("Talk", { HoldA(30), WaitFrames(10), PressA(2) })
   TakeStairs = Consecutive("Take Stairs", { OpenMenu, PressDown(2), PressDown(2), PressA(60) })
-
-  FaceUp    = HoldUpUntil   (Eq(PlayerDirScript(), Value(UP)))
-  FaceDown  = HoldDownUntil (Eq(PlayerDirScript(), Value(DOWN)))
-  FaceLeft  = HoldLeftUntil (Eq(PlayerDirScript(), Value(LEFT)))
-  FaceRight = HoldRightUntil(Eq(PlayerDirScript(), Value(RIGHT)))
 
   function VisitShop(mapId, x, y)
     return Consecutive("Visiting shop at: " .. tostring(Point(mapId, x, y)), {
@@ -534,6 +534,7 @@ Scripts = class(function(a,mem)
         DoNothing
       ),
       VisitShop(Garinham, 10, 16),
+      VisitInn(Garinham, 15, 15, FaceRight),
       GotoOverworld(Garinham)
     })
 
@@ -589,10 +590,10 @@ Scripts = class(function(a,mem)
 
   kol =
     Consecutive("Kol", {
-      SearchAt(Kol, 9, 6),
-      VisitShop(Kol, 20, 12),
       -- todo: dont search if we already have
       -- unless we are doing a ghetto grind
+      SearchAt(Kol, 9, 6),
+      VisitShop(Kol, 20, 12),
       VisitInn(Kol, 19, 2, FaceDown),
       -- TODO: we can't go to this one yet
       -- because its not a weapon and armor shop
@@ -611,7 +612,8 @@ Scripts = class(function(a,mem)
         Consecutive("Get chest Rimuldar", {Goto(Rimuldar, 24, 23), OpenChest}),
         DoNothing
       ),
-      VisitShop(Rimuldar, 23, 9)
+      VisitShop(Rimuldar, 23, 9),
+      VisitInn(Rimuldar, 18, 18, FaceLeft)
     })
 
   -- TODO: a lot of work needs to be done on this script
@@ -630,11 +632,17 @@ Scripts = class(function(a,mem)
 
   cantlin = Consecutive( "Cantlin", {
     VisitShop(Cantlin, 25, 26),
-    -- VisitShop(Cantlin, 26, 12), -- TODO: this one we can only do if we hve keys:
+    -- VisitShop(Cantlin, 26, 12), -- TODO: this one we can only do if we have keys:
     -- this one has the guy that moves around
     -- WeaponAndArmorShop({Point(Cantlin, 20, 3), Point(Cantlin, 20, 4), Point(Cantlin, 20, 5), Point(Cantlin, 20, 6)}, getShopItems(c1))
     VisitInn(Cantlin, 8, 5, FaceUp),
     GotoOverworld(Cantlin)
+  })
+
+  brecconary = Consecutive("Brecconary", {
+    VisitShop(Brecconary, 5, 6),
+    VisitInn(Brecconary, 8, 21, FaceRight),
+    GotoOverworld(Brecconary)
   })
 
   -- This is for maps that we don't really need a script for
@@ -656,7 +664,7 @@ Scripts = class(function(a,mem)
     [TantegelThroneRoom] = throneRoomScript,
     [CharlockThroneRoom] = exploreCharlockThroneRoom,
     [Kol] = kol,
-    [Brecconary] =  VisitShop(Brecconary, 5, 6),
+    [Brecconary] = brecconary,
     [Garinham] = garinhamScript,
     [Cantlin] = cantlin,
     [Rimuldar] = rimuldar,
@@ -688,6 +696,7 @@ Scripts = class(function(a,mem)
   a.TakeStairs = TakeStairs
   a.EnterCharlock = EnterCharlock
   a.GameStartMenuScript = GameStartMenuScript
+  a.throneRoomScript = throneRoomScript
   a.GotoPoint = GotoPoint
   a.Talk = Talk
 end)

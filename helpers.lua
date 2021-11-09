@@ -294,8 +294,23 @@ function list.indexOf(t, v, eqOp)
   return nil
 end
 
+function list.find(t, v, eqOp)
+  for i = 1, #t do
+    if eqOp == nil then
+      if v == t[i] then return t[i] end
+    else
+      if eqOp(v,t[i]) then return t[i] end
+    end
+  end
+  return nil
+end
+
+function list.findUsingDotEquals(t,v)
+  return list.find(t, v, function(v2) return v:equals(v2) end)
+end
+
 function list.exists(t, v, eqOp)
-  return list.indexOf(t, v, eqOp)
+  return list.indexOf(t, v, eqOp) ~= nil
 end
 
 function list.delete(t, index)
@@ -417,7 +432,7 @@ Neighbor = class(function(a, mapId, x, y, type)
 end)
 
 function Neighbor:__tostring()
-  return"<Neighbor mapId:" .. self.mapId .. ", x:" .. self.x .. ", y:" .. self.y .. ", type: " .. self.type.name .. ">"
+  return "<Neighbor mapId:" .. self.mapId .. ", x:" .. self.x .. ", y:" .. self.y .. ", type: " .. self.type.name .. ">"
 end
 
 function Neighbor:equalsPoint(p)
