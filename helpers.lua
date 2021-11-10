@@ -39,6 +39,19 @@ function round(n)
   return n % 1 >= 0.5 and math.ceil(n) or math.floor(n)
 end
 
+aiLogFile = io.open("/Users/joshcough/work/dwrandomizer_ai/ai.out", "w")
+
+log = {}
+
+function log.debug(...)
+  local args = { ... }
+	for _, v in ipairs( args ) do
+		aiLogFile:write(tostring(v) .. "\t")
+	end
+  aiLogFile:write("\n")
+  aiLogFile:flush()
+end
+
 function table.shallow_copy(t)
   local t2 = {}
   for k,v in pairs(t) do
@@ -153,7 +166,7 @@ end
 
 function table.dump( t )
   for i,v in ipairs(t) do
-    print(i,v)
+    log.debug(i,v)
   end
 end
 
@@ -363,6 +376,14 @@ function list.filter(t, f)
   return res
 end
 
+function list.filter3(t, f)
+  return
+    list.filter(t,
+      function(t2)
+        return list.filter(t2, function(t3) return list.filter(t3, f) end)
+      end)
+end
+
 function list.span(t, pred)
   local resL = {}
   local resR = {}
@@ -381,12 +402,16 @@ function list.span(t, pred)
   return {resL, resR}
 end
 
-function table.print(arr, indentLevel)
+function list.log(l)
+  for _, item in ipairs(l) do log.debug(item) end
+end
+
+function table.log(arr, indentLevel)
     local str = ""
     local indentStr = "#"
 
     if(indentLevel == nil) then
-        print(table.print(arr, 0))
+        log.debug(table.log(arr, 0))
         return
     end
 
@@ -396,7 +421,7 @@ function table.print(arr, indentLevel)
 
     for index,value in pairs(arr) do
         if type(value) == "table" then
-            str = str..indentStr..index..": \n"..table.print(value, (indentLevel + 1))
+            str = str..indentStr..index..": \n"..table.log(value, (indentLevel + 1))
         else
             str = str..indentStr..index..": "..tostring(value).."\n"
         end
@@ -419,24 +444,38 @@ function Point:equals(p2)
   return self.mapId == p2.mapId and self.x == p2.x and self.y == p2.y
 end
 
-NeighborType = enum.new("Neighbor Type", {
-  "SAME_MAP",
+NeighborDir = enum.new("Neighbor Direction", {
+  "LEFT",
+  "RIGHT",
+  "UP",
+  "DOWN",
   "STAIRS",
-  "BORDER_LEFT",
-  "BORDER_RIGHT",
-  "BORDER_UP",
-  "BORDER_DOWN",
 })
 
-Neighbor = class(function(a, mapId, x, y, type)
+-- todo: can this be NeighborDir:oppositeDirection? can we put functions on enums?
+function oppositeDirection(newNeighborDir)
+  if      newNeighborDir == NeighborDir.LEFT  then return NeighborDir.RIGHT
+  elseif newNeighborDir == NeighborDir.RIGHT then return NeighborDir.LEFT
+  elseif newNeighborDir == NeighborDir.UP    then return NeighborDir.DOWN
+  elseif newNeighborDir == NeighborDir.DOWN  then return NeighborDir.UP
+  else return NeighborDir.STAIRS
+  end
+end
+
+Neighbor = class(function(a, mapId, x, y, dir)
   a.mapId = mapId
   a.x = x
   a.y = y
-  a.type = type
+  a.dir = dir
 end)
 
 function Neighbor:__tostring()
-  return "<Neighbor mapId:" .. self.mapId .. ", x:" .. self.x .. ", y:" .. self.y .. ", type: " .. self.type.name .. ">"
+  return "<Neighbor mapId:" .. self.mapId .. ", x:" .. self.x .. ", y:" .. self.y .. ", dir: " .. self.dir.name .. ">"
+end
+
+function Neighbor:equals(n)
+  if n == nil then return false end
+  return self.mapId == n.mapId and self.x == n.x and self.y == n.y -- and self.dir == n.dir
 end
 
 function Neighbor:equalsPoint(p)

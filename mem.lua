@@ -306,8 +306,8 @@ function Memory:readNPC(byte)
   local b2 = self:readRAM(byte + 1)
   return NPC(byte, AND(b1, 31), AND(b2, 31))
   -- if we ever care about sprite and direction (i doubt we will), we can use these:
-  -- print("SSS? ", AND(b1, 224), decimalToHex(bitwise_and(b1, 224)))
-  -- print("DDD? ", AND(b2, 224), decimalToHex(bitwise_and(b2, 224)))
+  -- log.debug("SSS? ", AND(b1, 224), decimalToHex(bitwise_and(b1, 224)))
+  -- log.debug("DDD? ", AND(b2, 224), decimalToHex(bitwise_and(b2, 224)))
 end
 
 NPC = class(function(a, byte, x, y)
@@ -323,7 +323,7 @@ end
 function Memory:printNPCs()
   local npcs = self:readNPCs()
   for _, npc in ipairs(npcs) do
-    print(npc)
+    log.debug(npc)
   end
 end
 
@@ -333,17 +333,17 @@ function Memory:printDoorsAndChests()
   -- .alias DoorYPos         $600D   ;Through $601B. opened on the current map.
   -- .alias TrsrXPos         $601C   ;Through $602A. X and y positions of treasure-->
   -- .alias TrsrYPos         $601D   ;Through $602B. chests picked up on the current map.
-  print("=== Doors:")
+  log.debug("=== Doors:")
   local i = 0x600C
   while i <= 0x601A do
-    print(self:readRAM(i), self:readRAM(i+1))
+    log.debug(self:readRAM(i), self:readRAM(i+1))
     i = i + 2
   end
 
-  print("=== Chests:")
+  log.debug("=== Chests:")
   local i = 0x601C
   while i <= 0x602A do
-    print(self:readRAM(i), self:readRAM(i+1))
+    log.debug(self:readRAM(i), self:readRAM(i+1))
     i = i + 2
   end
 end

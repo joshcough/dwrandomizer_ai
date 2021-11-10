@@ -1,5 +1,6 @@
 require "Class"
 enum = require("enum")
+require "helpers"
 
 SlimeId         = 0
 RedSlimeId      = 1
@@ -177,7 +178,7 @@ function getGrindInfo(playerData, overworld)
 end
 
 function chooseClosestTile(playerLoc, enemyLocations)
-  print("picking closest tile to the player for grinding")
+  log.debug("picking closest tile to the player for grinding")
   local d = list.min(enemyLocations, function(t)
     return math.abs(t.x - playerLoc.x) + math.abs(t.y - playerLoc.y)
   end)
@@ -188,12 +189,12 @@ function Enemy:executeBattle(game)
 
   if not table.containsUsingDotEquals(self.locations, game:getLocation()) then
     table.insert(self.locations, game:getLocation())
-    -- print("have now seen " .. self.name .. " at: ", tostring(self.locations))
+    -- log.debug("have now seen " .. self.name .. " at: ", tostring(self.locations))
   end
 
   function battleStarted() return game.inBattle end
   function battleEnded()
-    -- print("self.enemyKilled", self.enemyKilled, "self.dead", self.dead, "self.inBattle: ", self.inBattle)
+    -- log.debug("self.enemyKilled", self.enemyKilled, "self.dead", self.dead, "self.inBattle: ", self.inBattle)
     return game.enemyKilled  -- i killed the enemy
       or   game.dead         -- the enemy killed me
       or   not game.inBattle -- the enemy ran
@@ -204,7 +205,7 @@ function Enemy:executeBattle(game)
   local enemyCanBeDefeated =
     self:canBeDefeatedByPlayer(game:readPlayerData()) or self.id == MetalSlimeId
 
-  print("canBeDefeatedByPlayer", enemyCanBeDefeated, "oneRoundDamageRange", self:oneRoundDamageRange(game:readPlayerData()))
+  log.debug("canBeDefeatedByPlayer", enemyCanBeDefeated, "oneRoundDamageRange", self:oneRoundDamageRange(game:readPlayerData()))
 
   if enemyCanBeDefeated then
     holdAUntil(battleEnded, "battle has ended")
@@ -217,5 +218,5 @@ function Enemy:executeBattle(game)
     end
   end
 
-  print("xpToNextLevel: ", game:readPlayerData():xpToNextLevel(), "self.stats.level", game:readPlayerData().stats.level)
+  log.debug("xpToNextLevel: ", game:readPlayerData():xpToNextLevel(), "self.stats.level", game:readPlayerData().stats.level)
 end

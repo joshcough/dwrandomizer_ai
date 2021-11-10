@@ -347,13 +347,13 @@ function StaticMap:mkGraph (haveKeys)
     -- if we can't walk to the node, dont bother including the node in the graph at all
     if not isWalkable(x,y) then return {} end
     local res = {}
-    function insertNeighbor(x,y) table.insert(res, Neighbor(self.mapId, x, y, NeighborType.SAME_MAP)) end
-    if x > 0 and isWalkable(x-1, y) then insertNeighbor(x-1, y) end
-    if x < self.width - 1 and isWalkable(x+1, y) then insertNeighbor(x+1, y) end
-    if y > 0 and isWalkable(x, y-1) then insertNeighbor(x, y-1) end
-    if y < self.height - 1 and isWalkable(x, y+1) then insertNeighbor(x, y+1) end
+    function insertNeighbor(x,y,dir) table.insert(res, Neighbor(self.mapId, x, y, dir)) end
+    if x > 0               and isWalkable(x-1, y) then insertNeighbor(x-1, y, NeighborDir.LEFT) end
+    if x < self.width - 1  and isWalkable(x+1, y) then insertNeighbor(x+1, y, NeighborDir.RIGHT) end
+    if y > 0               and isWalkable(x, y-1) then insertNeighbor(x, y-1, NeighborDir.UP) end
+    if y < self.height - 1 and isWalkable(x, y+1) then insertNeighbor(x, y+1, NeighborDir.DOWN) end
     -- really useful for debugging pathing. just plug in the location you care about
-    -- if self.mapId == 7 and x == 19 and y == 23 then print("n", res) end
+    -- if self.mapId == 7 and x == 19 and y == 23 then log.debug("n", res) end
     return res
   end
 
@@ -362,12 +362,12 @@ function StaticMap:mkGraph (haveKeys)
     if self.warps[x] ~= nil then
       if self.warps[x][y] ~= nil then
         for _, w in pairs(self.warps[x][y]) do
-          table.insert(res, Neighbor(w.mapId, w.x, w.y, NeighborType.STAIRS))
+          table.insert(res, Neighbor(w.mapId, w.x, w.y, NeighborDir.STAIRS))
         end
       end
     end
     -- really useful for debugging pathing. just plug in the location you care about
-    -- if self.mapId == 7 and x == 19 and y == 23 then print("w", res) end
+    -- if self.mapId == 7 and x == 19 and y == 23 then log.debug("w", res) end
     return res
   end
 
@@ -378,13 +378,13 @@ function StaticMap:mkGraph (haveKeys)
     local res = {}
     local coor = self.overworldCoordinates[1]
     function insertNeighbor(dir) table.insert(res, Neighbor(coor.mapId, coor.x, coor.y, dir)) end
-    if     x == 0               then insertNeighbor(NeighborType.BORDER_LEFT)
-    elseif x == self.width  - 1 then insertNeighbor(NeighborType.BORDER_RIGHT)
-    elseif y == 0               then insertNeighbor(NeighborType.BORDER_UP)
-    elseif y == self.height - 1 then insertNeighbor(NeighborType.BORDER_DOWN)
+    if     x == 0               then insertNeighbor(NeighborDir.LEFT)
+    elseif x == self.width  - 1 then insertNeighbor(NeighborDir.RIGHT)
+    elseif y == 0               then insertNeighbor(NeighborDir.UP)
+    elseif y == self.height - 1 then insertNeighbor(NeighborDir.DOWN)
     end
     -- really useful for debugging pathing. just plug in the location you care about
-    -- if self.mapId == 7 and x == 19 and y == 23 then print("b", res) end
+    -- if self.mapId == 7 and x == 19 and y == 23 then log.debug("b", res) end
     return res
   end
 
@@ -448,8 +448,8 @@ function StaticMap:saveGraphToFile ()
 end
 
 function quickPrintGraph(mapId, allWarps)
-  print(loadStaticMapFromFile(mapId, allWarps):mkGraph(false))
-  print(loadStaticMapFromFile(mapId, allWarps):mkGraph(true))
+  log.debug(loadStaticMapFromFile(mapId, allWarps):mkGraph(false))
+  log.debug(loadStaticMapFromFile(mapId, allWarps):mkGraph(true))
 end
 
 function loadStaticMapFromFile (mapId, allWarps)

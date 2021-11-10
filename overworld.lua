@@ -58,10 +58,6 @@ OVERWORLD_TILES = {
   [Stairs.id]   = Stairs,
 }
 
-function getOverworldTile(tileId)
-  return OVERWORLD_TILES[tileId]
-end
-
 function getOverworldTileName(tileId)
   return OVERWORLD_TILES[tileId] and OVERWORLD_TILES[tileId].name or "unknown"
 end
@@ -140,6 +136,10 @@ function OverWorld:getOverworldMapTileAt(x, y)
   return OVERWORLD_TILES[self:getOverworldMapTileIdAt(x, y)]
 end
 
+function OverWorld:getOverworldMapTileAtNoUpdate(x, y)
+  return OVERWORLD_TILES[self.overworldRows[y][x]]
+end
+
 ImportantLocationType = enum.new("Tyoes of important locations on the Overworld", {
   "CHARLOCK", -- Could be CASTLE, but, we already know where Tantegel is, so, it just must be Charlock
   "TOWN",
@@ -166,9 +166,9 @@ function OverWorld:updateKnownWorld(x, y, tileId)
       self.nrTilesSeen=self.nrTilesSeen+1
       local tileName = getOverworldTileName(tileId)
       -- this print statement is important... but its so damn noisy.
-      -- print ("discovered new tile at (x: " .. x .. ", y: " .. y .. ")" .. " tile is: " .. tileName .. " tile id is: " .. tileId)
+      -- log.debug ("discovered new tile at (x: " .. x .. ", y: " .. y .. ")" .. " tile is: " .. tileName .. " tile id is: " .. tileId)
       if tileId >= 8 and tileId <= 10 then
-        print ("discovered important location at (x: " .. x .. ", y: " .. y .. ")" .. " it is a: " .. tileName)
+        log.debug ("discovered important location at (x: " .. x .. ", y: " .. y .. ")" .. " it is a: " .. tileName)
         table.insert(self.importantLocations, ImportantLocation(x, y, tileId))
       end
   end
@@ -230,14 +230,14 @@ function OverWorld:neighbors(x,y)
   end
   local res = {}
 
-  function insertNeighbor(x,y)
-    table.insert(res,Neighbor(OverWorldId, x, y, NeighborType.SAME_MAP))
+  function insertNeighbor(x,y,dir)
+    table.insert(res,Neighbor(OverWorldId, x, y, dir))
   end
 
-  if x > 0   and isWalkable(x-1, y) then insertNeighbor(x-1, y) end
-  if x < 119 and isWalkable(x+1, y) then insertNeighbor(x+1, y) end
-  if y > 0   and isWalkable(x, y-1) then insertNeighbor(x, y-1) end
-  if y < 119 and isWalkable(x, y+1) then insertNeighbor(x, y+1) end
+  if x > 0   and isWalkable(x-1, y) then insertNeighbor(x-1, y, NeighborDir.LEFT) end
+  if x < 119 and isWalkable(x+1, y) then insertNeighbor(x+1, y, NeighborDir.RIGHT) end
+  if y > 0   and isWalkable(x, y-1) then insertNeighbor(x, y-1, NeighborDir.UP) end
+  if y < 119 and isWalkable(x, y+1) then insertNeighbor(x, y+1, NeighborDir.DOWN) end
   return res
 end
 
@@ -338,7 +338,7 @@ function OverWorld:printVisibleGrid (currentX, currentY)
     for x = 0, #(grid[y]) do
       row = row .. " | " .. getOverworldTileName(grid[y][x])
     end
-    print(row .. " |")
+    log.debug(row .. " |")
   end
 end
 
@@ -351,12 +351,12 @@ function OverWorld:newNeighbors(x,y)
   local res = {}
 
   function insertNeighbor(x,y,dir)
-    table.insert(res,NewNeighbor(OverWorldId, x, y, dir))
+    table.insert(res,Neighbor(OverWorldId, x, y, dir))
   end
 
-  if x > 0   and isWalkable(x-1, y) then insertNeighbor(x-1, y, NewNeighborDir.LEFT) end
-  if x < 119 and isWalkable(x+1, y) then insertNeighbor(x+1, y, NewNeighborDir.RIGHT) end
-  if y > 0   and isWalkable(x, y-1) then insertNeighbor(x, y-1, NewNeighborDir.UP) end
-  if y < 119 and isWalkable(x, y+1) then insertNeighbor(x, y+1, NewNeighborDir.DOWN) end
+  if x > 0   and isWalkable(x-1, y) then insertNeighbor(x-1, y, NeighborDir.LEFT) end
+  if x < 119 and isWalkable(x+1, y) then insertNeighbor(x+1, y, NeighborDir.RIGHT) end
+  if y > 0   and isWalkable(x, y-1) then insertNeighbor(x, y-1, NeighborDir.UP) end
+  if y < 119 and isWalkable(x, y+1) then insertNeighbor(x, y+1, NeighborDir.DOWN) end
   return res
 end

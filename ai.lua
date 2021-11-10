@@ -115,43 +115,43 @@ main()
 -- oldish stuff that i need to evaluate if i really want to keep
 -- game:cast(Repel)
 --     local spells = game.memory:readPlayerData().spells
---     print(spells:spellIndex(Healmore))
+--     log.debug(spells:spellIndex(Healmore))
 --   game:interpretScript(scripts.throneRoomOpeningGameScript())
 --   mem:setReturnWarpLocation(30,83) -- tangegel
 
---   print(game.maps[SwampCave].overworldCoordinates)
---   print(game.maps[Garinham].overworldCoordinates)
---   print(game.scripts.MapScripts[Tantegel])
+--   log.debug(game.maps[SwampCave].overworldCoordinates)
+--   log.debug(game.maps[Garinham].overworldCoordinates)
+--   log.debug(game.scripts.MapScripts[Tantegel])
 
 --   mem:printNPCs()
---   print(game.playerData)
---   print(game.weaponAndArmorShops)
---   print(game.searchSpots)
---   print(game.chests)
+--   log.debug(game.playerData)
+--   log.debug(game.weaponAndArmorShops)
+--   log.debug(game.searchSpots)
+--   log.debug(game.chests)
 
 -- game:gameStartScript()
 --   game:goTo(Point(Tantegel, 29,29))
 --   game:takeStairs(Point(Tantegel, 29,29))
 --   game:goTo(Point(TantegelThroneRoom, 3,4))
 
---   print(game.memory:readPlayerData().items:hasFairyFlute())
+--   log.debug(game.memory:readPlayerData().items:hasFairyFlute())
 
 -- i run this each time to make sure nothing has changed.
 -- if anything changes, git will tell me.
 -- saveStaticMaps(mem, warps)
 
 -- i print this out just to make sure things look sane when i start the script.
--- table.print(shortestPath(Point(TantegelThroneRoom, 1,1), Point(TantegelThroneRoom, 1,8), true, graphs))
+-- table.log(shortestPath(Point(TantegelThroneRoom, 1,1), Point(TantegelThroneRoom, 1,8), true, graphs))
 -- can also do this, which loads the maps from files instead of memory:
--- table.print(shortestPath(Point(TantegelThroneRoom, 1,1), Point(TantegelThroneRoom, 1,8), true))
--- table.print(shortestPath(Point(Charlock, 10,19), Point(CharlockThroneRoom, 17,24), true))
+-- table.log(shortestPath(Point(TantegelThroneRoom, 1,1), Point(TantegelThroneRoom, 1,8), true))
+-- table.log(shortestPath(Point(Charlock, 10,19), Point(CharlockThroneRoom, 17,24), true))
 
 -- These are some cool things, but, I don't think I actually really need them
 -- so just dumping them here.
 
 --   -- .alias RadiantTimer     $DA     ;Remaining time for radiant spell.
 --   memory.registerwrite(0xDA, function(address)
---     print(self.game.memory:readRAM(0xDA))
+--     log.debug(self.game.memory:readRAM(0xDA))
 --   end)
 --   -- .alias RepelTimer       $DB     ;Remining repel spell time.
 --   memory.registerwrite(0xDB, function(address)
@@ -164,10 +164,10 @@ main()
 --   game:useItem(MagicKey)
 --   game:useItem(RainbowDrop)
 --
---   print("levels: ", mem:readLevels())
+--   log.debug("levels: ", mem:readLevels())
 --   local pd = mem:readPlayerData()
---   print("totalXpToNextLevelFromCurrentLevel:", pd:totalXpToNextLevelFromCurrentLevel())
---   print("totalXpToNextLevel(1):", pd:totalXpToNextLevel(1)) ...
---   print("totalXpToNextLevel(4):", pd:totalXpToNextLevel(4))
+--   log.debug("totalXpToNextLevelFromCurrentLevel:", pd:totalXpToNextLevelFromCurrentLevel())
+--   log.debug("totalXpToNextLevel(1):", pd:totalXpToNextLevel(1)) ...
+--   log.debug("totalXpToNextLevel(4):", pd:totalXpToNextLevel(4))
 
---   print(mem:readWeaponAndArmorShops())
+--   log.debug(mem:readWeaponAndArmorShops())

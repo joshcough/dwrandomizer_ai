@@ -1,6 +1,7 @@
 require 'Class'
 require 'controller'
 enum = require("enum")
+require 'helpers'
 require 'player_data'
 require 'static_maps'
 
@@ -314,8 +315,8 @@ Scripts = class(function(a,mem)
 
   charlockLocation = coordinates[Charlock][1]
   a.tantegelLocation = coordinates[Tantegel][1]
---   print("charlockLocation", charlockLocation)
---   print("tantegelLocation", a.tantegelLocation)
+--   log.debug("charlockLocation", charlockLocation)
+--   log.debug("tantegelLocation", a.tantegelLocation)
 
   OpenMenu = Consecutive("Open Menu", { HoldA(30), WaitFrames(10) })
   OpenItemMenu = Consecutive("Open Item Menu", { OpenMenu, PressRight(2), PressDown(2), PressA(2), WaitFrames(30) })

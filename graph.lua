@@ -16,44 +16,6 @@ GraphNode = class(function(a, nodeType)
   a.neighbors = {}
 end)
 
-NewNeighborDir = enum.new("Neighbor Direction", {
-  "LEFT",
-  "RIGHT",
-  "UP",
-  "DOWN",
-  "STAIRS",
-})
-
--- todo: can this be NewNeighborDir:oppositeDirection? can we put functions on enums?
-function oppositeDirection(newNeighborDir)
-  if      newNeighborDir == NewNeighborDir.LEFT  then return NewNeighborDir.RIGHT
-  elseif newNeighborDir == NewNeighborDir.RIGHT then return NewNeighborDir.LEFT
-  elseif newNeighborDir == NewNeighborDir.UP    then return NewNeighborDir.DOWN
-  elseif newNeighborDir == NewNeighborDir.DOWN  then return NewNeighborDir.UP
-  else return NewNeighborDir.STAIRS
-  end
-end
-
-NewNeighbor = class(function(a, mapId, x, y, dir)
-  a.mapId = mapId
-  a.x = x
-  a.y = y
-  a.dir = dir
-end)
-
-function NewNeighbor:__tostring()
-  return "<Neighbor mapId:" .. self.mapId .. ", x:" .. self.x .. ", y:" .. self.y .. ", dir: " .. self.dir.name .. ">"
-end
-
-function NewNeighbor:equalsPoint(p)
-  if p == nil then return false end
-  return self.mapId == p.mapId and self.x == p.x and self.y == p.y
-end
-
-function NewNeighbor:getPoint()
-  return Point(self.mapId, self.x, self.y)
-end
-
 NewGraph = class(function(a, overworld)
   a.overworld = overworld
   a.rows = {}
@@ -75,8 +37,11 @@ function mkOverworldGraph()
 end
 
 function NewGraph:isDiscovered(m,x,y)
-  print("NewGraph:isDiscovered", m, x, y)
-  return self.rows[m][y][x] ~= unknown
+  return self:getNodeAt(m,x,y) ~= unknown
+end
+
+function NewGraph:getNodeAt(m,x,y)
+  return self.rows[m][y][x]
 end
 
 --TODO: when we see an important location (town/cave/castle)
@@ -85,16 +50,19 @@ end
 function NewGraph:discover(m, x, y)
   if self:isDiscovered(m,x,y) then return end
 
-  local newNode = GraphNode(GraphNodeType.KNOWN)
-  self.rows[m][y][x] = newNode
+  -- log.debug("DISCOVERED!", m, x, y)
+  self.rows[m][y][x] = GraphNode(GraphNodeType.KNOWN)
 
   function discovered(n) return self:isDiscovered(n.mapId, n.x, n.y) end
 
   function addNeighbor(n)
+    -- log.debug("adding neighbor", n)
     -- first, add the neighbor to m,x,y
-    table.insert(newNode.neighbors, n)
+    table.insert(self:getNodeAt(m,x,y).neighbors, n)
     -- then add m,x,y to the neighbors or n
-    table.insert(self.rows[n.mapId][n.y][n.x], NewNeighbor(m, x, y, oppositeDirection(n.dir)))
+    local reverseNeighbor = Neighbor(m, x, y, oppositeDirection(n.dir))
+    -- log.debug("adding reverse neighbor", reverseNeighbor)
+    table.insert(self:getNodeAt(n.mapId,n.x,n.y).neighbors, reverseNeighbor)
   end
 
   -- TODO: for now, only doing this on overworld.
@@ -143,7 +111,7 @@ end
 --     if y > 0 and isWalkable(x, y-1) then insertNeighbor(x, y-1) end
 --     if y < self.height - 1 and isWalkable(x, y+1) then insertNeighbor(x, y+1) end
 --     -- really useful for debugging pathing. just plug in the location you care about
---     -- if self.mapId == 7 and x == 19 and y == 23 then print("n", res) end
+--     -- if self.mapId == 7 and x == 19 and y == 23 then log.debug("n", res) end
 --     return res
 --   end
 --
@@ -157,7 +125,7 @@ end
 --       end
 --     end
 --     -- really useful for debugging pathing. just plug in the location you care about
---     -- if self.mapId == 7 and x == 19 and y == 23 then print("w", res) end
+--     -- if self.mapId == 7 and x == 19 and y == 23 then log.debug("w", res) end
 --     return res
 --   end
 --
@@ -174,7 +142,7 @@ end
 --     elseif y == self.height - 1 then insertNeighbor(NeighborType.BORDER_DOWN)
 --     end
 --     -- really useful for debugging pathing. just plug in the location you care about
---     -- if self.mapId == 7 and x == 19 and y == 23 then print("b", res) end
+--     -- if self.mapId == 7 and x == 19 and y == 23 then log.debug("b", res) end
 --     return res
 --   end
 --
@@ -214,3 +182,96 @@ end
 --
 -- when we add a neighbor y to a node x
 -- we can then immediately add the neighbor x to node y!
+
+
+function NewGraph:shortestPath(startNode, endNode)
+  -- log.debug("in newgraph:shorestpath", startNode, endNode)
+  if startNode.mapId ~= 1 or endNode.mapId ~= 1 then return {"no path man"} end
+
+  function insertPoint(tbl, p, value)
+    if tbl[p.mapId] == nil then tbl[p.mapId] = {} end
+    if tbl[p.mapId][p.x] == nil then tbl[p.mapId][p.x] = {} end
+    tbl[p.mapId][p.x][p.y] = value
+  end
+
+  function solve(s)
+    local q = Queue()
+    q:push(s)
+
+    local visited = {}
+    local prev = {}
+    insertPoint(visited, s, true)
+
+    while not q:isEmpty() do
+      local node = q:pop()
+      -- we have to do this check here because we may have pushed on a neighbor that we've never seen on the overworld.
+      -- and therefore it wouldn't appear in the graph.
+      if self:isDiscovered(node.mapId, node.x, node.y) then
+        local neighbors = self:getNodeAt(node.mapId, node.x, node.y).neighbors
+        for _, neighbor in ipairs(neighbors) do
+          if not containsPoint(visited, neighbor) then
+            q:push(neighbor)
+            insertPoint(visited, neighbor, true)
+            insertPoint(prev, neighbor, {node, neighbor})
+          end
+        end
+      end
+    end
+
+    return prev
+  end
+
+  function reconstruct(s, e, prev)
+    -- log.debug("reconstruct", s, e, prev)
+    local path = {}
+    local at = e
+    while not (at == nil) do
+      -- log.debug("at", at)
+      if prev[at.mapId] == nil or prev[at.mapId][at.x] == nil or prev[at.mapId][at.x][at.y] == nil
+        then
+          table.insert(path, at)
+          at = nil
+        else
+          table.insert(path, prev[at.mapId][at.x][at.y][2])
+          at = prev[at.mapId][at.x][at.y][1]
+      end
+    end
+    -- TODO: maybe ideally we would throw an error here instead of returning {}, but im honestly not sure yet.
+    if #path == 0 then return {}
+    else
+      local pathR = table.reverse(path)
+      if pathR[1] == nil then return {}
+      else
+        -- log.debug("pathR[1]", pathR[1])
+        return pathR[1]:equals(s) and pathR or {}
+      end
+    end
+  end
+
+  local r = reconstruct(startNode, endNode, solve(startNode))
+  -- log.debug("shortestPath", tostring(r))
+  return r
+end
+
+function NewGraph:knownWorldBorder()
+  local res = {}
+  for y,row in pairs(self.rows[1]) do
+    for x,tile in pairs(row) do
+      local overworldTile = self.overworld:getOverworldMapTileAtNoUpdate(x,y)
+      if overworldTile.walkable and self:isDiscovered(OverWorldId, x, y) then
+        local nbrs = self.overworld:newNeighbors(x,y)
+        -- TODO: potentially adding this more than once if more than one neighbor is nil
+        for i = 1, #(nbrs) do
+          local nbr = nbrs[i]
+          -- this is saying: if you are discovered, one of your neighbors is undiscovered
+          -- then YOU are on the border. you are a border tile.
+          -- because you bump up against the unknown. :)
+          if not self:isDiscovered(nbr.mapId, nbr.x, nbr.y) then
+            table.insert(res, Point(OverWorldId, x, y))
+          end
+        end
+      end
+    end
+  end
+  return res
+end

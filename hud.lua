@@ -151,7 +151,7 @@ strings = {
 
 
 function say(str) 
-  print(string.format("%s\n", str))
+  log.debug(string.format("%s\n", str))
 end
 
 function battle_message(strings, enemy_type)

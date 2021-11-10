@@ -37,6 +37,8 @@ Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsW
   a.lastPrintedPercentage = 0
   -- we start on the menu screen, so on no map at all.
   a.currentMapId = 0
+
+  a.file_descriptor = io.open("/Users/joshcough/work/dwrandomizer_ai/ai.out", "w")
 end)
 
 function newGame(memory)
@@ -102,12 +104,22 @@ GotoExitValues = enum.new("Follow Path Exit Values", {
 function Game:goTo(dest)
   local loc = self:getLocation()
   if loc:equals(dest) then
-    -- print("I was asked to go to: " .. tostring(dest) .. ", but I am already there!")
+    -- log.debug("I was asked to go to: " .. tostring(dest) .. ", but I am already there!")
     return GotoExitValues.AT_LOCATION
   end
   local path = self:shortestPath(loc, dest)
+  local newpath = self.overworld.newGraph:shortestPath(loc, dest)
+
+  if #path ~= #newpath then
+    log.debug("==========GOTO different paths!===========")
+    log.debug("in GOTO, SRC: ", loc)
+    log.debug("in GOTO, DEST: ", dest)
+    log.debug("in GOTO OLD PATH", path)
+    log.debug("in GOTO NEW PATH", newpath)
+  end
+
   if path == nil or #path == 0 then
-    print("ERROR: Could not create path from: " .. tostring(loc) .. " to: " .. tostring(dest))
+    log.debug("ERROR: Could not create path from: " .. tostring(loc) .. " to: " .. tostring(dest))
     -- something went wrong, we can't get a path there, and we aren't at the destination
     -- so return false indicating that we didn't make it.
     return GotoExitValues.NO_PATH
@@ -141,6 +153,9 @@ end
 function Game:followPath(path)
   local commands = convertPathToCommands(path, self.maps)
   if commands == nil or #commands == 0 then return GotoExitValues.NO_PATH end
+
+  -- list.log(commands)
+
   local dest = nil
   for i,c in pairs(commands) do
     -- if we are in battle or the repel window opened, then abort
@@ -157,11 +172,11 @@ function Game:followPath(path)
           self.overworld:getVisibleOverworldGrid(self:getX(), self:getY())
           local currentPercentageSeen = round(self:percentageOfWorldSeen())
           if self.lastPrintedPercentage < currentPercentageSeen then
-            print("percentageOfWorldSeen: " .. currentPercentageSeen)
+            log.debug("percentageOfWorldSeen: " .. currentPercentageSeen)
             self.lastPrintedPercentage = currentPercentageSeen
           end
         end
-        -- print("current point: ", memory:getLocation(), "c.to: ", c.to, "equal?: ", p:equals(c.to))
+        -- log.debug("current point: ", memory:getLocation(), "c.to: ", c.to, "equal?: ", p:equals(c.to))
         return loc:equals(c.to) or self.inBattle or self.repelTimerWindowOpen or self.dead or self.mapChanged
       end)
     end
@@ -180,7 +195,7 @@ end
 
 -- todo: what should this function return?
 function Game:interpretScript(s)
-  -- print("Script: " .. tostring(s))
+  -- log.debug("Script: " .. tostring(s))
   -- TODO: im not sure if these first two cases are really needed, but they dont hurt.
   if     self.inBattle then self:executeBattle()
   -- TODO: consider casting repel right here instead of just closing window
@@ -224,15 +239,15 @@ function Game:interpretScript(s)
     elseif s:is_a(WaitFrames) then waitFrames(s.duration)
     elseif s:is_a(WaitUntil) then
       waitUntil(function() return self:evaluateCondition(s.condition) end, s.duration, s.msg)
-    elseif s:is_a(DebugScript) then print(s.name)
+    elseif s:is_a(DebugScript) then log.debug(s.name)
     end
   else
-    print("Script is not a script! " .. tostring(s))
+    log.debug("Script is not a script! " .. tostring(s))
   end
 end
 
 function Game:evaluateCondition(s)
-  -- print("evaluateCondition: ", s)
+  -- log.debug("evaluateCondition: ", s)
   -- base conditions
       if s:is_a(IsChestOpen) then return self.chests:isChestOpen(s.location)
   elseif s:is_a(IsDoorOpen)  then return self:isDoorOpen(s.location)
@@ -289,7 +304,7 @@ end
 
 function Game:markChestOpened ()
   self.chests:openChestAt(self:getLocation())
-  -- print(self.memory:printDoorsAndChests())
+  -- log.debug(self.memory:printDoorsAndChests())
 end
 
 function Game:searchGroundScript ()
@@ -299,11 +314,11 @@ end
 -- TODO: this whole function needs to get redone completely. this is just a hack.
 function Game:addWarp(warp)
   if table.containsUsingDotEquals(self.warps, warp) then
-    -- print("NOT Adding warp, it already exists!: " .. tostring(warp))
+    -- log.debug("NOT Adding warp, it already exists!: " .. tostring(warp))
     return
   end
 
-  print("Adding warp: " .. tostring(warp))
+  log.debug("Adding warp: " .. tostring(warp))
   table.insert(self.warps, warp)
 
   -- TODO: this is just terrible....
@@ -384,7 +399,7 @@ function Game:shortestPath(startNode, endNode)
   end
 
   local r = reconstruct(startNode, endNode, solve(startNode))
-  -- print("shortestPath", tostring(r))
+  -- log.debug("shortestPath", tostring(r))
   return r
 end
 
@@ -422,17 +437,12 @@ function convertPathToCommands(pathIn, maps)
     local res = {}
 
     function move(next)
-      if p2.type == NeighborType.STAIRS then return MovementCommand("Stairs", p1, p2) end
-      if p2.type == NeighborType.BORDER_LEFT then return MovementCommand(LEFT, p1, p2) end
-      if p2.type == NeighborType.BORDER_RIGHT then return MovementCommand(RIGHT, p1, p2) end
-      if p2.type == NeighborType.BORDER_UP then return MovementCommand(UP, p1, p2) end
-      if p2.type == NeighborType.BORDER_DOWN then return MovementCommand(DOWN, p1, p2) end
-      if p2.type == NeighborType.SAME_MAP then
-        if p2.y < p1.y then return MovementCommand(UP, p1, next) end
-        if p2.y > p1.y then return MovementCommand(DOWN, p1, next) end
-        if p2.x < p1.x then return MovementCommand(LEFT, p1, next) end
-        if p2.x > p1.x then return MovementCommand(RIGHT, p1, next) end
-      else print("i have no idea what is going on with the neighbor type")
+      if     p2.dir == NeighborDir.STAIRS then return MovementCommand("Stairs", p1, next)
+      elseif p2.dir == NeighborDir.LEFT   then return MovementCommand(LEFT, p1, next)
+      elseif p2.dir == NeighborDir.RIGHT  then return MovementCommand(RIGHT, p1, next)
+      elseif p2.dir == NeighborDir.UP     then return MovementCommand(UP, p1, next)
+      elseif p2.dir == NeighborDir.DOWN   then return MovementCommand(DOWN, p1, next)
+      else log.debug("i have no idea what is going on with the neighbor type")
       end
     end
 
@@ -474,7 +484,7 @@ function Game:stateMachine()
   if self.dead then self:dealWithDeath()
   elseif self.mapChanged then self:dealWithMapChange()
   elseif self:getMapId() == 0 then
-    -- print("I think we are still on map 0 man!")
+    -- log.debug("I think we are still on map 0 man!")
     self:interpretScript(self.scripts.GameStartMenuScript)
   else self:grindOrExplore()
   end
@@ -496,7 +506,7 @@ function Game:grindOrExplore()
 end
 
 function Game:grind(grind, currentLevel)
-  print("GRINDING: ", tostring(grind))
+  log.debug("GRINDING: ", tostring(grind))
   -- TODO: if one is forest and the other is desert, we want to pick desert.
   -- in general, we want to pick the tiles with the highest encounter rate.
   local neighbor = self.overworld:grindableNeighbors(grind.location.x, grind.location.y)[1]
@@ -518,13 +528,13 @@ function Game:explore()
   local atDestination = self.exploreDest ~= nil and self.exploreDest:equals(loc)
 
   if atDestination then
-    -- print("we are already at our destination...so gonna pick a new one... currently at: " .. tostring(loc))
+    -- log.debug("we are already at our destination...so gonna pick a new one... currently at: " .. tostring(loc))
     if loc.mapId == OverWorldId then
       -- if the location is in overworld.importantLocations, then we have to remove it.
       -- TODO: this code is awful
       if self:atFirstImportantLocation()
       then
-        -- print("removing important location")
+        -- log.debug("removing important location")
         self:removeFirstImportantLocation()
         self.exploreDest = nil
         self:exploreStaticMap()
@@ -552,7 +562,7 @@ function Game:exploreStaticMap()
   if script ~= nil then self:interpretScript(script)
   else
     if (emu.framecount() % 60 == 0) then
-      print("i don't yet know how to explore this map: " .. tostring(loc), ", " .. tostring(STATIC_MAP_METADATA[loc.mapId]))
+      log.debug("i don't yet know how to explore this map: " .. tostring(loc), ", " .. tostring(STATIC_MAP_METADATA[loc.mapId]))
     end
   end
 end
@@ -562,7 +572,7 @@ function Game:removeFirstImportantLocation()
 end
 
 function Game:exploreStart()
-  -- print("no destination yet, about to get one")
+  -- log.debug("no destination yet, about to get one")
   local loc = self:getLocation()
   -- TODO: if there are multiple new locations, we should pick the closest one.
   local seeSomethingNew = #(self.overworld.importantLocations) > 0
@@ -570,35 +580,35 @@ function Game:exploreStart()
     local newImportantLoc = self.overworld.importantLocations[1].location
     -- if the the new location we have spotted on the overworld is tantegel itself, ignore it.
     if newImportantLoc:equals(self.scripts.tantegelLocation) then
-      -- print("I see a castle, but its just tantegel, so I'm ignoring it")
+      -- log.debug("I see a castle, but its just tantegel, so I'm ignoring it")
       self:removeFirstImportantLocation()
     elseif self.overworld.importantLocations[1].type == ImportantLocationType.CHARLOCK then
-      print("I see Charlock!")
+      log.debug("I see Charlock!")
       self:interpretScript(self.scripts.EnterCharlock)
       self:removeFirstImportantLocation()
     else
       if self.exploreDest == nil or not self.exploreDest:equals(newImportantLoc) then
-        print("I see something new at: ", newImportantLoc)
+        log.debug("I see something new at: ", newImportantLoc)
         self:chooseNewDestinationDirectly(self.overworld.importantLocations[1].location)
       end
     end
   else
     self:chooseNewDestination(function (k) return self:chooseClosestBorderTile(k) end)
   end
-  print("new destination is: " .. tostring(self.exploreDest))
+  log.debug("new destination is: " .. tostring(self.exploreDest))
 end
 
 -- what we really should do here is pick a random walkable border tile
 -- then get one if its unseen neighbors and walk to that location.
 -- walking to the border tile itself is kinda useless. we need to walk into unseen territory.
 function Game:chooseRandomBorderTile(borderOfKnownWorld)
-  print("picking random border tile")
+  log.debug("picking random border tile")
   local nrBorderTiles = #borderOfKnownWorld
   return borderOfKnownWorld[math.random(nrBorderTiles)]
 end
 
 function Game:chooseClosestBorderTile(borderOfKnownWorld)
-  print("picking closest border tile")
+  log.debug("picking closest border tile")
   local loc = self:getLocation()
   local d = list.min(borderOfKnownWorld, function(t)
     return math.abs(t.x - loc.x) + math.abs(t.y - loc.y)
@@ -609,12 +619,15 @@ end
 function Game:chooseNewDestination(tileSelectionStrat)
   -- otherwise, we either dont have a destination so we need to get one
   -- or we are at our destination already, so we need a new one
-  local borderOfKnownWorld = self.overworld:knownWorldBorder()
---   table.print(borderOfKnownWorld)
+  local borderOfKnownWorld = self.overworld.newGraph:knownWorldBorder()
+--   log.debug("Border of known world:")
+--   log.debug(borderOfKnownWorld)
+--   log.debug(#borderOfKnownWorld)
+--   log.debug("END Border of known world")
   local nrBorderTiles = #borderOfKnownWorld
   -- TODO: this is an error case that i might need to deal with somehow.
   if nrBorderTiles == 0 then
-    print("NO BORDER TILES!")
+    log.debug("NO BORDER TILES!")
     return
   end
 
@@ -622,7 +635,7 @@ function Game:chooseNewDestination(tileSelectionStrat)
 end
 
 function Game:chooseNewDestinationDirectly(newDestination)
-  -- print("new destination", newDestination, self.overworld:getOverworldMapTileAt(newDestination.x, newDestination.y))
+  -- log.debug("new destination", newDestination, self.overworld:getOverworldMapTileAt(newDestination.x, newDestination.y))
   self.exploreDest = newDestination
 end
 
@@ -635,12 +648,17 @@ function Game:getCombinedGraphs()
 end
 
 function Game:exploreMove()
-  print("Moving from: ", self:getLocation(), " to ", self.exploreDest)
+  log.debug("Moving from: ", self:getLocation(), " to ", self.exploreDest)
   -- TODO: we are calculating the shortest path twice... we need to do better than that
   -- here... if we cant find a path to the destination, then we want to just choose a new destination
   local path = self:shortestPath(self:getLocation(), self.exploreDest)
+--   local newpath = self.overworld.newGraph:shortestPath(self:getLocation(), self.exploreDest)
+--
+--   log.debug("OLD PATH", path)
+--   log.debug("NEW PATH", newpath)
+
   if path == nil or #(path) == 0 then
-    print("couldn't find a path from player location: ", self:getLocation(), " to ", self.exploreDest)
+    log.debug("couldn't find a path from player location: ", self:getLocation(), " to ", self.exploreDest)
     self:chooseNewDestination(function (k) return self:chooseRandomBorderTile(k) end)
   else
     self:castRepel()
@@ -654,7 +672,7 @@ function Game:startEncounter()
  if (self:getMapId() > 0) then
     local enemyId = self:getEnemyId()
     local enemy = Enemies[enemyId]
-    print ("entering battle vs a " .. enemy.name)
+    log.debug ("entering battle vs a " .. enemy.name)
     self.inBattle = true
     self.enemy = enemy
   end
@@ -703,12 +721,12 @@ function Game:healIfNecessary()
 
 --   local hl = self:healingLocations()
 --   for i = 1, #hl do
---     print("healing location #" .. i)
---     print(hl[i])
+--     log.debug("healing location #" .. i)
+--     log.debug(hl[i])
 --   end
 -- if we need mp, we should go the the closest healing location
---   print("closest healing location:")
---   print(self:closestHealingLocation())
+--   log.debug("closest healing location:")
+--   log.debug(self:closestHealingLocation())
 
 end
 
@@ -723,17 +741,17 @@ function Game:executeDragonLordBattle()
 end
 
 function Game:enemyRun()
-  print("the enemy is running!")
+  log.debug("the enemy is running!")
   self.inBattle = false
 end
 
 function Game:playerRunSuccess()
-  print("you are running!")
+  log.debug("you are running!")
   self.runSuccess = true
 end
 
 function Game:playerRunFailed()
-  print("you are NOT running!")
+  log.debug("you are NOT running!")
   self.runSuccess = false
 end
 
@@ -741,11 +759,11 @@ function Game:onPlayerMove()
   -- this wasn't working quite right
   -- so i just folded it into the followPath algo.
   -- i think that is a better spot for it anyway
-  -- print("position as changed to: " .. tostring(self:getLocation()))
+  -- log.debug("position as changed to: " .. tostring(self:getLocation()))
 end
 
 function Game:onMapChange()
-  -- print("recording that the map has changed.")
+  -- log.debug("recording that the map has changed.")
   self.mapChanged = true
 end
 
@@ -756,7 +774,7 @@ function Game:dealWithDeath()
 end
 
 function Game:dealWithMapChange()
-  -- print("dealing with map change")
+  -- log.debug("dealing with map change")
   local oldMapId = self.currentMapId
   local newMapId = self:getMapId()
   local newLoc   = self:getLocation()
@@ -772,16 +790,16 @@ function Game:dealWithMapChange()
   end
 
   if newMapId < 1 then
-    -- print("The map changed, but dood, we are on map 0, so must be the menu or something...")
+    -- log.debug("The map changed, but dood, we are on map 0, so must be the menu or something...")
     return
   end
 
-  -- print("The map has changed! current position: " ..  tostring(newLoc) .. ", old map: " .. tostring(oldMapId))
+  -- log.debug("The map has changed! current position: " ..  tostring(newLoc) .. ", old map: " .. tostring(oldMapId))
 
   if newMapId == OverWorldId then self.chests:closeAll()
   elseif newMapId > 1 and newMapId <= 29 then
     if not self.maps[newMapId].seenByPlayer then
-      print("now seen by player: ", self.maps[newMapId].mapName)
+      log.debug("now seen by player: ", self.maps[newMapId].mapName)
       self.maps[newMapId].seenByPlayer = true
     end
   end
@@ -794,16 +812,16 @@ function Game:dealWithMapChange()
       else
         -- this must be swamp cave, because it has more than one entrance
         if newLoc:equals(SwampNorthEntrance) then
-          print("adding warp to SwampNorthEntrance")
+          log.debug("adding warp to SwampNorthEntrance")
           self:addWarp(Warp(newLoc, coordinatesList[1]))
         elseif newLoc:equals(SwampSouthEntrance) then
-          print("adding warp to SwampSouthEntrance")
+          log.debug("adding warp to SwampSouthEntrance")
           self:addWarp(Warp(newLoc, coordinatesList[2]))
         end
       end
     end
   elseif oldMapId == SwampCave then
-    print("leaving swamp cave")
+    log.debug("leaving swamp cave")
     -- we can see a bunch of new land now (potentially on another continent)
     -- we have to call this so that the knownWorld gets updated properly to see the new land.
     self.overworld:getVisibleOverworldGrid(newLoc.x, newLoc.y)
@@ -811,14 +829,14 @@ function Game:dealWithMapChange()
     -- we also need to add the warp to the overworld
     local coordinatesList = self.maps[SwampCave].overworldCoordinates
     if newLoc:equals(coordinatesList[1]) then
-      print("adding warp to SwampNorthEntrance")
+      log.debug("adding warp to SwampNorthEntrance")
       self:addWarp(Warp(newLoc, SwampNorthEntrance))
     else
-      print("adding warp to SwampSouthEntrance")
+      log.debug("adding warp to SwampSouthEntrance")
       self:addWarp(Warp(newLoc, SwampSouthEntrance))
     end
   elseif oldMapId == Tantegel then
-    print("leaving Tantegel")
+    log.debug("leaving Tantegel")
     self:addWarp(Warp(TantegelEntrance, self.maps[Tantegel].overworldCoordinates[1]))
   end
 
@@ -832,9 +850,9 @@ end
 -- might need to do a little extra work there.
 function Game:useItem(item)
   local itemIndex = self:readPlayerData().items:itemIndex(item)
-  -- print("itemIndex", itemIndex)
+  -- log.debug("itemIndex", itemIndex)
   if itemIndex == nil then
-    print("can't use " .. ITEMS[item] .. ", we don't have it.")
+    log.debug("can't use " .. ITEMS[item] .. ", we don't have it.")
     return
   else
     self:interpretScript(self.scripts.OpenItemMenu)
@@ -854,10 +872,10 @@ function Game:cast(spell)
   local pd = self:readPlayerData()
   local spellIndex = pd.spells:spellIndex(spell)
   if spellIndex == nil then
-    -- print("can't cast " .. tostring(spell) .. ", spell hasn't been learned.")
+    -- log.debug("can't cast " .. tostring(spell) .. ", spell hasn't been learned.")
     return
   elseif pd.stats.currentMP < spell.mp then
-    print("can't cast " .. tostring(spell) .. ", not enough mp.")
+    log.debug("can't cast " .. tostring(spell) .. ", not enough mp.")
     return
   else
     self:interpretScript(self.scripts.OpenSpellMenu)
@@ -875,7 +893,7 @@ function Game:castRepel(disregardTimer)
   if disregardTimer then self:cast(Repel)
   else
     if self.memory:getRepelTimer() > 1  then
-      print("wanted to cast repel, but it is still on! Won't cast it.")
+      log.debug("wanted to cast repel, but it is still on! Won't cast it.")
     else
       self:cast(Repel)
     end
@@ -892,28 +910,28 @@ function Game:haveKeys()
 end
 
 function Game:endRepelTimer()
-  print("repel has ended")
+  log.debug("repel has ended")
   self.repelTimerWindowOpen = true
 end
 
 function Game:nextLevel()
-  print("i think i just leveled up.")
+  log.debug("i think i just leveled up.")
   self.leveledUp = true
 end
 
 function Game:deathBySwamp()
-  print("i think i just died in a swamp.")
+  log.debug("i think i just died in a swamp.")
   self.dead = true
 end
 
 function Game:enemyDefeated()
-  -- print("Killed an enemy.")
+  -- log.debug("Killed an enemy.")
   self.enemyKilled = true
   self.inBattle = false
 end
 
 function Game:playerDefeated()
-  print("I just got killed.")
+  log.debug("I just got killed.")
   self.dead = true
   self.inBattle = false
 end
@@ -926,7 +944,7 @@ function Game:talkToShopKeeper()
   local upgrades = shop:getAffordableUpgrades(self:readPlayerData())
 
   if upgrades:isEmpty() then
-    print("No upgrades here.")
+    log.debug("No upgrades here.")
     pressB(20)
     pressB(2)
   else
@@ -935,34 +953,34 @@ function Game:talkToShopKeeper()
 end
 
 function Game:buyUpgrades(shop)
-  print(tostring(shop))
+  log.debug(tostring(shop))
   -- Note: here, we keep re-reading the player data because its possible
   -- that it might have changed when purchased something.
   -- possible that we can no longer afford the best armor after we buy a weapon, for example.
   local pd = self:readPlayerData()
   local bestWeaponToBuy = shop:getMostExpensiveAffordableWeaponUpgrade(pd)
   if(bestWeaponToBuy ~= nil) then
-    print("buying weapon: ", tostring(bestWeaponToBuy))
+    log.debug("buying weapon: ", tostring(bestWeaponToBuy))
     self:buyItem(shop, bestWeaponToBuy.id, pd.equipment.weapon ~= nil)
   end
   pd = self:readPlayerData()
   local bestArmorToBuy  = shop:getMostExpensiveAffordableArmorUpgrade(pd)
   if(bestArmorToBuy ~= nil) then
     if(bestWeaponToBuy ~= nil) then
-      -- print("i bought a weapon, and am trying to say to buy armor")
+      -- log.debug("i bought a weapon, and am trying to say to buy armor")
       pressA(60) -- we already bought something, and we want to buy more
     end
-    print("buying armor: ", tostring(bestArmorToBuy))
+    log.debug("buying armor: ", tostring(bestArmorToBuy))
     self:buyItem(shop, bestArmorToBuy.id, pd.equipment.armor ~= nil)
   end
   pd = self:readPlayerData()
   local bestShieldToBuy = shop:getMostExpensiveAffordableShieldUpgrade(pd)
   if(bestShieldToBuy ~= nil) then
     if(bestWeaponToBuy ~= nil or bestArmorToBuy ~= nil) then
-      -- print("i bought a weapon or armor, and am trying to say to buy a shield")
+      -- log.debug("i bought a weapon or armor, and am trying to say to buy a shield")
       pressA(60) -- we already bought something, and we want to buy more
     end
-    print("buying shield: ", tostring(bestShieldToBuy))
+    log.debug("buying shield: ", tostring(bestShieldToBuy))
     self:buyItem(shop, bestShieldToBuy.id, pd.equipment.shield ~= nil)
   end
 
@@ -977,7 +995,7 @@ end
 
 function Game:buyItem(shop, itemId, sellExisting)
   local itemIndex = shop:indexOf(itemId)
-  -- print("itemIndex: ", itemIndex)
+  -- log.debug("itemIndex: ", itemIndex)
 
   -- todo: i think i can make this into a script
   -- by just adding `NTimes(n, script)` to the language.
@@ -1038,10 +1056,10 @@ function Game:closestHealingLocation()
   local loc = self:getLocation()
   local locs = self:healingLocations()
   return list.min(locs, function(dest)
-    print("getting shortest path to from " .. tostring(loc) .. " to " .. tostring(dest.loc))
+    log.debug("getting shortest path to from " .. tostring(loc) .. " to " .. tostring(dest.loc))
     local path = self:shortestPath(loc, dest.loc)
     local distance = #path
-    print("distance from " .. tostring(loc) .. " to " .. tostring(dest) .. " is " .. tostring(distance))
+    log.debug("distance from " .. tostring(loc) .. " to " .. tostring(dest) .. " is " .. tostring(distance))
     return distance
   end)
 end
