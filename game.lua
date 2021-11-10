@@ -8,16 +8,16 @@ require 'overworld'
 require 'player_data'
 require 'static_maps'
 
-Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsWithoutKeys)
+Game = class(function(a, memory, warps, graph, overworld, maps, graphsWithKeys, graphsWithoutKeys)
   -- map related stuff
   a.scripts = Scripts(memory)
   a.memory = memory
   a.warps = warps
+  a.graph = graph
   a.overworld = overworld
   a.maps = maps
   a.graphsWithKeys = graphsWithKeys
   a.graphsWithoutKeys = graphsWithoutKeys
---   a.newGraph = NewGraph(overworld.newGraph)
 
   -- events/signals that happen in game
   a.inBattle = false
@@ -42,21 +42,22 @@ Game = class(function(a, memory, warps, overworld, maps, graphsWithKeys, graphsW
 end)
 
 function newGame(memory)
-  local overworld = OverWorld(readOverworldFromROM(memory))
+  local graph = NewGraph()
+  local overworld = OverWorld(readOverworldFromROM(memory), graph)
   local warps = table.concat(WARPS, list.map(WARPS, swapSrcAndDest))
   local maps = readAllStaticMaps(memory, warps)
   local graphsWithKeys = readAllGraphs(memory, true, maps, warps)
   local graphsWithoutKeys = readAllGraphs(memory, false, maps, warps)
-  return Game(memory, warps, overworld, maps, graphsWithKeys, graphsWithoutKeys)
+  return Game(memory, warps, graph, overworld, maps, graphsWithKeys, graphsWithoutKeys)
 end
 
-function newGameWithNoOverworld(memory)
-  local warps = table.concat(WARPS, list.map(WARPS, swapSrcAndDest))
-  local maps = readAllStaticMaps(memory, warps)
-  local graphsWithKeys = readAllGraphs(memory, true, maps, warps)
-  local graphsWithoutKeys = readAllGraphs(memory, false, maps, warps)
-  return Game(memory, warps, nil, maps, graphsWithKeys, graphsWithoutKeys)
-end
+-- function newGameWithNoOverworld(memory)
+--   local warps = table.concat(WARPS, list.map(WARPS, swapSrcAndDest))
+--   local maps = readAllStaticMaps(memory, warps)
+--   local graphsWithKeys = readAllGraphs(memory, true, maps, warps)
+--   local graphsWithoutKeys = readAllGraphs(memory, false, maps, warps)
+--   return Game(memory, warps, nil, maps, graphsWithKeys, graphsWithoutKeys)
+-- end
 
 function Game:readPlayerData()
   return self.memory:readPlayerData()
@@ -108,7 +109,7 @@ function Game:goTo(dest)
     return GotoExitValues.AT_LOCATION
   end
   local path = self:shortestPath(loc, dest)
-  local newpath = self.overworld.newGraph:shortestPath(loc, dest)
+  local newpath = self.graph:shortestPath(loc, dest)
 
   if #path ~= #newpath then
     log.debug("==========GOTO different paths!===========")
@@ -619,7 +620,7 @@ end
 function Game:chooseNewDestination(tileSelectionStrat)
   -- otherwise, we either dont have a destination so we need to get one
   -- or we are at our destination already, so we need a new one
-  local borderOfKnownWorld = self.overworld.newGraph:knownWorldBorder()
+  local borderOfKnownWorld = self.graph:knownWorldBorder(self.overworld)
 --   log.debug("Border of known world:")
 --   log.debug(borderOfKnownWorld)
 --   log.debug(#borderOfKnownWorld)

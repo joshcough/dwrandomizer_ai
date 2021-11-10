@@ -119,13 +119,12 @@ function readOverworldFromROM (memory)
   return rows
 end
 
-OverWorld = class(function(a,rows)
+OverWorld = class(function(a,rows, graph)
   a.overworldRows = rows
   a.knownWorld = {}
   a.nrTilesSeen = 0
   a.importantLocations = {}
---   a.newGraph = {}
-  a.newGraph = NewGraph(a)
+  a.graph = graph
 end)
 
 function OverWorld:percentageOfWorldSeen()
@@ -173,7 +172,7 @@ function OverWorld:updateKnownWorld(x, y, tileId)
       end
   end
 
-  self.newGraph:discover(OverWorldId, x, y)
+  self.graph:discover(OverWorldId, x, y, self)
 end
 
 

@@ -16,8 +16,7 @@ GraphNode = class(function(a, nodeType)
   a.neighbors = {}
 end)
 
-NewGraph = class(function(a, overworld)
-  a.overworld = overworld
+NewGraph = class(function(a)
   a.rows = {}
   a.rows[1] = mkOverworldGraph()
 end)
@@ -47,7 +46,7 @@ end
 --TODO: when we see an important location (town/cave/castle)
 -- we can add the neighbors normally to the neighbors4.
 -- but when we actually go into it, then i think we want to remove those neighbors.
-function NewGraph:discover(m, x, y)
+function NewGraph:discover(m, x, y, overworld)
   if self:isDiscovered(m,x,y) then return end
 
   -- log.debug("DISCOVERED!", m, x, y)
@@ -66,10 +65,11 @@ function NewGraph:discover(m, x, y)
   end
 
   -- TODO: for now, only doing this on overworld.
+  -- possibly we only ever do this for the overworld...
   if m == 1 then
-    local neighborsOfXY = self.overworld:newNeighbors(x,y)
+    local neighborsOfXY = overworld:newNeighbors(x,y)
     local discoveredNeighborsOfXY = list.filter(neighborsOfXY, discovered)
-    list.foreach(self.overworld:newNeighbors(x,y), addNeighbor)
+    list.foreach(discoveredNeighborsOfXY, addNeighbor)
   end
 end
 
@@ -253,13 +253,13 @@ function NewGraph:shortestPath(startNode, endNode)
   return r
 end
 
-function NewGraph:knownWorldBorder()
+function NewGraph:knownWorldBorder(overworld)
   local res = {}
   for y,row in pairs(self.rows[1]) do
     for x,tile in pairs(row) do
-      local overworldTile = self.overworld:getOverworldMapTileAtNoUpdate(x,y)
+      local overworldTile = overworld:getOverworldMapTileAtNoUpdate(x,y)
       if overworldTile.walkable and self:isDiscovered(OverWorldId, x, y) then
-        local nbrs = self.overworld:newNeighbors(x,y)
+        local nbrs = overworld:newNeighbors(x,y)
         -- TODO: potentially adding this more than once if more than one neighbor is nil
         for i = 1, #(nbrs) do
           local nbr = nbrs[i]
