@@ -323,110 +323,35 @@ function StaticMap:__tostring (printStrat)
   return self.mapName .. "\n" .. res
 end
 
-Graph = class(function(a, graph, haveKeys, staticMap)
-  a.graph = graph
-  a.haveKeys = haveKeys
-  a.staticMap = staticMap
-end)
-
-function StaticMap:mkGraph (haveKeys)
-  local tileSet = self:getTileSet()
-
-  function isWalkable(x,y)
-    local t = tileSet[self.rows[y][x]]
-    if table.containsUsingDotEquals(self.immobileScps, Point(self.mapId, x, y))
-      then return false
-      else return haveKeys and (t.walkableWithKeys or t.walkable) or t.walkable
-    end
-  end
-
-  --         x,y-1
-  -- x-1,y   x,y     x+1,y
-  --         x,y+1
-  function neighbors(x,y)
-    -- if we can't walk to the node, dont bother including the node in the graph at all
-    if not isWalkable(x,y) then return {} end
-    local res = {}
-    function insertNeighbor(x,y,dir) table.insert(res, Neighbor(self.mapId, x, y, dir)) end
-    if x > 0               and isWalkable(x-1, y) then insertNeighbor(x-1, y, NeighborDir.LEFT) end
-    if x < self.width - 1  and isWalkable(x+1, y) then insertNeighbor(x+1, y, NeighborDir.RIGHT) end
-    if y > 0               and isWalkable(x, y-1) then insertNeighbor(x, y-1, NeighborDir.UP) end
-    if y < self.height - 1 and isWalkable(x, y+1) then insertNeighbor(x, y+1, NeighborDir.DOWN) end
-    -- really useful for debugging pathing. just plug in the location you care about
-    -- if self.mapId == 7 and x == 19 and y == 23 then log.debug("n", res) end
-    return res
-  end
-
-  function warpNeighbors(x,y)
-    local res = {}
-    if self.warps[x] ~= nil then
-      if self.warps[x][y] ~= nil then
-        for _, w in pairs(self.warps[x][y]) do
-          table.insert(res, Neighbor(w.mapId, w.x, w.y, NeighborDir.STAIRS))
-        end
-      end
-    end
-    -- really useful for debugging pathing. just plug in the location you care about
-    -- if self.mapId == 7 and x == 19 and y == 23 then log.debug("w", res) end
-    return res
-  end
-
-  function borderNeighbors(x,y)
-    -- this only applies to maps where you can walk directly out onto the overworld.
-    if self.mapType ~= MapType.TOWN and self.mapType ~= MapType.BOTH then return {} end
-    if not isWalkable(x,y) then return {} end
-    local res = {}
-    local coor = self.overworldCoordinates[1]
-    function insertNeighbor(dir) table.insert(res, Neighbor(coor.mapId, coor.x, coor.y, dir)) end
-    if     x == 0               then insertNeighbor(NeighborDir.LEFT)
-    elseif x == self.width  - 1 then insertNeighbor(NeighborDir.RIGHT)
-    elseif y == 0               then insertNeighbor(NeighborDir.UP)
-    elseif y == self.height - 1 then insertNeighbor(NeighborDir.DOWN)
-    end
-    -- really useful for debugging pathing. just plug in the location you care about
-    -- if self.mapId == 7 and x == 19 and y == 23 then log.debug("b", res) end
-    return res
-  end
-
-  local res = {}
-  for y = 0,self.height-1 do
-    res[y] = {}
-    for x = 0,self.width-1 do
-      res[y][x] = table.concatAll({neighbors(x,y), borderNeighbors(x,y), warpNeighbors(x,y)})
-    end
-  end
-  return Graph(res, haveKeys, self)
-end
-
-function Graph:__tostring ()
-
-  local contains = table.containsUsingDotEquals
-
-  function printTile(x,y,neighbors)
-    if neighbors == nil then return "   " end
-    local res = ""
-    if contains(neighbors, Point(self.staticMap.mapId, x-1, y)) then res = res .. "←" else res = res .. " " end
-    if contains(neighbors, Point(self.staticMap.mapId, x, y-1)) and contains(neighbors, Point(self.staticMap.mapId, x, y+1))
-      then res = res .. "↕"
-      elseif contains(neighbors, Point(self.staticMap.mapId, x, y-1)) then res = res .. "↑"
-      elseif contains(neighbors, Point(self.staticMap.mapId, x, y+1)) then res = res .. "↓"
-      else res = res .. " "
-    end
-    if contains(neighbors, Point(self.staticMap.mapId, x+1, y)) then res = res .. "→" else res = res .. " " end
-    return res
-  end
-
-  local tileSet = self.staticMap:getTileSet()
-  local res = ""
-  for y = 0,self.staticMap.height-1 do
-    local row = ""
-    for x = 0,self.staticMap.width-1 do
-      row = row .. "|" .. printTile(x, y, self.graph[y][x])
-    end
-    res = res .. row .. " |\n"
-  end
-  return res
-end
+-- function Graph:__tostring ()
+--
+--   local contains = table.containsUsingDotEquals
+--
+--   function printTile(x,y,neighbors)
+--     if neighbors == nil then return "   " end
+--     local res = ""
+--     if contains(neighbors, Point(self.staticMap.mapId, x-1, y)) then res = res .. "←" else res = res .. " " end
+--     if contains(neighbors, Point(self.staticMap.mapId, x, y-1)) and contains(neighbors, Point(self.staticMap.mapId, x, y+1))
+--       then res = res .. "↕"
+--       elseif contains(neighbors, Point(self.staticMap.mapId, x, y-1)) then res = res .. "↑"
+--       elseif contains(neighbors, Point(self.staticMap.mapId, x, y+1)) then res = res .. "↓"
+--       else res = res .. " "
+--     end
+--     if contains(neighbors, Point(self.staticMap.mapId, x+1, y)) then res = res .. "→" else res = res .. " " end
+--     return res
+--   end
+--
+--   local tileSet = self.staticMap:getTileSet()
+--   local res = ""
+--   for y = 0,self.staticMap.height-1 do
+--     local row = ""
+--     for x = 0,self.staticMap.width-1 do
+--       row = row .. "|" .. printTile(x, y, self.graph[y][x])
+--     end
+--     res = res .. row .. " |\n"
+--   end
+--   return res
+-- end
 
 function StaticMap:writeTileNamesToFile (file)
   file:write(self:__tostring() .. "\n")
@@ -467,16 +392,6 @@ function readAllStaticMaps(memory, allWarps)
   local res = {}
   for i = 2, 29 do
     res[i] = memory == nil and loadStaticMapFromFile(i, allWarps) or readStaticMapFromRom(memory, i, allWarps)
-  end
-  return res
-end
-
-function readAllGraphs(memory, haveKeys, maps, allWarps)
-  if maps == nil then maps = readAllStaticMaps(memory, allWarps) end
-  local res = {}
-  for i = 2, 29 do
-    local g = maps[i]:mkGraph(haveKeys)
-    res[i] = g
   end
   return res
 end

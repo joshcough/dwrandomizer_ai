@@ -8,7 +8,7 @@ require 'overworld'
 require 'player_data'
 require 'static_maps'
 
-Game = class(function(a, memory, warps, graph, overworld, maps, graphsWithKeys, graphsWithoutKeys)
+Game = class(function(a, memory, warps, graph, overworld, maps)
   -- map related stuff
   a.scripts = Scripts(memory)
   a.memory = memory
@@ -16,8 +16,6 @@ Game = class(function(a, memory, warps, graph, overworld, maps, graphsWithKeys, 
   a.graph = graph
   a.overworld = overworld
   a.maps = maps
-  a.graphsWithKeys = graphsWithKeys
-  a.graphsWithoutKeys = graphsWithoutKeys
 
   -- events/signals that happen in game
   a.inBattle = false
@@ -42,13 +40,11 @@ Game = class(function(a, memory, warps, graph, overworld, maps, graphsWithKeys, 
 end)
 
 function newGame(memory)
-  local graph = NewGraph()
-  local overworld = OverWorld(readOverworldFromROM(memory), graph)
   local warps = table.concat(WARPS, list.map(WARPS, swapSrcAndDest))
-  local maps = readAllStaticMaps(memory, warps)
-  local graphsWithKeys = readAllGraphs(memory, true, maps, warps)
-  local graphsWithoutKeys = readAllGraphs(memory, false, maps, warps)
-  return Game(memory, warps, graph, overworld, maps, graphsWithKeys, graphsWithoutKeys)
+  local staticMaps = readAllStaticMaps(memory, warps)
+  local graph = Graph(staticMaps)
+  local overworld = OverWorld(readOverworldFromROM(memory), graph)
+  return Game(memory, warps, graph, overworld, staticMaps)
 end
 
 -- function newGameWithNoOverworld(memory)
@@ -109,15 +105,6 @@ function Game:goTo(dest)
     return GotoExitValues.AT_LOCATION
   end
   local path = self:shortestPath(loc, dest)
-  local newpath = self.graph:shortestPath(loc, dest)
-
-  if #path ~= #newpath then
-    log.debug("==========GOTO different paths!===========")
-    log.debug("in GOTO, SRC: ", loc)
-    log.debug("in GOTO, DEST: ", dest)
-    log.debug("in GOTO OLD PATH", path)
-    log.debug("in GOTO NEW PATH", newpath)
-  end
 
   if path == nil or #path == 0 then
     log.debug("ERROR: Could not create path from: " .. tostring(loc) .. " to: " .. tostring(dest))
@@ -332,11 +319,6 @@ function Game:addWarp(warp)
   self:resetGraphs()
 end
 
-function Game:resetGraphs()
-  self.graphsWithKeys = readAllGraphs(self.memory, true, self.maps, self.warps)
-  self.graphsWithoutKeys = readAllGraphs(self.memory, false, self.maps, self.warps)
-end
-
 function containsPoint(tbl, p)
   if tbl[p.mapId] == nil then return false end
   if tbl[p.mapId][p.x] == nil then return false end
@@ -344,64 +326,7 @@ function containsPoint(tbl, p)
 end
 
 function Game:shortestPath(startNode, endNode)
-  local allGraphs = self:getCombinedGraphs()
-
-  function insertPoint(tbl, p, value)
-    if tbl[p.mapId] == nil then tbl[p.mapId] = {} end
-    if tbl[p.mapId][p.x] == nil then tbl[p.mapId][p.x] = {} end
-    tbl[p.mapId][p.x][p.y] = value
-  end
-
-  function solve(s)
-    local q = Queue()
-    q:push(s)
-
-    local visited = {}
-    local prev = {}
-    insertPoint(visited, s, true)
-
-    while not q:isEmpty() do
-      local node = q:pop()
-      -- we have to do this check here because we may have pushed on a neighbor that we've never seen on the overworld.
-      -- and therefore it wouldn't appear in the graph.
-      if allGraphs[node.mapId].graph[node.y] ~= nil then
-        local neighbors = allGraphs[node.mapId].graph[node.y][node.x]
-
-        if neighbors ~= nil then -- it can be nil if we've never seen it on the overworld.
-          for _, neighbor in ipairs(neighbors) do
-            if not containsPoint(visited, neighbor) then
-              q:push(neighbor)
-              insertPoint(visited, neighbor, true)
-              insertPoint(prev, neighbor, {node, neighbor} )
-            end
-          end
-        end
-      end
-    end
-
-    return prev
-  end
-
-  function reconstruct(s, e, prev)
-    local path = {}
-    local at = e
-    while not (at == nil) do
-      if prev[at.mapId] == nil or prev[at.mapId][at.x] == nil or prev[at.mapId][at.x][at.y] == nil
-        then
-          table.insert(path, at)
-          at = nil
-        else
-          table.insert(path, prev[at.mapId][at.x][at.y][2])
-          at = prev[at.mapId][at.x][at.y][1]
-      end
-    end
-    local pathR = table.reverse(path)
-    return pathR[1]:equals(s) and pathR or {}
-  end
-
-  local r = reconstruct(startNode, endNode, solve(startNode))
-  -- log.debug("shortestPath", tostring(r))
-  return r
+  return self.graph:shortestPath(startNode, endNode, self:haveKeys())
 end
 
 function swapSrcAndDest(w) return w:swap() end
@@ -415,8 +340,7 @@ function Game:saveUnlockedDoor(loc)
   -- then we need to set that tile to brick instead of a door
   -- and then we will probably have to regenerate the graphs or whatever.
   if (loc:equalsPoint(Point(TantegelThroneRoom, 4, 7))) then
-    self.maps[TantegelThroneRoom]:setTileAt(4, 7, 6) -- 6 for brick. TODO: we need names for things like that
-    self:resetGraphs()
+    self.graph:unlockThroneRoomDoor()
   end
   table.insert(self.unlockedDoors, loc)
 end
@@ -640,14 +564,6 @@ function Game:chooseNewDestinationDirectly(newDestination)
   self.exploreDest = newDestination
 end
 
-function Game:getCombinedGraphs()
-  local staticGraphs = self:haveKeys() and self.graphsWithKeys or self.graphsWithoutKeys
-  local graphs = {}
-  graphs[1] = Graph(self.overworld:knownWorldGraph(), self:haveKeys())
-  for i, g in pairs(staticGraphs) do graphs[i] = g end
-  return graphs
-end
-
 function Game:exploreMove()
   log.debug("Moving from: ", self:getLocation(), " to ", self.exploreDest)
   -- TODO: we are calculating the shortest path twice... we need to do better than that
@@ -787,7 +703,7 @@ function Game:dealWithMapChange()
   if oldMapId == 0 or oldMap == nil then
     local b = self:readPlayerData().statuses.leftThroneRoom
     self.maps[TantegelThroneRoom]:setTileAt(4, 7, b and 6 or 11)
-    self:resetGraphs()
+    if b then self.graph:unlockThroneRoomDoor() end
   end
 
   if newMapId < 1 then

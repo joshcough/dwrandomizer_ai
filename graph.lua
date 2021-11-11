@@ -1,161 +1,4 @@
-require 'Class'
-enum = require("enum")
-require 'helpers'
 
-GraphNodeType = enum.new("Type of graph node", {
-  "UNKNOWN", -- tiles on the overworld that we haven't discovered yet.
-  "KNOWN", -- tiles on the overworld that we have discovered, or tiles on static maps.
-})
-
-GraphNode = class(function(a, nodeType)
-  a.nodeType = nodeType
-  -- invariant: neighbors must be empty if nodeType == UNKNOWN.
-  -- it _might_ be empty if we have discovered it
-  -- but only if its not walkable, or there's literally no possible way to get to it.
-  -- like a grass node surrounded by mountains. there would not be a path to it.
-  a.neighbors = {}
-end)
-
-NewGraph = class(function(a)
-  a.rows = {}
-  a.rows[1] = mkOverworldGraph()
-end)
-
-unknown = GraphNode(GraphNodeType.UNKNOWN)
-
--- this is the empty overworld graph. the one that we would have before we ever leave tantegel.
-function mkOverworldGraph()
-  local res = {}
-  for y = 0,119 do
-    res[y] = {}
-    for x = 0,119 do
-      res[y][x] = unknown
-    end
-  end
-  return res
-end
-
-function NewGraph:isDiscovered(m,x,y)
-  return self:getNodeAt(m,x,y) ~= unknown
-end
-
-function NewGraph:getNodeAt(m,x,y)
-  return self.rows[m][y][x]
-end
-
---TODO: when we see an important location (town/cave/castle)
--- we can add the neighbors normally to the neighbors4.
--- but when we actually go into it, then i think we want to remove those neighbors.
-function NewGraph:discover(m, x, y, overworld)
-  if self:isDiscovered(m,x,y) then return end
-
-  -- log.debug("DISCOVERED!", m, x, y)
-  self.rows[m][y][x] = GraphNode(GraphNodeType.KNOWN)
-
-  function discovered(n) return self:isDiscovered(n.mapId, n.x, n.y) end
-
-  function addNeighbor(n)
-    -- log.debug("adding neighbor", n)
-    -- first, add the neighbor to m,x,y
-    table.insert(self:getNodeAt(m,x,y).neighbors, n)
-    -- then add m,x,y to the neighbors or n
-    local reverseNeighbor = Neighbor(m, x, y, oppositeDirection(n.dir))
-    -- log.debug("adding reverse neighbor", reverseNeighbor)
-    table.insert(self:getNodeAt(n.mapId,n.x,n.y).neighbors, reverseNeighbor)
-  end
-
-  -- TODO: for now, only doing this on overworld.
-  -- possibly we only ever do this for the overworld...
-  if m == 1 then
-    local neighborsOfXY = overworld:newNeighbors(x,y)
-    local discoveredNeighborsOfXY = list.filter(neighborsOfXY, discovered)
-    list.foreach(discoveredNeighborsOfXY, addNeighbor)
-  end
-end
-
--- NewGraph = class(function(a, haveKeys, staticMaps)
---   a.staticMaps = staticMaps
---   a.haveKeys = haveKeys
---
---   a.rows = {}
---   a.rows[1] = mkOverworldGraph()
---   for i = 2, 29 do
---     a.rows[i] = mkGraphFromStaticMap(staticMaps[i])
---   end
--- end)
---
--- function mkGraphFromStaticMap(staticMap, haveKeys)
--- end
---
--- function StaticMap:mkGraph (haveKeys)
---   local tileSet = self:getTileSet()
---
---   function isWalkable(x,y)
---     local t = tileSet[self.rows[y][x]]
---     if table.containsUsingDotEquals(self.immobileScps, Point(self.mapId, x, y))
---       then return false
---       else return haveKeys and (t.walkableWithKeys or t.walkable) or t.walkable
---     end
---   end
---
---   --         x,y-1
---   -- x-1,y   x,y     x+1,y
---   --         x,y+1
---   function neighbors(x,y)
---     -- if we can't walk to the node, dont bother including the node in the graph at all
---     if not isWalkable(x,y) then return {} end
---     local res = {}
---     function insertNeighbor(x,y) table.insert(res, Neighbor(self.mapId, x, y, NeighborType.SAME_MAP)) end
---     if x > 0 and isWalkable(x-1, y) then insertNeighbor(x-1, y) end
---     if x < self.width - 1 and isWalkable(x+1, y) then insertNeighbor(x+1, y) end
---     if y > 0 and isWalkable(x, y-1) then insertNeighbor(x, y-1) end
---     if y < self.height - 1 and isWalkable(x, y+1) then insertNeighbor(x, y+1) end
---     -- really useful for debugging pathing. just plug in the location you care about
---     -- if self.mapId == 7 and x == 19 and y == 23 then log.debug("n", res) end
---     return res
---   end
---
---   function warpNeighbors(x,y)
---     local res = {}
---     if self.warps[x] ~= nil then
---       if self.warps[x][y] ~= nil then
---         for _, w in pairs(self.warps[x][y]) do
---           table.insert(res, Neighbor(w.mapId, w.x, w.y, NeighborType.STAIRS))
---         end
---       end
---     end
---     -- really useful for debugging pathing. just plug in the location you care about
---     -- if self.mapId == 7 and x == 19 and y == 23 then log.debug("w", res) end
---     return res
---   end
---
---   function borderNeighbors(x,y)
---     -- this only applies to maps where you can walk directly out onto the overworld.
---     if self.mapType ~= MapType.TOWN and self.mapType ~= MapType.BOTH then return {} end
---     if not isWalkable(x,y) then return {} end
---     local res = {}
---     local coor = self.overworldCoordinates[1]
---     function insertNeighbor(dir) table.insert(res, Neighbor(coor.mapId, coor.x, coor.y, dir)) end
---     if     x == 0               then insertNeighbor(NeighborType.BORDER_LEFT)
---     elseif x == self.width  - 1 then insertNeighbor(NeighborType.BORDER_RIGHT)
---     elseif y == 0               then insertNeighbor(NeighborType.BORDER_UP)
---     elseif y == self.height - 1 then insertNeighbor(NeighborType.BORDER_DOWN)
---     end
---     -- really useful for debugging pathing. just plug in the location you care about
---     -- if self.mapId == 7 and x == 19 and y == 23 then log.debug("b", res) end
---     return res
---   end
---
---   local res = {}
---   for y = 0,self.height-1 do
---     res[y] = {}
---     for x = 0,self.width-1 do
---       res[y][x] = table.concatAll({neighbors(x,y), borderNeighbors(x,y), warpNeighbors(x,y)})
---     end
---   end
---   return Graph(res, haveKeys, self)
--- end
---
 -- for the actual graph for the overworld...
 -- when we discover a new tile (by just moving around), we need to get its neighbors and put them in the graph.
 -- however, we can only get the neighbors that we've actually seen.
@@ -183,11 +26,104 @@ end
 -- when we add a neighbor y to a node x
 -- we can then immediately add the neighbor x to node y!
 
+require 'Class'
+enum = require("enum")
+require 'helpers'
 
-function NewGraph:shortestPath(startNode, endNode)
+GraphNodeType = enum.new("Type of graph node", {
+  "UNKNOWN", -- tiles on the overworld that we haven't discovered yet.
+  "KNOWN", -- tiles on the overworld that we have discovered, or tiles on static maps.
+})
+
+GraphNode = class(function(a, nodeType)
+  a.nodeType = nodeType
+  -- invariant: neighbors must be empty if nodeType == UNKNOWN.
+  -- it _might_ be empty if we have discovered it
+  -- but only if its not walkable, or there's literally no possible way to get to it.
+  -- like a grass node surrounded by mountains. there would not be a path to it.
+  a.neighbors = {}
+end)
+
+Graph = class(function (a, staticMaps)
+  a.graphWithKeys = NewGraph(createStaticMapGraphs(staticMaps, true))
+  a.graphWithoutKeys = NewGraph(createStaticMapGraphs(staticMaps, false))
+end)
+
+function Graph:shortestPath(startNode, endNode, haveKeys)
+  local res = nil
+  res = haveKeys and self.graphWithKeys:shortestPath(startNode, endNode)
+                 or  self.graphWithoutKeys:shortestPath(startNode, endNode)
+  -- log.debug("in shortestPath", res)
+  return res
+end
+
+function Graph:knownWorldBorder(overworld)
+  return self.graphWithKeys:knownWorldBorder(overworld)
+end
+
+function Graph:discover(m, x, y, overworld)
+  self.graphWithKeys:discover(m, x, y, overworld)
+  self.graphWithoutKeys:discover(m, x, y, overworld)
+end
+
+--TODO
+TantegelThroneRoom = 5
+
+function Graph:unlockThroneRoomDoor()
+  self.graphWithoutKeys.rows[TantegelThroneRoom] = self.graphWithKeys.rows[TantegelThroneRoom]
+end
+
+NewGraph = class(function(a, staticMapGraphs)
+  a.rows = {}
+  a.rows[1] = mkOverworldGraph()
+  for i = 2, 29 do
+    a.rows[i] = staticMapGraphs[i]
+  end
+end)
+
+unknown = GraphNode(GraphNodeType.UNKNOWN)
+
+function NewGraph:isDiscovered(m,x,y)
+  return self:getNodeAt(m,x,y) ~= unknown
+end
+
+function NewGraph:getNodeAt(m,x,y)
+  return self.rows[m][y][x]
+end
+
+--TODO: when we see an important location (town/cave/castle)
+-- we can add the neighbors normally to the neighbors4.
+-- but when we actually go into it, then i think we want to replace those neighbors
+-- with instead of the overworld location, the actual warp location
+function NewGraph:discover(m, x, y, overworld)
+  if self:isDiscovered(m,x,y) then return end
+
+  -- log.debug("DISCOVERED!", m, x, y)
+  self.rows[m][y][x] = GraphNode(GraphNodeType.KNOWN)
+
+  function discovered(n) return self:isDiscovered(n.mapId, n.x, n.y) end
+
+  function addNeighbor(n)
+    -- log.debug("adding neighbor", n)
+    -- first, add the neighbor to m,x,y
+    table.insert(self:getNodeAt(m,x,y).neighbors, n)
+    -- then add m,x,y to the neighbors or n
+    local reverseNeighbor = Neighbor(m, x, y, oppositeDirection(n.dir))
+    -- log.debug("adding reverse neighbor", reverseNeighbor)
+    table.insert(self:getNodeAt(n.mapId,n.x,n.y).neighbors, reverseNeighbor)
+  end
+
+  -- TODO: for now, only doing this on overworld.
+  -- possibly we only ever do this for the overworld...
+  if m == 1 then
+    local neighborsOfXY = overworld:newNeighbors(x,y)
+    local discoveredNeighborsOfXY = list.filter(neighborsOfXY, discovered)
+    list.foreach(discoveredNeighborsOfXY, addNeighbor)
+  end
+end
+
+function NewGraph:shortestPath(startNode, endNode, haveKeys)
   -- log.debug("in newgraph:shorestpath", startNode, endNode)
-  if startNode.mapId ~= 1 or endNode.mapId ~= 1 then return {"no path man"} end
-
   function insertPoint(tbl, p, value)
     if tbl[p.mapId] == nil then tbl[p.mapId] = {} end
     if tbl[p.mapId][p.x] == nil then tbl[p.mapId][p.x] = {} end
@@ -207,7 +143,8 @@ function NewGraph:shortestPath(startNode, endNode)
       -- we have to do this check here because we may have pushed on a neighbor that we've never seen on the overworld.
       -- and therefore it wouldn't appear in the graph.
       if self:isDiscovered(node.mapId, node.x, node.y) then
-        local neighbors = self:getNodeAt(node.mapId, node.x, node.y).neighbors
+        local nodeAtXY = self:getNodeAt(node.mapId, node.x, node.y)
+        local neighbors = nodeAtXY.neighbors
         for _, neighbor in ipairs(neighbors) do
           if not containsPoint(visited, neighbor) then
             q:push(neighbor)
@@ -271,6 +208,97 @@ function NewGraph:knownWorldBorder(overworld)
           end
         end
       end
+    end
+  end
+  return res
+end
+
+-- this is the empty overworld graph. the one that we would have before we ever leave tantegel.
+function mkOverworldGraph()
+  local res = {}
+  for y = 0,119 do
+    res[y] = {}
+    for x = 0,119 do
+      res[y][x] = unknown
+    end
+  end
+  return res
+end
+
+function createStaticMapGraphs(staticMaps, haveKeys)
+  local res = {}
+  for i = 2, 29 do
+    local g = mkStaticMapGraph(staticMaps[i], haveKeys)
+    res[i] = g
+  end
+  return res
+end
+
+function mkStaticMapGraph (staticMap, haveKeys)
+  local tileSet = staticMap:getTileSet()
+
+  function isWalkable(x,y)
+    local t = tileSet[staticMap.rows[y][x]]
+    if table.containsUsingDotEquals(staticMap.immobileScps, Point(staticMap.mapId, x, y))
+      then return false
+      else return haveKeys and (t.walkableWithKeys or t.walkable) or t.walkable
+    end
+  end
+
+  --         x,y-1
+  -- x-1,y   x,y     x+1,y
+  --         x,y+1
+  function neighbors(x,y)
+    -- if we can't walk to the node, dont bother including the node in the graph at all
+    if not isWalkable(x,y) then return {} end
+    local res = {}
+    function insertNeighbor(x,y,dir) table.insert(res, Neighbor(staticMap.mapId, x, y, dir)) end
+    if x > 0                    and isWalkable(x-1, y) then insertNeighbor(x-1, y, NeighborDir.LEFT) end
+    if x < staticMap.width - 1  and isWalkable(x+1, y) then insertNeighbor(x+1, y, NeighborDir.RIGHT) end
+    if y > 0                    and isWalkable(x, y-1) then insertNeighbor(x, y-1, NeighborDir.UP) end
+    if y < staticMap.height - 1 and isWalkable(x, y+1) then insertNeighbor(x, y+1, NeighborDir.DOWN) end
+    -- really useful for debugging pathing. just plug in the location you care about
+    -- if staticMap.mapId == 7 and x == 19 and y == 23 then log.debug("n", res) end
+    return res
+  end
+
+  function warpNeighbors(x,y)
+    local res = {}
+    if staticMap.warps[x] ~= nil then
+      if staticMap.warps[x][y] ~= nil then
+        for _, w in pairs(staticMap.warps[x][y]) do
+          table.insert(res, Neighbor(w.mapId, w.x, w.y, NeighborDir.STAIRS))
+        end
+      end
+    end
+    -- really useful for debugging pathing. just plug in the location you care about
+    -- if staticMap.mapId == 7 and x == 19 and y == 23 then log.debug("w", res) end
+    return res
+  end
+
+  function borderNeighbors(x,y)
+    -- this only applies to maps where you can walk directly out onto the overworld.
+    if staticMap.mapType ~= MapType.TOWN and staticMap.mapType ~= MapType.BOTH then return {} end
+    if not isWalkable(x,y) then return {} end
+    local res = {}
+    local coor = staticMap.overworldCoordinates[1]
+    function insertNeighbor(dir) table.insert(res, Neighbor(coor.mapId, coor.x, coor.y, dir)) end
+    if     x == 0                    then insertNeighbor(NeighborDir.LEFT)
+    elseif x == staticMap.width  - 1 then insertNeighbor(NeighborDir.RIGHT)
+    elseif y == 0                    then insertNeighbor(NeighborDir.UP)
+    elseif y == staticMap.height - 1 then insertNeighbor(NeighborDir.DOWN)
+    end
+    -- really useful for debugging pathing. just plug in the location you care about
+    -- if staticMap.mapId == 7 and x == 19 and y == 23 then log.debug("b", res) end
+    return res
+  end
+
+  local res = {}
+  for y = 0, staticMap.height - 1 do
+    res[y] = {}
+    for x = 0, staticMap.width - 1 do
+      res[y][x] = GraphNode(GraphNodeType.KNOWN)
+      res[y][x].neighbors = table.concatAll({neighbors(x,y), borderNeighbors(x,y), warpNeighbors(x,y)})
     end
   end
   return res
