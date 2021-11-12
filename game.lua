@@ -99,15 +99,16 @@ GotoExitValues = enum.new("Follow Path Exit Values", {
  })
 
 function Game:goTo(dest)
-  local loc = self:getLocation()
-  if loc:equals(dest) then
+  local src = self:getLocation()
+  if src:equals(dest) then
     -- log.debug("I was asked to go to: " .. tostring(dest) .. ", but I am already there!")
     return GotoExitValues.AT_LOCATION
   end
-  local path = self:shortestPath(loc, dest)
+  local path = self:shortestPath(src, dest)
+  -- log.debug("in goto, shortestPath: ", src, dest, path)
 
   if path == nil or #path == 0 then
-    log.debug("ERROR: Could not create path from: " .. tostring(loc) .. " to: " .. tostring(dest))
+    log.debug("ERROR: Could not create path from: " .. tostring(src) .. " to: " .. tostring(dest))
     -- something went wrong, we can't get a path there, and we aren't at the destination
     -- so return false indicating that we didn't make it.
     return GotoExitValues.NO_PATH
@@ -312,11 +313,7 @@ function Game:addWarp(warp)
   -- TODO: this is just terrible....
   self.warps = table.concat(self.warps, list.map(self.warps, swapSrcAndDest))
 
-  -- TODO: these two lines just reload absolutely everything.
-  -- this is really not ideal, but, its probably fine for now.
-  -- eventually we will want to do the minimal amount of work possible here.
-  for i = 2, 29 do self.maps[i]:resetWarps(self.warps) end
-  self:resetGraphs()
+  self.graph:addWarp(warp)
 end
 
 function containsPoint(tbl, p)
@@ -569,10 +566,6 @@ function Game:exploreMove()
   -- TODO: we are calculating the shortest path twice... we need to do better than that
   -- here... if we cant find a path to the destination, then we want to just choose a new destination
   local path = self:shortestPath(self:getLocation(), self.exploreDest)
---   local newpath = self.overworld.newGraph:shortestPath(self:getLocation(), self.exploreDest)
---
---   log.debug("OLD PATH", path)
---   log.debug("NEW PATH", newpath)
 
   if path == nil or #(path) == 0 then
     log.debug("couldn't find a path from player location: ", self:getLocation(), " to ", self.exploreDest)
@@ -721,19 +714,20 @@ function Game:dealWithMapChange()
     end
   end
 
+  -- we have entered a town or a cave
   if newMapId ~= 1 and newMapId ~= Tantegel then
-    local coordinatesList = self.maps[newMapId].overworldCoordinates
-    if coordinatesList ~= nil then
-      if #coordinatesList == 1 then
-        self:addWarp(Warp(newLoc, coordinatesList[1]))
+    local entrances = self.maps[newMapId].entrances
+    if entrances ~= nil then
+      if #entrances == 1 then
+        self:addWarp(Warp(newLoc, entrances[1].from))
       else
         -- this must be swamp cave, because it has more than one entrance
         if newLoc:equals(SwampNorthEntrance) then
           log.debug("adding warp to SwampNorthEntrance")
-          self:addWarp(Warp(newLoc, coordinatesList[1]))
+          self:addWarp(Warp(newLoc, entrances[1].from))
         elseif newLoc:equals(SwampSouthEntrance) then
           log.debug("adding warp to SwampSouthEntrance")
-          self:addWarp(Warp(newLoc, coordinatesList[2]))
+          self:addWarp(Warp(newLoc, entrances[2].from))
         end
       end
     end
@@ -744,8 +738,8 @@ function Game:dealWithMapChange()
     self.overworld:getVisibleOverworldGrid(newLoc.x, newLoc.y)
 
     -- we also need to add the warp to the overworld
-    local coordinatesList = self.maps[SwampCave].overworldCoordinates
-    if newLoc:equals(coordinatesList[1]) then
+    local entrances = self.maps[SwampCave].entrances
+    if newLoc:equals(entrances[1].from) then
       log.debug("adding warp to SwampNorthEntrance")
       self:addWarp(Warp(newLoc, SwampNorthEntrance))
     else
@@ -754,7 +748,7 @@ function Game:dealWithMapChange()
     end
   elseif oldMapId == Tantegel then
     log.debug("leaving Tantegel")
-    self:addWarp(Warp(TantegelEntrance, self.maps[Tantegel].overworldCoordinates[1]))
+    self:addWarp(Warp(TantegelEntrance, self.maps[Tantegel].entrances[1].from))
   end
 
   self.currentMapId = newMapId

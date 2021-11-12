@@ -311,12 +311,13 @@ function OnMap(m) return Eq(GetMap, Value(m)) end
 
 Scripts = class(function(a,mem)
 
-  coordinates = getAllOverworldCoordinates(mem)
+  entrances = getAllEntranceCoordinates(mem)
+  -- log.debug("entrances", entrances)
 
-  charlockLocation = coordinates[Charlock][1]
-  a.tantegelLocation = coordinates[Tantegel][1]
---   log.debug("charlockLocation", charlockLocation)
---   log.debug("tantegelLocation", a.tantegelLocation)
+  charlockLocation = entrances[Charlock][1].from
+  a.tantegelLocation = entrances[Tantegel][1].from
+  -- log.debug("charlockLocation", charlockLocation)
+  -- log.debug("tantegelLocation", a.tantegelLocation)
 
   OpenMenu = Consecutive("Open Menu", { HoldA(30), WaitFrames(10) })
   OpenItemMenu = Consecutive("Open Item Menu", { OpenMenu, PressRight(2), PressDown(2), PressA(2), WaitFrames(30) })
@@ -390,7 +391,7 @@ Scripts = class(function(a,mem)
   end
 
   function GotoOverworld(fromMap)
-    local p = coordinates[fromMap][1]
+    local p = entrances[fromMap][1].from
     return Goto(p.mapId, p.x, p.y)
   end
 

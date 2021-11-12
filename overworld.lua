@@ -172,7 +172,7 @@ function OverWorld:updateKnownWorld(x, y, tileId)
       end
   end
 
-  self.graph:discover(OverWorldId, x, y, self)
+  self.graph:discover(x, y, self)
 end
 
 
@@ -339,23 +339,4 @@ function OverWorld:printVisibleGrid (currentX, currentY)
     end
     log.debug(row .. " |")
   end
-end
-
-function OverWorld:newNeighbors(x,y)
-  function isWalkable(x,y)
-    if self.overworldRows[y] == nil then return false end
-    if self.overworldRows[y][x] == nil then return false end
-    return OVERWORLD_TILES[self.overworldRows[y][x]].walkable
-  end
-  local res = {}
-
-  function insertNeighbor(x,y,dir)
-    table.insert(res,Neighbor(OverWorldId, x, y, dir))
-  end
-
-  if x > 0   and isWalkable(x-1, y) then insertNeighbor(x-1, y, NeighborDir.LEFT) end
-  if x < 119 and isWalkable(x+1, y) then insertNeighbor(x+1, y, NeighborDir.RIGHT) end
-  if y > 0   and isWalkable(x, y-1) then insertNeighbor(x, y-1, NeighborDir.UP) end
-  if y < 119 and isWalkable(x, y+1) then insertNeighbor(x, y+1, NeighborDir.DOWN) end
-  return res
 end

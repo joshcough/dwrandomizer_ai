@@ -119,8 +119,8 @@ main()
 --   game:interpretScript(scripts.throneRoomOpeningGameScript())
 --   mem:setReturnWarpLocation(30,83) -- tangegel
 
---   log.debug(game.maps[SwampCave].overworldCoordinates)
---   log.debug(game.maps[Garinham].overworldCoordinates)
+--   log.debug(game.maps[SwampCave].entrances)
+--   log.debug(game.maps[Garinham].entrances)
 --   log.debug(game.scripts.MapScripts[Tantegel])
 
 --   mem:printNPCs()
