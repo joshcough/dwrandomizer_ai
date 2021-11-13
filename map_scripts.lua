@@ -263,6 +263,18 @@ GetItems    = PlayerDataScript("Player's Items", function(pd) return pd.items en
 GetSpells   = PlayerDataScript("Player's Spells", function(pd) return pd.spells end)
 GetStatuses = PlayerDataScript("Game statuses", function(pd) return pd.statuses end)
 
+GetHP       = PlayerDataScript("Amount of HP the player has.", function(pd) return pd.stats.currentHP end)
+GetMP       = PlayerDataScript("Amount of MP the player has.", function(pd) return pd.stats.currentMP end)
+GetMaxHP    = PlayerDataScript("Amount of HP the player has.", function(pd) return pd.stats.maxHP end)
+GetMaxMP    = PlayerDataScript("Amount of MP the player has.", function(pd) return pd.stats.maxMP end)
+
+function CanCast(spell)
+  return All(
+    HaveSpell(s),
+    GtEq(GetMP, Value(spell.mp))
+  )
+end
+
 PlayerDirScript = class(Script, function(a)
   Script.init(a, "HEADING")
 end)
@@ -398,7 +410,7 @@ Scripts = class(function(a,mem)
   function LeaveDungeon(mapId)
     return IfThenScript(
       "Figure out how to leave map: " .. tostring(mapId),
-      HaveSpell(Outside),
+      CanCast(Outside),
       CastSpell(Outside),
       GotoOverworld(mapId)
     )

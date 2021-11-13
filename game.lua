@@ -313,7 +313,7 @@ function Game:addWarp(warp)
   -- TODO: this is just terrible....
   self.warps = table.concat(self.warps, list.map(self.warps, swapSrcAndDest))
 
-  self.graph:addWarp(warp)
+  self.graph:addWarp(warp, self.overworld)
 end
 
 function containsPoint(tbl, p)

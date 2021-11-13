@@ -52,8 +52,9 @@ end
 -- but for now it just helps me survive to test exploration
 -- give ourself gold, xp, best equipment, etc
 function cheat(mem)
-  cheat_giveMaxXP()
-  cheat_giveMaxGold()
+  log.debug("cheating...")
+  cheat_giveMaxXP(mem)
+  cheat_giveMaxGold(mem)
 
   mem:writeRAM(0xbe, 255) -- best equipment
   -- mem:writeRAM(0xbe, 0) -- no equipment

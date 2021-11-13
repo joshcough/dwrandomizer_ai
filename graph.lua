@@ -79,8 +79,34 @@ end
 -- we can add the neighbors normally to the neighbors4.
 -- but when we actually go into it, then i think we want to replace those neighbors
 -- with instead of the overworld location, the actual warp location
-function Graph:addWarp(warp)
-  log.debug("---------add warp ----------", warp)
+function Graph:addWarp(warp, overworld)
+  if not (warp.src.mapId == OverWorldId or warp.dest.mapId == OverWorldId) then
+    log.debug("Not adding warp because there's no overworld in it.", warp)
+  end
+  -- log.debug("adding warp in Graph", warp)
+  self:fixOverworldNeighbors(warp, overworld)
+end
+
+function Graph:fixOverworldNeighbors(warp, overworld)
+  local overworldPoint = warp.src.mapId == OverWorldId and warp.src  or warp.dest
+  local otherPoint     = warp.src.mapId == OverWorldId and warp.dest or warp.src
+
+  function go(graph)
+    -- we need to get each of the Walkable neighbors4 of the overworldPoint
+    -- for each of those points, add add a neighbor (in the correct direction of course) to the otherPoint
+    -- there should already be a node in the graph from otherPoint to overworldPoint
+    list.foreach(overworld:neighbors(overworldPoint.x,overworldPoint.y), function(n)
+      -- log.debug("replacing neighbor", n, otherPoint)
+      -- delete the overworldPoint and then add the otherPoint
+      graph:getNodeAt(OverWorldId,n.x,n.y).neighbors =
+        list.map(graph:getNodeAt(OverWorldId,n.x,n.y).neighbors, function(n)
+          return n:equalsPoint(overworldPoint) and Neighbor(otherPoint.mapId, otherPoint.x, otherPoint.y, n.dir) or n
+        end)
+    end)
+  end
+
+  go(self.graphWithKeys)
+  go(self.graphWithoutKeys)
 end
 
 NewGraph = class(function(a, staticMapGraphs)
@@ -101,7 +127,6 @@ function NewGraph:getNodeAt(m,x,y)
   return self.rows[m][y][x]
 end
 
--- TODO: this is really only for the overworld... so can we remove the m argument?
 function NewGraph:discover(x, y, overworld)
   if self:isDiscovered(OverWorldId,x,y) or not overworld:getOverworldMapTileAtNoUpdate(x,y).walkable
     then return
