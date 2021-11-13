@@ -373,3 +373,13 @@ function SearchSpots:searchAt(loc)
   else return
   end
 end
+
+-- TODO: i think i want to make Inns a class.
+-- would just need their location and cost
+-- Inn costs
+  -- brecconary 6
+  -- kol 20
+  -- garinham 25
+  -- rimuldar 55
+  -- cantlin 100
+

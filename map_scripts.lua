@@ -268,6 +268,10 @@ GetMP       = PlayerDataScript("Amount of MP the player has.", function(pd) retu
 GetMaxHP    = PlayerDataScript("Amount of HP the player has.", function(pd) return pd.stats.maxHP end)
 GetMaxMP    = PlayerDataScript("Amount of MP the player has.", function(pd) return pd.stats.maxMP end)
 
+function CanAfford(amount)
+ return GtEq(GetGold, Value(53))
+end
+
 function CanCast(spell)
   return All(
     HaveSpell(s),
@@ -347,16 +351,22 @@ Scripts = class(function(a,mem)
     })
   end
 
-  function VisitInn(mapId, x, y, directionScript)
-    return Consecutive("Visiting inn at: " .. tostring(Point(mapId, x, y)), {
-      Goto(mapId, x, y),
-      directionScript,
-      Talk,
-      PressA(30),
-      PressA(180),
-      PressA(30),
-      PressB(2)
-    })
+  function VisitInn(p, cost, directionScript)
+    return IfThenScript(
+      "If we can afford the inn, use it.",
+      CanAfford(cost),
+      Consecutive("Visiting inn at: " .. tostring(p), {
+        CanAfford(53),
+        GotoPoint(p),
+        directionScript,
+        Talk,
+        PressA(30),
+        PressA(300),
+        PressA(30),
+        PressB(2)
+      }),
+      DoNothing
+    )
   end
 
   function OpenDoor(loc)
@@ -548,7 +558,7 @@ Scripts = class(function(a,mem)
         DoNothing
       ),
       VisitShop(Garinham, 10, 16),
-      VisitInn(Garinham, 15, 15, FaceRight),
+      VisitInn(Point(Garinham, 15, 15), 25, FaceRight),
       GotoOverworld(Garinham)
     })
 
@@ -608,7 +618,7 @@ Scripts = class(function(a,mem)
       -- unless we are doing a ghetto grind
       SearchAt(Kol, 9, 6),
       VisitShop(Kol, 20, 12),
-      VisitInn(Kol, 19, 2, FaceDown),
+      VisitInn(Point(Kol, 19, 2), 20, FaceDown),
       -- TODO: we can't go to this one yet
       -- because its not a weapon and armor shop
       -- and thats currently all we know how to handle
@@ -618,7 +628,7 @@ Scripts = class(function(a,mem)
 
   rimuldar =
     Consecutive("Rimuldar", {
-      IfThenScript("Do we need keys?", All(NeedKeys, GtEq(GetGold, Value(53))),
+      IfThenScript("Do we need keys?", All(NeedKeys, CanAfford(53)),
         Consecutive("Buy Keys in Rimuldar", {Goto(Rimuldar, 4, 5), ShopKeeper}),
         DoNothing
       ),
@@ -627,7 +637,7 @@ Scripts = class(function(a,mem)
         DoNothing
       ),
       VisitShop(Rimuldar, 23, 9),
-      VisitInn(Rimuldar, 18, 18, FaceLeft)
+      VisitInn(Point(Rimuldar, 18, 18), 55, FaceLeft)
     })
 
   -- TODO: a lot of work needs to be done on this script
@@ -645,17 +655,17 @@ Scripts = class(function(a,mem)
     )
 
   cantlin = Consecutive( "Cantlin", {
-    VisitShop(Cantlin, 25, 26),
+    -- VisitShop(Cantlin, 25, 26),
     -- VisitShop(Cantlin, 26, 12), -- TODO: this one we can only do if we have keys:
     -- this one has the guy that moves around
     -- WeaponAndArmorShop({Point(Cantlin, 20, 3), Point(Cantlin, 20, 4), Point(Cantlin, 20, 5), Point(Cantlin, 20, 6)}, getShopItems(c1))
-    VisitInn(Cantlin, 8, 5, FaceUp),
+    VisitInn(Point(Cantlin, 8, 5), 100, FaceUp),
     GotoOverworld(Cantlin)
   })
 
   brecconary = Consecutive("Brecconary", {
     VisitShop(Brecconary, 5, 6),
-    VisitInn(Brecconary, 8, 21, FaceRight),
+    VisitInn(Point(Brecconary, 8, 21), 6, FaceRight),
     GotoOverworld(Brecconary)
   })
 
