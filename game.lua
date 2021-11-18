@@ -10,7 +10,7 @@ require 'static_maps'
 
 Game = class(function(a, memory, warps, graph, overworld, maps)
   -- map related stuff
-  a.scripts = Scripts(memory)
+  a.scripts = Scripts(getAllEntranceCoordinates(memory))
   a.memory = memory
   a.warps = warps
   a.graph = graph
@@ -108,12 +108,15 @@ function Game:goTo(dest)
   -- log.debug("in goto, shortestPath: ", src, dest, path)
 
   if path == nil or #path == 0 then
-    log.debug("ERROR: Could not create path from: " .. tostring(src) .. " to: " .. tostring(dest))
+    local errMsg = "ERROR: Could not create path from: " .. tostring(src) .. " to: " .. tostring(dest)
+    log.debug(errMsg)
+    error(errMsg)
     -- something went wrong, we can't get a path there, and we aren't at the destination
     -- so return false indicating that we didn't make it.
     return GotoExitValues.NO_PATH
   else
     local res = self:followPath(path)
+    -- log.debug("res from followPath is", res)
     if res == GotoExitValues.REPEL_TIMER
       then
         -- we got interruped by repel ending. after closing the window, continue going.
@@ -129,6 +132,7 @@ function Game:goTo(dest)
     elseif res == GotoExitValues.MAP_CHANGED
       then
         self:dealWithMapChange()
+        -- waitFrames(120)
         self:goTo(dest)
     else
       return res -- TODO: can we even do anything with the others? NO_PATH, BUG? AT_LOCATION?
@@ -143,7 +147,7 @@ function Game:followPath(path)
   local commands = convertPathToCommands(path, self.maps)
   if commands == nil or #commands == 0 then return GotoExitValues.NO_PATH end
 
-  -- list.log(commands)
+  -- log.debug(commands)
 
   local dest = nil
   for i,c in pairs(commands) do
@@ -166,7 +170,9 @@ function Game:followPath(path)
           end
         end
         -- log.debug("current point: ", memory:getLocation(), "c.to: ", c.to, "equal?: ", p:equals(c.to))
-        return loc:equals(c.to) or self.inBattle or self.repelTimerWindowOpen or self.dead or self.mapChanged
+        -- TODO: ugh... in  some situations it seems like we do need to abort on mapChanged
+        -- and others it seems that we can't. i'm not sure how to resolve this yet. :(
+        return loc:equals(c.to) or self.inBattle or self.repelTimerWindowOpen or self.dead -- or self.mapChanged
       end)
     end
   end
@@ -215,6 +221,7 @@ function Game:interpretScript(s)
     elseif s:is_a(PlayerDirScript)  then return self.memory:readPlayerDirection()
     elseif s:is_a(IfThenScript)
       then
+        -- log.debug("IfThenScript calling evaluateCondition with", s.condition)
         local cond = self:evaluateCondition(s.condition)
         local branch = cond and s.trueBranch or s.falseBranch
         return self:interpretScript(branch)
@@ -223,12 +230,25 @@ function Game:interpretScript(s)
     elseif s:is_a(PressButtonScript) then pressButton(s.button.name, s.waitFrames)
     elseif s:is_a(HoldButtonScript) then holdButton(s.button.name, s.duration)
     elseif s:is_a(HoldButtonUntilScript) then holdButtonUntil(s.button.name, tostring(s.condition), function ()
+      -- log.debug("HoldButtonUntilScript calling evaluateCondition with", s.condition)
       return self:evaluateCondition(s.condition)
     end)
     elseif s:is_a(WaitFrames) then waitFrames(s.duration)
     elseif s:is_a(WaitUntil) then
+      -- log.debug("WaitUntil calling evaluateCondition with", s.condition)
       waitUntil(function() return self:evaluateCondition(s.condition) end, s.duration, s.msg)
     elseif s:is_a(DebugScript) then log.debug(s.name)
+    elseif s:is_a(NTimes) then
+      local n = self:interpretScript(s.n)
+      -- log.debug("in NTimes", "s.n", s.n, "n", n, "s.script", s.script)
+      for i = 1, self:interpretScript(s.n) do
+        self:interpretScript(s.script)
+      end
+    elseif s:is_a(BinaryOperator) then
+      local lv = self:interpretScript(s.l)
+      local rv = self:interpretScript(s.r)
+      -- log.debug("in BinaryOperator", s.name, s.l, s.r, lv, rv)
+      return s.f(self:interpretScript(s.l), self:interpretScript(s.r))
     end
   else
     log.debug("Script is not a script! " .. tostring(s))
@@ -239,20 +259,29 @@ function Game:evaluateCondition(s)
   -- log.debug("evaluateCondition: ", s)
   -- base conditions
       if s:is_a(IsChestOpen) then return self.chests:isChestOpen(s.location)
-  elseif s:is_a(IsDoorOpen)  then return self:isDoorOpen(s.location)
+  elseif s:is_a(IsDoorOpen)  then
+    local b = self:isDoorOpen(s.location)
+    -- log.debug("IsDoorOpen", b)
+    return b
   elseif s:is_a(HasChestEverBeenOpened) then return self.chests:hasChestEverBeenOpened(s.location)
   -- combinators
-  elseif s:is_a(Eq)       then return self:interpretScript(s.l) == self:interpretScript(s.r)
-  elseif s:is_a(DotEq)    then return self:interpretScript(s.l):equals(self:interpretScript(s.r))
-  elseif s:is_a(NotEq)    then return self:interpretScript(s.l) ~= self:interpretScript(s.r)
-  elseif s:is_a(Lt)       then return self:interpretScript(s.l) < self:interpretScript(s.r)
-  elseif s:is_a(LtEq)     then return self:interpretScript(s.l) <= self:interpretScript(s.r)
-  elseif s:is_a(Gt)       then return self:interpretScript(s.l) > self:interpretScript(s.r)
-  elseif s:is_a(GtEq)     then return self:interpretScript(s.l) >= self:interpretScript(s.r)
-  elseif s:is_a(Any)      then return list.any(s.conditions, function(x) return self:evaluateCondition(x) end)
-  elseif s:is_a(All)      then return list.all(s.conditions, function(x) return self:evaluateCondition(x) end)
+  elseif s:is_a(BinaryOperator) then
+    local lv = self:interpretScript(s.l)
+    local rv = self:interpretScript(s.r)
+    -- log.debug("in BinaryOperator", s.name, s.l, s.r, lv, rv)
+    return s.f(self:interpretScript(s.l), self:interpretScript(s.r))
+  elseif s:is_a(Any)      then return list.any(s.conditions, function(x)
+    -- log.debug("Any calling evaluateCondition with", x)
+    return self:evaluateCondition(x)
+  end)
+  elseif s:is_a(All)      then return list.all(s.conditions, function(x)
+    -- log.debug("All calling evaluateCondition with", s.conditions, x)
+    return self:evaluateCondition(x)
+  end)
   elseif s:is_a(Contains) then return self:interpretScript(s.container):contains(s.v)
-  elseif s:is_a(Not)      then return not self:evaluateCondition(s.condition)
+  elseif s:is_a(Not)      then
+    -- log.debug("Not calling evaluateCondition with", s.condition)
+    return not self:evaluateCondition(s.condition)
   elseif s:is_a(Value)    then return s.v
 
   -- TODO: hack. PlayerDataScript is not a ConditionScript...gross.
@@ -329,7 +358,9 @@ end
 function swapSrcAndDest(w) return w:swap() end
 
 function Game:isDoorOpen(loc)
-  return containsPoint(self.unlockedDoors, loc)
+  local res = table.containsUsingDotEquals(list.map(self.unlockedDoors, function(d) return d.loc end), loc.loc)
+  -- log.debug("in Game:isDoorOpen", "loc", loc, "self.unlockedDoors", self.unlockedDoors, res)
+  return res
 end
 
 function Game:saveUnlockedDoor(loc)
@@ -338,6 +369,8 @@ function Game:saveUnlockedDoor(loc)
   -- and then we will probably have to regenerate the graphs or whatever.
   if (loc:equalsPoint(Point(TantegelThroneRoom, 4, 7))) then
     self.graph:unlockThroneRoomDoor()
+  elseif (loc:equalsPoint(Point(Rimuldar, 22, 23))) then
+    self.graph:unlockRimuldar()
   end
   table.insert(self.unlockedDoors, loc)
 end
@@ -364,7 +397,9 @@ function convertPathToCommands(pathIn, maps)
       elseif p2.dir == NeighborDir.RIGHT  then return MovementCommand(RIGHT, p1, next)
       elseif p2.dir == NeighborDir.UP     then return MovementCommand(UP, p1, next)
       elseif p2.dir == NeighborDir.DOWN   then return MovementCommand(DOWN, p1, next)
-      else log.debug("i have no idea what is going on with the neighbor type")
+      else
+        log.debug("i have no idea what is going on with the neighbor type", p1, p2, next)
+        error("i have no idea what is going on with the neighbor type", p1, p2, next)
       end
     end
 
@@ -406,7 +441,7 @@ function Game:stateMachine()
   if self.dead then self:dealWithDeath()
   elseif self.mapChanged then self:dealWithMapChange()
   elseif self:getMapId() == 0 then
-    -- log.debug("I think we are still on map 0 man!")
+    -- log.debug("We are still on map 0 man!")
     self:interpretScript(self.scripts.GameStartMenuScript)
   else self:grindOrExplore()
   end
@@ -415,15 +450,25 @@ end
 function Game:grindOrExplore()
   local pd = self:readPlayerData()
   local currentLevel = pd.stats.level
-  local grind = getGrindInfo(pd, self.overworld)
+  local grind = getGrindInfo(pd, self.graph, self.overworld)
+  log.debug("in grindOrExplore", "grind", grind, "getLocation", self:getLocation())
 
   self:healIfNecessary()
+
+  -- TODO: i think these if statements can be simplified.
+  -- they are weird now because there are two calls to self:explore()
+  if self.exploreDest ~= nil then
+    log.debug("we had an exploreDest, so going to that instead of grinding", self.exploreDest)
+    self:explore()
+  end
 
   if self:getMapId() == OverWorldId and grind ~= nil
     -- we have a good monster to grind on, so, grind.
     then self:grind(grind, currentLevel)
     -- if haven't seen anything worth fighting... then i guess just explore...
-    else self:explore()
+    else
+      log.debug("no exploreDest and nothing to grind on, going to explore.")
+      self:explore()
   end
 end
 
@@ -431,7 +476,8 @@ function Game:grind(grind, currentLevel)
   log.debug("GRINDING: ", tostring(grind))
   -- TODO: if one is forest and the other is desert, we want to pick desert.
   -- in general, we want to pick the tiles with the highest encounter rate.
-  local neighbor = self.overworld:grindableNeighbors(grind.location.x, grind.location.y)[1]
+  local neighbor = self.graph:grindableNeighbors(self.overworld, grind.location.x, grind.location.y)[1]
+  log.debug("The neighbor to grind on", neighbor)
 
   while(self.memory:getLevel() == currentLevel and not self.dead) do
     self:goTo(grind.location)
@@ -499,18 +545,20 @@ function Game:exploreStart()
   -- TODO: if there are multiple new locations, we should pick the closest one.
   local seeSomethingNew = #(self.overworld.importantLocations) > 0
   if seeSomethingNew then
-    local newImportantLoc = self.overworld.importantLocations[1].location
+    local newImportantLoc = self.overworld.importantLocations[1]
     -- if the the new location we have spotted on the overworld is tantegel itself, ignore it.
-    if newImportantLoc:equals(self.scripts.tantegelLocation) then
+    if newImportantLoc.location:equals(self.scripts.tantegelLocation) then
       -- log.debug("I see a castle, but its just tantegel, so I'm ignoring it")
-      self:removeFirstImportantLocation()
+     -- log.debug("removing important location in exploreStart (1)")
+     self:removeFirstImportantLocation()
     elseif self.overworld.importantLocations[1].type == ImportantLocationType.CHARLOCK then
       log.debug("I see Charlock!")
       self:interpretScript(self.scripts.EnterCharlock)
+     -- log.debug("removing important location in exploreStart (2)")
       self:removeFirstImportantLocation()
     else
-      if self.exploreDest == nil or not self.exploreDest:equals(newImportantLoc) then
-        log.debug("I see something new at: ", newImportantLoc)
+      if self.exploreDest == nil or not self.exploreDest:equals(newImportantLoc.location) then
+        -- log.debug("Headed towards new important location: ", newImportantLoc)
         self:chooseNewDestinationDirectly(self.overworld.importantLocations[1].location)
       end
     end
@@ -626,17 +674,19 @@ function Game:healIfNecessary()
 
   function castMaybe(spell) if needHealing() then  self:cast(spell) end end
 
+  -- todo: we can do better than all this
+  -- like, if we have 20 out of 40 HP, we should only cast heal
   castMaybe(Healmore)
   castMaybe(Heal)
 
---   local hl = self:healingLocations()
---   for i = 1, #hl do
---     log.debug("healing location #" .. i)
---     log.debug(hl[i])
---   end
--- if we need mp, we should go the the closest healing location
---   log.debug("closest healing location:")
---   log.debug(self:closestHealingLocation())
+  if needMP() then
+    -- if we need mp, we should go the the closest healing location
+    local healingLoc = self:closestHealingLocation()
+    log.debug("closest healing location:", healingLoc)
+    if healingLoc ~= nil then
+      self:interpretScript(self.scripts.InnScripts[healingLoc.mapId])
+    end
+  end
 
 end
 
@@ -684,7 +734,7 @@ function Game:dealWithDeath()
 end
 
 function Game:dealWithMapChange()
-  -- log.debug("dealing with map change")
+  log.debug("dealing with map change")
   local oldMapId = self.currentMapId
   local newMapId = self:getMapId()
   local newLoc   = self:getLocation()
@@ -749,6 +799,8 @@ function Game:dealWithMapChange()
   elseif oldMapId == Tantegel then
     log.debug("leaving Tantegel")
     self:addWarp(Warp(TantegelEntrance, self.maps[Tantegel].entrances[1].from))
+  else
+    log.debug("nothing to do in dealWithMapChange")
   end
 
   self.currentMapId = newMapId
@@ -826,12 +878,12 @@ function Game:endRepelTimer()
 end
 
 function Game:nextLevel()
-  log.debug("i think i just leveled up.")
+  log.debug("i just leveled up.")
   self.leveledUp = true
 end
 
 function Game:deathBySwamp()
-  log.debug("i think i just died in a swamp.")
+  log.debug("i just died in a swamp.")
   self.dead = true
 end
 

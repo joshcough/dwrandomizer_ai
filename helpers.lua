@@ -467,6 +467,7 @@ Neighbor = class(function(a, mapId, x, y, dir)
   a.x = x
   a.y = y
   a.dir = dir
+  a.loc = Point(mapId, x, y)
 end)
 
 function Neighbor:__tostring()
@@ -479,8 +480,8 @@ function Neighbor:equals(n)
 end
 
 function Neighbor:equalsPoint(p)
-  if p == nil then return false end
-  return self.mapId == p.mapId and self.x == p.x and self.y == p.y
+  if n == nil then return false end
+  return self.loc:equals(n)
 end
 
 function Neighbor:getPoint()

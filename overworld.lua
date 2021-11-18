@@ -139,7 +139,7 @@ function OverWorld:getOverworldMapTileAtNoUpdate(x, y)
   return OVERWORLD_TILES[self.overworldRows[y][x]]
 end
 
-ImportantLocationType = enum.new("Tyoes of important locations on the Overworld", {
+ImportantLocationType = enum.new("Types of important locations on the Overworld", {
   "CHARLOCK", -- Could be CASTLE, but, we already know where Tantegel is, so, it just must be Charlock
   "TOWN",
   "CAVE",
@@ -238,14 +238,6 @@ function OverWorld:neighbors(x,y)
   if y > 0   and isWalkable(x, y-1) then insertNeighbor(x, y-1, NeighborDir.UP) end
   if y < 119 and isWalkable(x, y+1) then insertNeighbor(x, y+1, NeighborDir.DOWN) end
   return res
-end
-
-function OverWorld:grindableNeighbors(x,y)
-  return list.filter(self:neighbors(x,y), function(n)
-    local tileId = self:getOverworldMapTileIdAt(n.x, n.y)
-    local res = (tileId ~= SwampId and tileId < TownId) or tileId == BridgeId
-    return res
-  end)
 end
 
 function OverWorld:getKnownWorldTileAt(x,y)

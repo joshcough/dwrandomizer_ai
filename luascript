@@ -1,3 +1,7 @@
 > dofile('helpers.lua'); dofile('player_data.lua'); dofile('static_maps.lua'); dofile('game.lua'); dofile('map_scripts.lua');  dofile('shops.lua');
 > o = OverWorld(emptyWorldGrid())
 > o:printVisibleGrid(0,0)
+
+
+> dofile("helpers.lua"); dofile("static_maps.lua"); dofile("map_scripts.lua"); dofile("game.lua")
+> Scripts(getMockEntranceCoordinates()).MapScripts[ErdricksCaveLv1]

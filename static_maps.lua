@@ -62,37 +62,37 @@ WARPS = {
  , Warp(Point(TantegelThroneRoom, 8, 8), Point(Tantegel, 7, 7))
  -- 9 = garinham, 24 = GarinsGrave -- this one has to be discovered, like the basement
  -- , Warp(Point(9, 19, 0), Point(24, 6, 11))
- , Warp(Point(CharlockCaveLv1, 15, 1),   Point(CharlockCaveLv2, 8, 0))
- , Warp(Point(CharlockCaveLv1, 13, 7),   Point(CharlockCaveLv2, 4, 4))
- , Warp(Point(CharlockCaveLv1, 19, 7),   Point(CharlockCaveLv2, 9, 8))
- , Warp(Point(CharlockCaveLv1, 14, 9),   Point(CharlockCaveLv2, 8, 9))
- , Warp(Point(CharlockCaveLv1, 2, 14),   Point(CharlockCaveLv2, 0, 1))
- , Warp(Point(CharlockCaveLv1, 2, 4),    Point(CharlockCaveLv2, 0, 0))
- , Warp(Point(CharlockCaveLv1, 8, 19),   Point(CharlockCaveLv2, 5, 0))
- , Warp(Point(CharlockCaveLv2, 3, 0),    Point(CharlockCaveLv3, 7, 0))
- , Warp(Point(CharlockCaveLv2, 9, 1),    Point(CharlockCaveLv3, 2, 2))
- , Warp(Point(CharlockCaveLv2, 0, 8),    Point(CharlockCaveLv3, 5, 4))
- , Warp(Point(CharlockCaveLv2, 1, 9),    Point(CharlockCaveLv3, 0, 9))
- , Warp(Point(CharlockCaveLv3, 1, 6),    Point(CharlockCaveLv4, 0, 9))
- , Warp(Point(CharlockCaveLv3, 7, 7),    Point(CharlockCaveLv4, 7, 7))
- , Warp(Point(CharlockCaveLv4, 2, 2),    Point(CharlockCaveLv5, 9, 0))
- , Warp(Point(CharlockCaveLv4, 8, 1),    Point(CharlockCaveLv5, 4, 0))
- , Warp(Point(CharlockCaveLv5, 5, 5),    Point(CharlockCaveLv6, 0, 0))
- , Warp(Point(CharlockCaveLv5, 0, 0),    Point(CharlockCaveLv6, 0, 6))
- , Warp(Point(CharlockCaveLv6, 9, 0),    Point(CharlockCaveLv6, 0, 0))
- , Warp(Point(CharlockCaveLv6, 9, 6),    Point(CharlockThroneRoom, 10, 29))
- , Warp(Point(MountainCaveLv1, 0, 0),    Point(MountainCaveLv2, 0, 0))
- , Warp(Point(MountainCaveLv1, 6, 5),    Point(MountainCaveLv2, 6, 5))
+ , Warp(Point(CharlockCaveLv1, 15,  1),  Point(CharlockCaveLv2,  8,  0))
+ , Warp(Point(CharlockCaveLv1, 13,  7),  Point(CharlockCaveLv2,  4,  4))
+ , Warp(Point(CharlockCaveLv1, 19,  7),  Point(CharlockCaveLv2,  9,  8))
+ , Warp(Point(CharlockCaveLv1, 14,  9),  Point(CharlockCaveLv2,  8,  9))
+ , Warp(Point(CharlockCaveLv1,  2, 14),  Point(CharlockCaveLv2,  0,  1))
+ , Warp(Point(CharlockCaveLv1,  2,  4),  Point(CharlockCaveLv2,  0,  0))
+ , Warp(Point(CharlockCaveLv1,  8, 19),  Point(CharlockCaveLv2,  5,  0))
+ , Warp(Point(CharlockCaveLv2,  3,  0),  Point(CharlockCaveLv3,  7,  0))
+ , Warp(Point(CharlockCaveLv2,  9,  1),  Point(CharlockCaveLv3,  2,  2))
+ , Warp(Point(CharlockCaveLv2,  0,  8),  Point(CharlockCaveLv3,  5,  4))
+ , Warp(Point(CharlockCaveLv2,  1,  9),  Point(CharlockCaveLv3,  0,  9))
+ , Warp(Point(CharlockCaveLv3,  1,  6),  Point(CharlockCaveLv4,  0,  9))
+ , Warp(Point(CharlockCaveLv3,  7,  7),  Point(CharlockCaveLv4,  7,  7))
+ , Warp(Point(CharlockCaveLv4,  2,  2),  Point(CharlockCaveLv5,  9,  0))
+ , Warp(Point(CharlockCaveLv4,  8,  1),  Point(CharlockCaveLv5,  4,  0))
+ , Warp(Point(CharlockCaveLv5,  5,  5),  Point(CharlockCaveLv6,  0,  0))
+ , Warp(Point(CharlockCaveLv5,  0,  0),  Point(CharlockCaveLv6,  0,  6))
+ , Warp(Point(CharlockCaveLv6,  9,  0),  Point(CharlockCaveLv6,  0,  0))
+ , Warp(Point(CharlockCaveLv6,  9,  6),  Point(CharlockThroneRoom, 10, 29))
+ , Warp(Point(MountainCaveLv1,  0,  0),  Point(MountainCaveLv2,  0,  0))
+ , Warp(Point(MountainCaveLv1,  6,  5),  Point(MountainCaveLv2,  6,  5))
  , Warp(Point(MountainCaveLv1, 12, 12),  Point(MountainCaveLv2, 12, 12))
- , Warp(Point(GarinsGraveLv1,  1, 18),   Point(GarinsGraveLv2, 11, 2))
- , Warp(Point(GarinsGraveLv2,  1, 1),    Point(GarinsGraveLv3, 1, 26))
- , Warp(Point(GarinsGraveLv2,  12, 1),   Point(GarinsGraveLv3, 18, 1))
- , Warp(Point(GarinsGraveLv2,  5, 6),    Point(GarinsGraveLv3, 6, 11))
- , Warp(Point(GarinsGraveLv2,  1, 10),   Point(GarinsGraveLv3, 2, 17))
- , Warp(Point(GarinsGraveLv2,  12, 10),  Point(GarinsGraveLv3, 18, 13))
- , Warp(Point(GarinsGraveLv3,  9, 5),    Point(GarinsGraveLv4, 0, 4))
- , Warp(Point(GarinsGraveLv3,  10, 9),   Point(GarinsGraveLv4, 5, 4))
- , Warp(Point(ErdricksCaveLv1, 9, 9),    Point(ErdricksCaveLv2, 8, 9))
+ , Warp(Point(GarinsGraveLv1,   1, 18),  Point(GarinsGraveLv2,  11,  2))
+ , Warp(Point(GarinsGraveLv2,   1,  1),  Point(GarinsGraveLv3,   1, 16))
+ , Warp(Point(GarinsGraveLv2,  12,  1),  Point(GarinsGraveLv3,  18,  1))
+ , Warp(Point(GarinsGraveLv2,   5,  6),  Point(GarinsGraveLv3,   6, 11))
+ , Warp(Point(GarinsGraveLv2,   1, 10),  Point(GarinsGraveLv3,   2, 17))
+ , Warp(Point(GarinsGraveLv2,  12, 10),  Point(GarinsGraveLv3,  18, 13))
+ , Warp(Point(GarinsGraveLv3,   9,  5),  Point(GarinsGraveLv4,   0,  4))
+ , Warp(Point(GarinsGraveLv3,  10,  9),  Point(GarinsGraveLv4,   5,  4))
+ , Warp(Point(ErdricksCaveLv1,  9,  9),  Point(ErdricksCaveLv2,  8,  9))
 }
 
 function getWarpsForMap(mapId, allWarps)
@@ -202,6 +202,25 @@ function getAllEntranceCoordinates(memory)
     res[i] = meta:readEntranceCoordinates(memory)
   end
   return res
+end
+
+function getMockEntranceCoordinates()
+  return
+    {[2]={Entrance(19, 10, Point(1, 54, 87))},
+     [3]={Entrance(10, 0, Point(1, 29, 112))},
+     [4]={Entrance(29, 11, Point(1, 85, 90))},
+     [7]={Entrance(23, 19, Point(1, 55, 67))},
+     [8]={Entrance(15, 0, Point(1, 98, 98))},
+     [9]={Entrance(14, 0, Point(1, 74, 108))},
+     [10]={Entrance(15, 5, Point(1, 36, 44))},
+     [11]={Entrance(14, 29, Point(1, 74, 110))},
+     [12]={Entrance(4, 0, Point(4, 29, 29))},
+     [13]={Entrance(9, 4, Point(1, 58, 106))},
+     [14]={Entrance(4, 0, Point(1, 82, 8))},
+     [21]={Entrance(0, 0, Point(1, 90, 78)), Entrance(29, 0, Point(1, 93, 63))},
+     [22]={Entrance(7, 0, Point(1, 96, 99))},
+     [24]={Entrance(11, 6, Point(9, 19, 0))},
+     [28]={Entrance(0, 0, Point(1, 86, 84))}}
 end
 
 StaticMapTile = class(function(a,tileId,name,walkable,walkableWithKeys)

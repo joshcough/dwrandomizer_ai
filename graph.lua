@@ -72,7 +72,13 @@ OverWorldId = 1
 TantegelThroneRoom = 5
 
 function Graph:unlockThroneRoomDoor()
+  log.debug("unlocking throne room door")
   self.graphWithoutKeys.rows[TantegelThroneRoom] = self.graphWithKeys.rows[TantegelThroneRoom]
+end
+
+function Graph:unlockRimuldar()
+  log.debug("unlocking rimular")
+  self.graphWithoutKeys.rows[Rimuldar] = self.graphWithKeys.rows[Rimuldar]
 end
 
 --TODO: when we see an important location (town/cave/castle)
@@ -87,20 +93,41 @@ function Graph:addWarp(warp, overworld)
   self:fixOverworldNeighbors(warp, overworld)
 end
 
+function Graph:grindableNeighbors(overworld,x,y)
+  -- log.debug("in grindableNeighbors", x, y)
+  local neighbors = self.graphWithKeys:getNodeAt(OverWorldId,x,y).neighbors
+  return list.filter(neighbors, function(n)
+    if n.mapId ~= OverWorldId then return false end
+    local tileId = overworld:getOverworldMapTileIdAt(n.x, n.y)
+    local res = (tileId ~= SwampId and tileId < TownId) or tileId == BridgeId
+    -- log.debug("in grindableNeighbors filter", n.mapId, n.x, n.y, tileId, res)
+    return res
+  end)
+end
+
 function Graph:fixOverworldNeighbors(warp, overworld)
   local overworldPoint = warp.src.mapId == OverWorldId and warp.src  or warp.dest
   local otherPoint     = warp.src.mapId == OverWorldId and warp.dest or warp.src
+
+  -- log.debug("fixOverworldNeighbors", overworldPoint, otherPoint)
 
   function go(graph)
     -- we need to get each of the Walkable neighbors4 of the overworldPoint
     -- for each of those points, add add a neighbor (in the correct direction of course) to the otherPoint
     -- there should already be a node in the graph from otherPoint to overworldPoint
-    list.foreach(overworld:neighbors(overworldPoint.x,overworldPoint.y), function(n)
-      -- log.debug("replacing neighbor", n, otherPoint)
+    list.foreach(overworld:neighbors(overworldPoint.x,overworldPoint.y), function(outer)
+      -- log.debug("OUTER", outer, overworldPoint)
       -- delete the overworldPoint and then add the otherPoint
-      graph:getNodeAt(OverWorldId,n.x,n.y).neighbors =
-        list.map(graph:getNodeAt(OverWorldId,n.x,n.y).neighbors, function(n)
-          return n:equalsPoint(overworldPoint) and Neighbor(otherPoint.mapId, otherPoint.x, otherPoint.y, n.dir) or n
+      graph:getNodeAt(OverWorldId,outer.x,outer.y).neighbors =
+        list.map(graph:getNodeAt(OverWorldId,outer.x,outer.y).neighbors, function(inner)
+          -- log.debug("INNER", inner, overworldPoint, inner.loc:equals(overworldPoint))
+          if inner.loc:equals(overworldPoint) then
+            local newNeighbor = Neighbor(otherPoint.mapId, otherPoint.x, otherPoint.y, inner.dir)
+            -- log.debug("replacing neighbor of outer", outer, "inner", inner, "with", newNeighbor)
+            return newNeighbor
+          else
+            return inner
+          end
         end)
     end)
   end
