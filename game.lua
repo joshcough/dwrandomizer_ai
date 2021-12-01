@@ -452,24 +452,29 @@ function Game:stateMachine()
 end
 
 function Game:grindOrExplore()
-  local pd = self:readPlayerData()
-  local currentLevel = pd.stats.level
-  local grind = getGrindInfo(pd, self.graph, self.overworld)
-  log.debug("in grindOrExplore", "grind", grind, "getLocation", self:getLocation())
-
+  log.debug("in grindOrExplore, current location is:", self:getLocation())
   self:healIfNecessary()
 
   -- TODO: i think these if statements can be simplified.
-  -- they are weird now because there are two calls to self:explore()
+  -- they are weird now because there are several calls to self:explore()
   if self.exploreDest ~= nil then
     log.debug("we had an exploreDest, so going to that instead of grinding", self.exploreDest)
     self:explore()
-  elseif self:getMapId() == OverWorldId and grind ~= nil
-    -- we have a good monster to grind on, so, grind.
-    then self:grind(grind, currentLevel)
+  elseif self:getMapId() == OverWorldId then
+    log.debug("no exploreDest, on the overworld.")
+    local pd = self:readPlayerData()
+    local grind = getGrindInfo(pd, self.graph, self.overworld)
+    -- if we have a good monster to grind on, grind.
+    if grind ~= nil then
+      log.debug("grind", grind)
+      self:grind(grind, pd.stats.level)
     -- if haven't seen anything worth fighting... then i guess just explore...
+    else
+      log.debug("grind was nil, so jumping to self:explore()")
+      self:explore()
+    end
   else
-    log.debug("no exploreDest and nothing to grind on, jumping right to explore.")
+    log.debug("not on the overworld, jumping to self:explore()")
     self:explore()
   end
 end

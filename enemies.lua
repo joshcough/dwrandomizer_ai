@@ -143,17 +143,24 @@ function getGrindInfo(playerData, graph, overworld)
   local bestEnemy = nil
   local bestEnemyLocs = nil
 
-  -- filter out swamps from the locations
-  -- and the neighbors of the locations (because we want back and forth and dont want to grind on one)
+  -- TODO: get this from somewhere else!
+  OverWorldId = 1
+
+  -- filter out locations
+  -- remove all things that aren't the overworld
+  -- remove all swamps
+  -- and the neighbors of the locations (because we want back and forth and dont want to grind on a swamp)
   -- we only need to worry about the neighbors if they are _all_ swamp.
   -- if one is non-swamp, then we would want to pick that one to walk back and forth on
   -- if there are no non-swamp locations, we wont grind there.
-  function filterOutSwamps(locs)
-    return list.filter(locs, function(l) return overworld:getTileAt(l.x, l.y, graph) ~= Swamp end)
+  function filterOutUngrindableLocs(locs)
+    return list.filter(locs, function(l) return
+      l.mapId == OverWorldId and overworld:getTileAt(l.x, l.y, graph) ~= Swamp
+    end)
   end
 
   for _, enemy in ipairs(Enemies) do
-    local nonSwampLocations = filterOutSwamps(enemy.locations)
+    local nonSwampLocations = filterOutUngrindableLocs(enemy.locations)
     --- return only the locations who are not a swamp and have at least one non-swamp neighbor
     local nonSwampLocationsWithNonSwampNeighbors = list.filter(nonSwampLocations, function(loc)
       local gn = graph:grindableNeighbors(overworld, loc.x, loc.y)

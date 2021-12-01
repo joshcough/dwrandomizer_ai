@@ -206,21 +206,22 @@ end
 
 function getMockEntranceCoordinates()
   return
-    {[2]={Entrance(19, 10, Point(1, 54, 87))},
-     [3]={Entrance(10, 0, Point(1, 29, 112))},
-     [4]={Entrance(29, 11, Point(1, 85, 90))},
-     [7]={Entrance(23, 19, Point(1, 55, 67))},
-     [8]={Entrance(15, 0, Point(1, 98, 98))},
-     [9]={Entrance(14, 0, Point(1, 74, 108))},
-     [10]={Entrance(15, 5, Point(1, 36, 44))},
+    {[2]= {Entrance(19, 10, Point(1, 54,  87))},
+     [3]= {Entrance(10,  0, Point(1, 29, 112))},
+     [4]= {Entrance(29, 11, Point(1, 85,  90))},
+     [7]= {Entrance(23, 19, Point(1, 55,  67))},
+     [8]= {Entrance(15,  0, Point(1, 98,  98))},
+     [9]= {Entrance(14,  0, Point(1, 74, 108))},
+     [10]={Entrance(15,  5, Point(1, 36,  44))},
      [11]={Entrance(14, 29, Point(1, 74, 110))},
-     [12]={Entrance(4, 0, Point(4, 29, 29))},
-     [13]={Entrance(9, 4, Point(1, 58, 106))},
-     [14]={Entrance(4, 0, Point(1, 82, 8))},
-     [21]={Entrance(0, 0, Point(1, 90, 78)), Entrance(29, 0, Point(1, 93, 63))},
-     [22]={Entrance(7, 0, Point(1, 96, 99))},
-     [24]={Entrance(11, 6, Point(9, 19, 0))},
-     [28]={Entrance(0, 0, Point(1, 86, 84))}}
+     [12]={Entrance( 4,  0, Point(4, 29,  29))},
+     [13]={Entrance( 9,  4, Point(1, 58, 106))},
+     [14]={Entrance( 4,  0, Point(1, 82,   8))},
+     [21]={Entrance( 0,  0, Point(1, 90,  78)), Entrance(29, 0, Point(1, 93, 63))},
+     [22]={Entrance( 7,  0, Point(1, 96,  99))},
+     [24]={Entrance(11,  6, Point(9, 19,   0))},
+     [28]={Entrance( 0,  0, Point(1, 86,  84))}
+   }
 end
 
 StaticMapTile = class(function(a,tileId,name,walkable,walkableWithKeys)
@@ -362,36 +363,6 @@ function StaticMap:__tostring (printStrat)
   end
   return self.mapName .. "\n" .. res
 end
-
--- function Graph:__tostring ()
---
---   local contains = table.containsUsingDotEquals
---
---   function printTile(x,y,neighbors)
---     if neighbors == nil then return "   " end
---     local res = ""
---     if contains(neighbors, Point(self.staticMap.mapId, x-1, y)) then res = res .. "←" else res = res .. " " end
---     if contains(neighbors, Point(self.staticMap.mapId, x, y-1)) and contains(neighbors, Point(self.staticMap.mapId, x, y+1))
---       then res = res .. "↕"
---       elseif contains(neighbors, Point(self.staticMap.mapId, x, y-1)) then res = res .. "↑"
---       elseif contains(neighbors, Point(self.staticMap.mapId, x, y+1)) then res = res .. "↓"
---       else res = res .. " "
---     end
---     if contains(neighbors, Point(self.staticMap.mapId, x+1, y)) then res = res .. "→" else res = res .. " " end
---     return res
---   end
---
---   local tileSet = self.staticMap:getTileSet()
---   local res = ""
---   for y = 0,self.staticMap.height-1 do
---     local row = ""
---     for x = 0,self.staticMap.width-1 do
---       row = row .. "|" .. printTile(x, y, self.graph[y][x])
---     end
---     res = res .. row .. " |\n"
---   end
---   return res
--- end
 
 function StaticMap:writeTileNamesToFile (file)
   file:write(self:__tostring() .. "\n")

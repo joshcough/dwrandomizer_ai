@@ -499,6 +499,37 @@ function mkStaticMapGraph (staticMap, haveKeys)
   return res
 end
 
+-- function NewGraph:__tostring ()
+--
+--   local contains = table.containsUsingDotEquals
+--
+--   function printTile(x,y,neighbors)
+--     if neighbors == nil then return "   " end
+--     local res = ""
+--     if contains(neighbors, Point(self.staticMap.mapId, x-1, y)) then res = res .. "←" else res = res .. " " end
+--     if contains(neighbors, Point(self.staticMap.mapId, x, y-1)) and contains(neighbors, Point(self.staticMap.mapId, x, y+1))
+--       then res = res .. "↕"
+--       elseif contains(neighbors, Point(self.staticMap.mapId, x, y-1)) then res = res .. "↑"
+--       elseif contains(neighbors, Point(self.staticMap.mapId, x, y+1)) then res = res .. "↓"
+--       else res = res .. " "
+--     end
+--     if contains(neighbors, Point(self.staticMap.mapId, x+1, y)) then res = res .. "→" else res = res .. " " end
+--     return res
+--   end
+--
+--   local tileSet = self.staticMap:getTileSet()
+--   local res = ""
+--   for y = 0,self.staticMap.height-1 do
+--     local row = ""
+--     for x = 0,self.staticMap.width-1 do
+--       row = row .. "|" .. printTile(x, y, self.graph[y][x])
+--     end
+--     res = res .. row .. " |\n"
+--   end
+--   return res
+-- end
+
+
 -- function NewGraph:iterate(f)
 --   iterate3(self.rows, f)
 -- end
