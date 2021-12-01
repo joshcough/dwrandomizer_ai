@@ -28,8 +28,9 @@
 -- we can then immediately add the neighbor x to node y!
 
 require 'Class'
-enum = require("enum")
+enum = require('enum')
 require 'helpers'
+PriorityQueue = require('PriorityQueue')
 
 GraphNodeType = enum.new("Type of graph node", {
   "UNKNOWN", -- tiles on the overworld that we haven't discovered yet.
@@ -46,14 +47,14 @@ GraphNode = class(function(a, nodeType)
 end)
 
 Graph = class(function (a, staticMaps)
-  a.graphWithKeys = NewGraph(createStaticMapGraphs(staticMaps, true))
-  a.graphWithoutKeys = NewGraph(createStaticMapGraphs(staticMaps, false))
+  a.graphWithKeys = NewGraph(createStaticMapGraphs(staticMaps, true), true)
+  a.graphWithoutKeys = NewGraph(createStaticMapGraphs(staticMaps, false), false)
 end)
 
-function Graph:shortestPath(startNode, endNode, haveKeys)
+function Graph:shortestPath(startNode, endNode, haveKeys, overworld, staticMaps)
   local res = nil
-  res = haveKeys and self.graphWithKeys:shortestPath(startNode, endNode)
-                 or  self.graphWithoutKeys:shortestPath(startNode, endNode)
+  res = haveKeys and self.graphWithKeys:shortestPath(startNode, endNode, overworld, staticMaps)
+                 or  self.graphWithoutKeys:shortestPath(startNode, endNode, overworld, staticMaps)
   -- log.debug("in shortestPath", res)
   return res
 end
@@ -98,7 +99,7 @@ function Graph:grindableNeighbors(overworld,x,y)
   local neighbors = self.graphWithKeys:getNodeAt(OverWorldId,x,y).neighbors
   return list.filter(neighbors, function(n)
     if n.mapId ~= OverWorldId then return false end
-    local tileId = overworld:getOverworldMapTileIdAt(n.x, n.y)
+    local tileId = overworld:getTileIdAt(n.x, n.y, self)
     local res = (tileId ~= SwampId and tileId < TownId) or tileId == BridgeId
     -- log.debug("in grindableNeighbors filter", n.mapId, n.x, n.y, tileId, res)
     return res
@@ -108,7 +109,6 @@ end
 function Graph:fixOverworldNeighbors(warp, overworld)
   local overworldPoint = warp.src.mapId == OverWorldId and warp.src  or warp.dest
   local otherPoint     = warp.src.mapId == OverWorldId and warp.dest or warp.src
-
   -- log.debug("fixOverworldNeighbors", overworldPoint, otherPoint)
 
   function go(graph)
@@ -136,8 +136,9 @@ function Graph:fixOverworldNeighbors(warp, overworld)
   go(self.graphWithoutKeys)
 end
 
-NewGraph = class(function(a, staticMapGraphs)
+NewGraph = class(function(a, staticMapGraphs, isGraphWithKeys)
   a.rows = {}
+  a.isGraphWithKeys = isGraphWithKeys
   a.rows[1] = mkOverworldGraph()
   for i = 2, 29 do
     a.rows[i] = staticMapGraphs[i]
@@ -150,12 +151,28 @@ function NewGraph:isDiscovered(m,x,y)
   return self:getNodeAt(m,x,y) ~= unknown
 end
 
-function NewGraph:getNodeAt(m,x,y)
-  return self.rows[m][y][x]
+function NewGraph:getNodeAt(mapId,x,y)
+  return self.rows[mapId][y][x]
+end
+
+function NewGraph:getNodeAtPoint(p)
+  return self.rows[p.mapId][p.y][p.x]
+end
+
+function NewGraph:getTileAtPoint(p, overworld, staticMaps)
+  if p.mapId == OverWorldId then
+    return overworld:getTileAt(p.x, p.y, self)
+  else
+    return staticMaps[p.mapId]:getTileAt(p.x, p.y, self)
+  end
+end
+
+function NewGraph:getWeightAtPoint(p, overworld, staticMaps)
+  return self:getTileAtPoint(p, overworld, staticMaps).weight
 end
 
 function NewGraph:discover(x, y, overworld)
-  if self:isDiscovered(OverWorldId,x,y) or not overworld:getOverworldMapTileAtNoUpdate(x,y).walkable
+  if self:isDiscovered(OverWorldId,x,y) or not overworld:getTileAt_NoUpdate(x,y).walkable
     then return
   end
 
@@ -178,8 +195,22 @@ function NewGraph:discover(x, y, overworld)
   list.foreach(discoveredNeighborsOfXY, addNeighbor)
 end
 
-function NewGraph:shortestPath(startNode, endNode, haveKeys)
-  -- log.debug("in newgraph:shorestpath", startNode, endNode)
+function NewGraph:shortestPath(src, destination, overworld, staticMaps)
+  return self:dijkstra(src, destination, overworld, staticMaps)
+-- TODO: probably just kill all this code, along with bfs.
+--   local b = self:bfs     (src, destination, overworld, staticMaps)
+--   local d = self:dijkstra(src, destination, overworld, staticMaps)
+--
+--   if #b == #d then return d
+--   else
+--     log.debug("BFS", #b, tostring(b))
+--     log.debug("dijkstra",     #d, tostring(d))
+--     error("shortestPath and dijkstra not the same!", #b, b, #d, d)
+--   end
+end
+
+function NewGraph:bfs(startNode, endNode, overworld, staticMaps)
+  -- log.debug("in newgraph:bfs", startNode, endNode)
   function insertPoint(tbl, p, value)
     -- log.debug("insertPoint", "p", p, "value", value)
     if tbl[p.mapId] == nil then tbl[p.mapId] = {} end
@@ -241,17 +272,103 @@ function NewGraph:shortestPath(startNode, endNode, haveKeys)
       end
     end
   end
-
-  local r = reconstruct(startNode, endNode, solve(startNode))
-  -- log.debug("shortestPath", tostring(r))
-  return r
+  return reconstruct(startNode, endNode, solve(startNode))
 end
+
+-- Find the shortest path between the current and dest nodes
+function NewGraph:dijkstra (src, dest, overworld, staticMaps)
+  -- log.debug("entering dijkstra", src, dest)
+
+  function insertPoint3D(tbl, p, value)
+    if tbl[p.mapId] == nil then tbl[p.mapId] = {} end
+    if tbl[p.mapId][p.x] == nil then tbl[p.mapId][p.x] = {} end
+    tbl[p.mapId][p.x][p.y] = value
+  end
+
+  function readPoint3D(tbl, p, default)
+    if tbl[p.mapId] == nil then return default end
+    if tbl[p.mapId][p.x] == nil then return default end
+    if tbl[p.mapId][p.x][p.y] == nil then return default end
+    return tbl[p.mapId][p.x][p.y]
+  end
+
+  local distanceTo, trail = {}, {}
+  local pq = PriorityQueue()
+  pq:enqueue(src, 0)
+  insertPoint3D(distanceTo, src, 0)
+
+  function getDistanceTo(p) return readPoint3D(distanceTo, p, math.huge) end
+  function getWeightAtPoint(p) return self:getWeightAtPoint(p, overworld, staticMaps) end
+  function getPrevious(p) return readPoint3D(trail, p) end
+
+  function print3dTable(tbl, name)
+    log.debug("====" .. name .. "====")
+    for i,v in pairs(tbl) do
+      for j,v2 in pairs(v) do
+        for k,v3 in pairs(v2) do
+          log.debug(i, j, k, v3)
+        end
+      end
+    end
+    log.debug("====end " .. name .. "====")
+  end
+
+  function printTrail() print3dTable(trail, "trail") end
+  function printDistanceTo() print3dTable(distanceTo, "distanceTo") end
+
+  while not pq:empty() do
+    local current = pq:dequeue()
+    local distanceToCurrent = getDistanceTo(current)
+    for _,neighbor in pairs(self:getNodeAtPoint(current).neighbors) do
+      local newWeight = distanceToCurrent + getWeightAtPoint(neighbor)
+      if newWeight < getDistanceTo(neighbor) then
+        insertPoint3D(distanceTo, neighbor, newWeight)
+        insertPoint3D(trail, neighbor, {mapId = current.mapId, x = current.x, y = current.y, dir = neighbor.dir})
+        pq:enqueue(neighbor:getPoint(), newWeight)
+      end
+    end
+  end
+
+  -- Create path string from table of previous nodes
+  function followTrailToDest ()
+    -- log.debug("followTrailTo", dest, "getPrevious(dest)", getPrevious(dest))
+    local path, prev = {}, getPrevious(dest)
+
+    -- if prev is nil it means there was no path to the destination.
+    -- for example, it could be on a little island or something that we cant get to.
+    if prev == nil then
+      -- printTrail()
+      -- printDistanceTo()
+      -- log.debug("in followTrailToDest, prev is nil!! src", src, "dest", dest)
+      return {}
+    else
+      table.insert(path, Neighbor(dest.mapId, dest.x, dest.y, prev.dir))
+    end
+
+    while prev do
+      if src:equalsPoint(prev) then
+        table.insert(path, Point(prev.mapId, prev.x, prev.y))
+      else
+        local prev2 = getPrevious(prev)
+        table.insert(path, Neighbor(prev.mapId, prev.x, prev.y, prev2.dir))
+      end
+      prev = getPrevious(prev)
+    end
+    return path
+  end
+
+
+  local res = table.reverse(followTrailToDest())
+--   log.debug("done in dijkstra")
+  return res
+end
+
 
 function NewGraph:knownWorldBorder(overworld)
   local res = {}
   for y,row in pairs(self.rows[1]) do
     for x,tile in pairs(row) do
-      local overworldTile = overworld:getOverworldMapTileAtNoUpdate(x,y)
+      local overworldTile = overworld:getTileAt_NoUpdate(x,y)
       if overworldTile.walkable and self:isDiscovered(OverWorldId, x, y) then
         local nbrs = overworld:neighbors(x,y)
         -- TODO: potentially adding this more than once if more than one neighbor is nil
@@ -381,3 +498,25 @@ function mkStaticMapGraph (staticMap, haveKeys)
   end
   return res
 end
+
+-- function NewGraph:iterate(f)
+--   iterate3(self.rows, f)
+-- end
+--
+-- function iterate3(tbl, f)
+--   for mapId, mapRows in ipairs(tbl) do
+--     for y, row in ipairs(mapRows) do
+--       for x, neighbors in ipairs(row) do
+--         f(Point(mapId, x, y), neighbors)
+--       end
+--     end
+--   end
+-- end
+--
+-- function NewGraph:print(mapId)
+--   for y, row in ipairs(self.rows[mapId]) do
+--     for x, neighbors in ipairs(row) do
+--       log.debug(Point(mapId, x, y), neighbors)
+--     end
+--   end
+-- end

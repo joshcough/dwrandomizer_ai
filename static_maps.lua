@@ -228,6 +228,10 @@ StaticMapTile = class(function(a,tileId,name,walkable,walkableWithKeys)
   a.name = name
   a.walkable = walkable
   a.walkableWithKeys = walkableWithKeys and true or false
+  -- i think 1 here is ok. if its not walkable it wont end up in the graph at all
+  -- the only small problem is charlock has some swamp and desert, but... they aren't really
+  -- avoidable anyway, and so... it should just be fine to always use 1.
+  a.weight = 1
 end)
 
 function StaticMapTile:__tostring()
@@ -276,7 +280,7 @@ IMMOBILE_NPCS = {
   [TantegelThroneRoom] = {{3,6}, {5,6}},
   [CharlockThroneRoom] = {},
   [Kol]                = {},
-  [Brecconary]         = {},
+  [Brecconary]         = {{1,13}, {4,7}, {10,26}, {20,23}, {28,1}},
   [Garinham]           = {{2,17}, {9,6}, {14,1}},
   [Cantlin]            = {{0,0}},
   [Rimuldar]           = {{2,4}, {27,0}},
@@ -448,7 +452,7 @@ function readStaticMapFromRom(memory, mapId, allWarps)
   local mapData = STATIC_MAP_METADATA[mapId]
 
   -- returns the tile id for the given (x,y) for the current map
-  function getMapTileIdAt(x, y)
+  function readTileIdAt(x, y)
     local offset = (y*mapData.size.width) + x
     local addr = mapData.mapLayoutRomAddr + math.floor(offset/2)
     local val = memory:readROM(addr)
@@ -458,12 +462,12 @@ function readStaticMapFromRom(memory, mapId, allWarps)
   end
 
   -- returns a two dimensional grid of tile ids for the current map
-  function getMapTileIds ()
+  function readTileIds ()
     local res = {}
     for y = 0, mapData.size.height-1 do
       res[y] = {}
       for x = 0, mapData.size.width-1 do
-        res[y][x]=getMapTileIdAt(x,y)
+        res[y][x]=readTileIdAt(x,y)
       end
     end
     return res
@@ -475,5 +479,5 @@ function readStaticMapFromRom(memory, mapId, allWarps)
   end
 
   return StaticMap(mapId, mapData.name, mapData.mapType, mapData:readEntranceCoordinates(memory),
-                   mapData.size.width, mapData.size.height, getMapTileIds(), allWarps)
+                   mapData.size.width, mapData.size.height, readTileIds(), allWarps)
 end

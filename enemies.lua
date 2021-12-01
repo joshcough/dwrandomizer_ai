@@ -149,7 +149,7 @@ function getGrindInfo(playerData, graph, overworld)
   -- if one is non-swamp, then we would want to pick that one to walk back and forth on
   -- if there are no non-swamp locations, we wont grind there.
   function filterOutSwamps(locs)
-    return list.filter(locs, function(l) return overworld:getOverworldMapTileAt(l.x, l.y) ~= Swamp end)
+    return list.filter(locs, function(l) return overworld:getTileAt(l.x, l.y, graph) ~= Swamp end)
   end
 
   for _, enemy in ipairs(Enemies) do

@@ -108,8 +108,8 @@ Search         = ActionScript("SEARCH")
 DeathWarp      = ActionScript("DEATH_WARP")
 SavePrincess   = ActionScript("RESCUE_PRINCESS")
 DragonLord     = ActionScript("DRAGONLORD")
-TalkToOldMan   = ActionScript("TALK_TO_OLD_MAN")
 ShopKeeper     = ActionScript("TALK_TO_SHOP_KEEPER")
+DoBattle       = ActionScript("DO_BATTLE")
 
 SaveUnlockedDoor = class(ActionScript, function(a, loc)
   ActionScript.init(a, "SAVE_UNLOCKED_DOOR: " .. tostring(loc))
@@ -156,6 +156,10 @@ end)
 function IsDoorOpen:__tostring()
   return self.name .. ": " .. tostring(self.location)
 end
+
+InBattle = class(ConditionScript, function(a)
+  ConditionScript.init(a, "IN_BATTLE")
+end)
 
 BinaryOperator = class(ConditionScript, function(a, name, l, r, f)
   ConditionScript.init(a, tostring(l) .. " " .. name .. " " .. tostring(r))
@@ -359,15 +363,30 @@ Scripts = class(function(a,entrances)
     )
   end
 
-  function SearchAt(mapId, x, y)
+  function SearchAtWith(mapId, x, y, script)
     return Consecutive("Searching at: " .. tostring(Point(mapId, x, y)), {
       Goto(mapId, x, y),
+      script,
       OpenMenu,
       PressUp(2),
       PressA(40),
       PressA(10),
       Search
     })
+  end
+
+  function SearchSpikeTile(mapId, x, y)
+    return SearchAtWith(mapId, x, y,
+      Consecutive("Fighting monster on spike tile.", {
+        WaitUntil("In Battle", InBattle(), 240),
+        DoBattle,
+        WaitUntil("Not in Battle", Not(InBattle()), 240),
+      })
+    )
+  end
+
+  function SearchAt(mapId, x, y)
+    return SearchAtWith(mapId, x, y, DoNothing)
   end
 
   function IfHaveKeys(name, t, f)
@@ -479,7 +498,7 @@ Scripts = class(function(a,entrances)
 
   exploreHauksness =
     Consecutive("Hauksness", {
-      SearchAt(Hauksness, 18, 12),
+      SearchSpikeTile(Hauksness, 18, 12),
       GotoOverworld(Hauksness)
     })
 
@@ -535,7 +554,7 @@ Scripts = class(function(a,entrances)
       All ({ HaveItem(StaffOfRain), HaveItem(StonesOfSunlight), HaveItem(ErdricksToken) }),
       Consecutive("Talk to old man", {
         Goto(SouthernShrine, 3, 5),
-        TalkToOldMan,
+        Consecutive("Talk to old man", { Talk, HoldA(60), PressB(2) }),
         GotoOverworld(SouthernShrine)
       }),
       TakeStairs

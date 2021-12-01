@@ -23,6 +23,7 @@ require 'static_maps'
 --   but we have no way to associate this with a cave and be able to say,
 --   "ok go back to this cave to try to get the last unopened chest" or whatever.
 -- * we must prioritize visiting important locations over grinding, if we see them
+-- * we can't open a chest when we have a full inventory. we dont know how to detect that and/or drop something.
 
 AI = class(function(a, game) a.game = game end)
 
@@ -39,7 +40,7 @@ function AI:enemyDefeated()    return function(address) self.game:enemyDefeated(
 function AI:playerDefeated()   return function(address) self.game:playerDefeated()   end end
 
 function AI:register(memory)
-  memory.registerexecute(0xcf44, self:onEncounter())
+  memory.registerexecute(0xE4DF, self:onEncounter())
   memory.registerexecute(0xefc8, self:enemyRun())
   memory.registerexecute(0xe8a4, self:playerRunSuccess())
   memory.registerexecute(0xe89D, self:playerRunFailed())
@@ -103,7 +104,7 @@ function main()
   -- right now this gets called when we move
   -- but we need to call it here once before we move, too.
   if(game:getLocation().mapId == 1) then
-    game.overworld:getVisibleOverworldGrid(game:getX(), game:getY())
+    game.overworld:getVisibleOverworldGrid(game:getX(), game:getY(), game.graph)
   end
 
   while true do
@@ -125,8 +126,8 @@ main()
 --   game:interpretScript(scripts.throneRoomOpeningGameScript())
 --   mem:setReturnWarpLocation(30,83) -- tangegel
 
---   log.debug(game.maps[SwampCave].entrances)
---   log.debug(game.maps[Garinham].entrances)
+--   log.debug(game.staticMaps[SwampCave].entrances)
+--   log.debug(game.staticMaps[Garinham].entrances)
 --   log.debug(game.scripts.MapScripts[Tantegel])
 
 --   mem:printNPCs()

@@ -8,10 +8,11 @@ OverWorldId = 1
 --   [1] = {["name"] = "Overworld", ["size"] = {["w"]=120,["h"]=120}, ["romAddr"] = 0x1D6D},
 -- }
 
-OverworldTile = class(function(a,id,name,walkable)
+OverworldTile = class(function(a,id,name,weight)
   a.id = id
   a.name = name
-  a.walkable = walkable
+  a.weight = weight
+  a.walkable = weight ~= nil
 end)
 
 GrassId    = 0
@@ -28,19 +29,19 @@ CastleId   = 10
 BridgeId   = 11
 StairsId   = 12
 
-Grass    = OverworldTile(GrassId,    "Grass   ", true)  -- "🟩",
-Desert   = OverworldTile(DesertId,   "Desert  ", true)  -- "🏜",
-Hills    = OverworldTile(HillsId,    "Hills   ", true)  -- "🏞"
-Mountain = OverworldTile(MountainId, "Mountain", false) -- "⛰",
-Water    = OverworldTile(WaterId,    "Water   ", false) -- "🌊",
-Stone    = OverworldTile(StoneId,    "Stone   ", false) -- "⬛",
-Forest   = OverworldTile(ForestId,   "Forest  ", true)  -- "🌳",
-Swamp    = OverworldTile(SwampId,    "Swamp   ", true)
-Town     = OverworldTile(TownId,     "Town    ", true)
-Cave     = OverworldTile(CaveId,     "Cave    ", true)
-Castle   = OverworldTile(CastleId,   "Castle  ", true)  -- "🏰"
-Bridge   = OverworldTile(BridgeId,   "Bridge  ", true)  -- "🌉",
-Stairs   = OverworldTile(StairsId,   "Stairs  ", true)
+Grass    = OverworldTile(GrassId,    "Grass   ", 1)    -- "🟩",
+Desert   = OverworldTile(DesertId,   "Desert  ", 5)    -- "🏜",
+Hills    = OverworldTile(HillsId,    "Hills   ", 2)    -- "🏞"
+Mountain = OverworldTile(MountainId, "Mountain", nil)  -- "⛰",
+Water    = OverworldTile(WaterId,    "Water   ", nil)  -- "🌊",
+Stone    = OverworldTile(StoneId,    "Stone   ", nil)  -- "⬛",
+Forest   = OverworldTile(ForestId,   "Forest  ", 2)    -- "🌳",
+Swamp    = OverworldTile(SwampId,    "Swamp   ", 20)
+Town     = OverworldTile(TownId,     "Town    ", 1000)
+Cave     = OverworldTile(CaveId,     "Cave    ", 1000)
+Castle   = OverworldTile(CastleId,   "Castle  ", 1000) -- "🏰"
+Bridge   = OverworldTile(BridgeId,   "Bridge  ", 1)    -- "🌉",
+Stairs   = OverworldTile(StairsId,   "Stairs  ", 1)
 
 OVERWORLD_TILES = {
   [Grass.id]    = Grass,
@@ -119,23 +120,23 @@ function readOverworldFromROM (memory)
   return rows
 end
 
-OverWorld = class(function(a,rows, graph)
+OverWorld = class(function(a,rows)
   a.overworldRows = rows
   a.knownWorld = {}
   a.nrTilesSeen = 0
   a.importantLocations = {}
-  a.graph = graph
 end)
 
 function OverWorld:percentageOfWorldSeen()
   return self.nrTilesSeen/MAX_TILES*100
 end
 
-function OverWorld:getOverworldMapTileAt(x, y)
-  return OVERWORLD_TILES[self:getOverworldMapTileIdAt(x, y)]
+function OverWorld:getTileAt(x, y, graph)
+  -- log.debug("OverWorld:getTileAt(x, y, graph)", x, y, graph)
+  return OVERWORLD_TILES[self:getTileIdAt(x, y, graph)]
 end
 
-function OverWorld:getOverworldMapTileAtNoUpdate(x, y)
+function OverWorld:getTileAt_NoUpdate(x, y)
   return OVERWORLD_TILES[self.overworldRows[y][x]]
 end
 
@@ -157,7 +158,7 @@ ImportantLocation = class(function(a,x,y,tileId)
   a.type = locationTypeFromTile(tileId)
 end)
 
-function OverWorld:updateKnownWorld(x, y, tileId)
+function OverWorld:updateKnownWorld(x, y, tileId, graph)
   if self.knownWorld[y] == nil then self.knownWorld[y] = {} end
   if self.knownWorld[y][x] == nil
     then
@@ -172,7 +173,7 @@ function OverWorld:updateKnownWorld(x, y, tileId)
       end
   end
 
-  self.graph:discover(x, y, self)
+  graph:discover(x, y, self)
 end
 
 
@@ -289,23 +290,25 @@ end
 
 -- returns the tile id for the given (x,y) for the overworld
 -- {["name"] = "Overworld", ["size"] = {120,120}, ["romAddr"] = {0x1D6D, 0x2668}},
-function OverWorld:getOverworldMapTileIdAt(x, y)
+function OverWorld:getTileIdAt(x, y, graph)
   local tileId = self.overworldRows[y][x]
   -- optimization... each time we get a visible tile, record it in what we have seen
-  self:updateKnownWorld(x,y,tileId)
+  -- log.debug("OverWorld:getTileIdAt", x, y, graph)
+  self:updateKnownWorld(x,y,tileId,graph)
   return tileId
 end
 
-function OverWorld:setOverworldMapTileIdAt(x, y, tileId)
+-- TODO: big todo... we need to update the graph when we do this.
+function OverWorld:setOverworldMapTileIdAt(x, y, tileId, graph)
   self.overworldRows[y][x] = tileId
 end
 
 -- this is always done from one tile right of where the bridge will be
-function OverWorld:useRainbowDrop(loc)
-  self:setOverworldMapTileIdAt(loc.x - 1, loc.y, 0xB) -- 0xB is a bridge
+function OverWorld:useRainbowDrop(loc, graph)
+  self:setOverworldMapTileIdAt(loc.x - 1, loc.y, 0xB, graph) -- 0xB is a bridge
 end
 
-function OverWorld:getVisibleOverworldGrid(currentX, currentY)
+function OverWorld:getVisibleOverworldGrid(currentX, currentY, graph)
   local upperLeftX = math.max(0, currentX - 8)
   local upperLeftY = math.max(0, currentY - 6)
 
@@ -316,14 +319,14 @@ function OverWorld:getVisibleOverworldGrid(currentX, currentY)
   for y = upperLeftY, bottomRightY do
     res[y-upperLeftY] = {}
     for x = upperLeftX, bottomRightX do
-      res[y-upperLeftY][x-upperLeftX]=self:getOverworldMapTileIdAt(x, y)
+      res[y-upperLeftY][x-upperLeftX]=self:getTileIdAt(x, y, graph)
     end
   end
   return res
 end
 
-function OverWorld:printVisibleGrid (currentX, currentY)
-  local grid = self:getVisibleOverworldGrid(currentX, currentY)
+function OverWorld:printVisibleGrid (currentX, currentY, graph)
+  local grid = self:getVisibleOverworldGrid(currentX, currentY, graph)
   for y = 0, #(grid) do
     local row = ""
     for x = 0, #(grid[y]) do

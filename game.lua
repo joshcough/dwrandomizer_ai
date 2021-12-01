@@ -15,7 +15,7 @@ Game = class(function(a, memory, warps, graph, overworld, maps)
   a.warps = warps
   a.graph = graph
   a.overworld = overworld
-  a.maps = maps
+  a.staticMaps = maps
 
   -- events/signals that happen in game
   a.inBattle = false
@@ -43,7 +43,7 @@ function newGame(memory)
   local warps = table.concat(WARPS, list.map(WARPS, swapSrcAndDest))
   local staticMaps = readAllStaticMaps(memory, warps)
   local graph = Graph(staticMaps)
-  local overworld = OverWorld(readOverworldFromROM(memory), graph)
+  local overworld = OverWorld(readOverworldFromROM(memory))
   return Game(memory, warps, graph, overworld, staticMaps)
 end
 
@@ -84,7 +84,7 @@ function Game:percentageOfWorldSeen()
 end
 
 function Game:printVisibleGrid()
-  return self.overworld:printVisibleGrid(self:getX(), self:getY())
+  return self.overworld:printVisibleGrid(self:getX(), self:getY(), self.graph)
 end
 
 -- these are reasons that we have exited the followPath function
@@ -144,7 +144,7 @@ end
 -- if we discover a new location while walking to a path
 -- we immediately want to abandon this path, and walk to the new path.
 function Game:followPath(path)
-  local commands = convertPathToCommands(path, self.maps)
+  local commands = self:convertPathToCommands(path, self.staticMaps)
   if commands == nil or #commands == 0 then return GotoExitValues.NO_PATH end
 
   -- log.debug(commands)
@@ -162,7 +162,7 @@ function Game:followPath(path)
         dest = c.to
         local loc = self:getLocation()
         if loc.mapId == 1 and not loc:equals(startingLoc) then
-          self.overworld:getVisibleOverworldGrid(self:getX(), self:getY())
+          self.overworld:getVisibleOverworldGrid(self:getX(), self:getY(), self.graph)
           local currentPercentageSeen = round(self:percentageOfWorldSeen())
           if self.lastPrintedPercentage < currentPercentageSeen then
             log.debug("percentageOfWorldSeen: " .. currentPercentageSeen)
@@ -207,6 +207,7 @@ function Game:interpretScript(s)
         elseif s == SavePrincess then self:savePrincess()
         elseif s == DragonLord   then self:fightDragonLord()
         elseif s == ShopKeeper   then self:talkToShopKeeper()
+        elseif s == DoBattle     then self:executeBattle()
         -- == doesn't work on these, so we need is_a
         elseif s:is_a(SaveUnlockedDoor) then self:saveUnlockedDoor(s.loc)
         elseif s:is_a(CastSpell)        then self:cast(s.spell)
@@ -249,6 +250,8 @@ function Game:interpretScript(s)
       local rv = self:interpretScript(s.r)
       -- log.debug("in BinaryOperator", s.name, s.l, s.r, lv, rv)
       return s.f(self:interpretScript(s.l), self:interpretScript(s.r))
+    elseif s:is_a(ConditionScript) then
+      return self:evaluateCondition(s)
     end
   else
     log.debug("Script is not a script! " .. tostring(s))
@@ -287,6 +290,7 @@ function Game:evaluateCondition(s)
   -- TODO: hack. PlayerDataScript is not a ConditionScript...gross.
   elseif s:is_a(PlayerDataScript) then return s.playerDataF(self:readPlayerData())
 
+  elseif s:is_a(InBattle) then return self.inBattle
   -- this should be a type error, but, we dont get those in lua.
   else return false
   end
@@ -352,7 +356,7 @@ function containsPoint(tbl, p)
 end
 
 function Game:shortestPath(startNode, endNode)
-  return self.graph:shortestPath(startNode, endNode, self:haveKeys())
+  return self.graph:shortestPath(startNode, endNode, self:haveKeys(), self.overworld, self.staticMaps)
 end
 
 function swapSrcAndDest(w) return w:swap() end
@@ -387,7 +391,7 @@ end
 
 -- TODO: this shit seems to work... but im not sure i understand it. lol
 -- there is definitely a way to do this that is more intuitive.
-function convertPathToCommands(pathIn, maps)
+function Game:convertPathToCommands(pathIn, maps)
   function directionFromP1ToP2(p1, p2)
     local res = {}
 
@@ -405,7 +409,7 @@ function convertPathToCommands(pathIn, maps)
 
     function nextTileIsDoor()
       if p2.mapId == OverWorldId then return false
-      else return maps[p2.mapId]:getTileAt(p2.x, p2.y).name == "Door"
+      else return maps[p2.mapId]:getTileAt(p2.x, p2.y, self.graph).name == "Door"
       end
     end
 
@@ -460,20 +464,18 @@ function Game:grindOrExplore()
   if self.exploreDest ~= nil then
     log.debug("we had an exploreDest, so going to that instead of grinding", self.exploreDest)
     self:explore()
-  end
-
-  if self:getMapId() == OverWorldId and grind ~= nil
+  elseif self:getMapId() == OverWorldId and grind ~= nil
     -- we have a good monster to grind on, so, grind.
     then self:grind(grind, currentLevel)
     -- if haven't seen anything worth fighting... then i guess just explore...
-    else
-      log.debug("no exploreDest and nothing to grind on, going to explore.")
-      self:explore()
+  else
+    log.debug("no exploreDest and nothing to grind on, jumping right to explore.")
+    self:explore()
   end
 end
 
 function Game:grind(grind, currentLevel)
-  log.debug("GRINDING: ", tostring(grind))
+  log.debug("GRINDING at: ", tostring(grind), "current location: ", self:getLocation())
   -- TODO: if one is forest and the other is desert, we want to pick desert.
   -- in general, we want to pick the tiles with the highest encounter rate.
   local neighbor = self.graph:grindableNeighbors(self.overworld, grind.location.x, grind.location.y)[1]
@@ -498,6 +500,7 @@ function Game:explore()
   if atDestination then
     -- log.debug("we are already at our destination...so gonna pick a new one... currently at: " .. tostring(loc))
     if loc.mapId == OverWorldId then
+      -- log.debug("we are on the overworld, at our destination")
       -- if the location is in overworld.importantLocations, then we have to remove it.
       -- TODO: this code is awful
       if self:atFirstImportantLocation()
@@ -507,16 +510,27 @@ function Game:explore()
         self.exploreDest = nil
         self:exploreStaticMap()
      else
+        -- log.debug("not at first important location, starting to explore")
         self:exploreStart()
       end
-    else self:exploreStaticMap()
+    else
+      -- log.debug("we are not on the overworld, so exploring static map")
+      self:exploreStaticMap()
     end
   else
+    -- log.debug("we are not at our destination")
     if loc.mapId == OverWorldId then
-      if self.exploreDest ~= nil then self:exploreMove()
-      else self:exploreStart()
+      -- log.debug("we are on the overworld, not at our destination")
+      if self.exploreDest ~= nil then
+        -- log.debug("we have en exploreDest, calling exploreMove")
+        self:exploreMove()
+      else
+        -- log.debug("we dont have en exploreDest, calling exploreStart")
+        self:exploreStart()
       end
-    else self:exploreStaticMap()
+    else
+      -- log.debug("not at our destination, and not on the overworld. calling exploreStaticMap")
+      self:exploreStaticMap()
     end
   end
 end
@@ -605,7 +619,7 @@ function Game:chooseNewDestination(tileSelectionStrat)
 end
 
 function Game:chooseNewDestinationDirectly(newDestination)
-  -- log.debug("new destination", newDestination, self.overworld:getOverworldMapTileAt(newDestination.x, newDestination.y))
+  -- log.debug("new destination", newDestination, self.overworld:getTileAt(newDestination.x, newDestination.y))
   self.exploreDest = newDestination
 end
 
@@ -745,7 +759,11 @@ function Game:dealWithMapChange()
   -- the game thinks that you have already left the throne room.
   if oldMapId == 0 or oldMap == nil then
     local b = self:readPlayerData().statuses.leftThroneRoom
-    self.maps[TantegelThroneRoom]:setTileAt(4, 7, b and 6 or 11)
+    -- TODO: is there actually any reason to update the map here?
+    -- i doubt it. we probably just need to update the graph.
+    -- except... maybe we do because we get the tile at (x,y) and if its a door it might have infinite weight?
+    -- anyway, we have to double check on this.
+    self.staticMaps[TantegelThroneRoom]:setTileAt(4, 7, b and 6 or 11)
     if b then self.graph:unlockThroneRoomDoor() end
   end
 
@@ -756,17 +774,21 @@ function Game:dealWithMapChange()
 
   -- log.debug("The map has changed! current position: " ..  tostring(newLoc) .. ", old map: " .. tostring(oldMapId))
 
-  if newMapId == OverWorldId then self.chests:closeAll()
+  if newMapId == OverWorldId then
+    self.chests:closeAll()
+    -- we can see a bunch of new land now (potentially on another continent)
+    -- we have to call this so that the knownWorld gets updated properly to see the new land.
+    self.overworld:getVisibleOverworldGrid(newLoc.x, newLoc.y, self.graph)
   elseif newMapId > 1 and newMapId <= 29 then
-    if not self.maps[newMapId].seenByPlayer then
-      log.debug("now seen by player: ", self.maps[newMapId].mapName)
-      self.maps[newMapId].seenByPlayer = true
+    if not self.staticMaps[newMapId].seenByPlayer then
+      log.debug("now seen by player: ", self.staticMaps[newMapId].mapName)
+      self.staticMaps[newMapId].seenByPlayer = true
     end
   end
 
   -- we have entered a town or a cave
   if newMapId ~= 1 and newMapId ~= Tantegel then
-    local entrances = self.maps[newMapId].entrances
+    local entrances = self.staticMaps[newMapId].entrances
     if entrances ~= nil then
       if #entrances == 1 then
         self:addWarp(Warp(newLoc, entrances[1].from))
@@ -783,12 +805,8 @@ function Game:dealWithMapChange()
     end
   elseif oldMapId == SwampCave then
     log.debug("leaving swamp cave")
-    -- we can see a bunch of new land now (potentially on another continent)
-    -- we have to call this so that the knownWorld gets updated properly to see the new land.
-    self.overworld:getVisibleOverworldGrid(newLoc.x, newLoc.y)
-
     -- we also need to add the warp to the overworld
-    local entrances = self.maps[SwampCave].entrances
+    local entrances = self.staticMaps[SwampCave].entrances
     if newLoc:equals(entrances[1].from) then
       log.debug("adding warp to SwampNorthEntrance")
       self:addWarp(Warp(newLoc, SwampNorthEntrance))
@@ -798,7 +816,7 @@ function Game:dealWithMapChange()
     end
   elseif oldMapId == Tantegel then
     log.debug("leaving Tantegel")
-    self:addWarp(Warp(TantegelEntrance, self.maps[Tantegel].entrances[1].from))
+    self:addWarp(Warp(TantegelEntrance, self.staticMaps[Tantegel].entrances[1].from))
   else
     log.debug("nothing to do in dealWithMapChange")
   end
@@ -865,7 +883,7 @@ end
 
 function Game:useRainbowDrop()
   self:useItem(RainbowDrop)
-  self.overworld:useRainbowDrop(self:getLocation())
+  self.overworld:useRainbowDrop(self:getLocation(), self.graph)
 end
 
 function Game:haveKeys()
@@ -1005,11 +1023,11 @@ GarinhamInn   = HealingLocation(Point(Garinham,   15, 15), FaceRight, HealingLoc
 function Game:healingLocations()
   local res = {}
   -- TODO: these aren't actually working. is it possible that seenByPlayer is never being set properly?
-  if self.maps[Brecconary].seenByPlayer then table.insert(res, BrecconaryInn) end
-  if self.maps[Kol].seenByPlayer        then table.insert(res, KolInn)        end
-  if self.maps[Garinham].seenByPlayer   then table.insert(res, GarinhamInn)   end
-  if self.maps[Cantlin].seenByPlayer    then table.insert(res, CantlinInn)    end
-  if self.maps[Rimuldar].seenByPlayer   then table.insert(res, RimuldarInn)   end
+  if self.staticMaps[Brecconary].seenByPlayer then table.insert(res, BrecconaryInn) end
+  if self.staticMaps[Kol].seenByPlayer        then table.insert(res, KolInn)        end
+  if self.staticMaps[Garinham].seenByPlayer   then table.insert(res, GarinhamInn)   end
+  if self.staticMaps[Cantlin].seenByPlayer    then table.insert(res, CantlinInn)    end
+  if self.staticMaps[Rimuldar].seenByPlayer   then table.insert(res, RimuldarInn)   end
   local spells = self:readPlayerData().spells
   if spells:contains(Heal) or spells:contains(Healmore) then table.insert(res, OldMan) end
   return res

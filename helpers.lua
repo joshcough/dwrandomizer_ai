@@ -444,6 +444,8 @@ function Point:equals(p2)
   return self.mapId == p2.mapId and self.x == p2.x and self.y == p2.y
 end
 
+function Point:equalsPoint(p2) return self:equals(p2) end
+
 NeighborDir = enum.new("Neighbor Direction", {
   "LEFT",
   "RIGHT",
