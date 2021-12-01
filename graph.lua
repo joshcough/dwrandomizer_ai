@@ -1,35 +1,7 @@
--- NOTES
-
--- for the actual graph for the overworld...
--- when we discover a new tile (by just moving around), we need to get its neighbors and put them in the graph.
--- however, we can only get the neighbors that we've actually seen.
--- for example if we move left to uncover tile at x=10, one of its neighbors is x=9, but we've never seen that
--- so we can't add it to the graph.
--- finally we take another step to uncover x=9, then we need to go back and update the neighbors of x=10 to include x=9
---
--- so basically when we uncover a tile, we need to update its neighbors in the graph
--- but also update its neighbors neighbors! but only for those neighbors that we have seen.
---
--- but how do we know what we have seen?
---
--- one possible approach is to fill in the entire graph with one of these constructors:
---
--- GraphNodeUnknown | GraphNodeKnown
---
--- if its known, it would have neighbors in it, like
---
--- GraphNodeKnown{ neighbors: { ... } }
---
--- and obviously when we uncover a new tile, it would be GraphNodeUnknown in the graph, and we'd change it to GraphNodeKnown
--- and we would get its "Neighbors4" and for each of those at are GraphNodeKnown, we would put them into its neighbors
--- and also for each of those that are GraphNodeKnown, we would include this node into their neighbors.
---
--- when we add a neighbor y to a node x
--- we can then immediately add the neighbor x to node y!
-
 require 'Class'
 enum = require('enum')
 require 'helpers'
+require 'locations'
 PriorityQueue = require('PriorityQueue')
 
 GraphNodeType = enum.new("Type of graph node", {
@@ -51,10 +23,10 @@ Graph = class(function (a, staticMaps)
   a.graphWithoutKeys = NewGraph(createStaticMapGraphs(staticMaps, false), false)
 end)
 
-function Graph:shortestPath(startNode, endNode, haveKeys, overworld, staticMaps)
+function Graph:shortestPath(startNode, endNode, haveKeys, game)
   local res = nil
-  res = haveKeys and self.graphWithKeys:shortestPath(startNode, endNode, overworld, staticMaps)
-                 or  self.graphWithoutKeys:shortestPath(startNode, endNode, overworld, staticMaps)
+  res = haveKeys and self.graphWithKeys:shortestPath(startNode, endNode, game)
+                 or  self.graphWithoutKeys:shortestPath(startNode, endNode, game)
   -- log.debug("in shortestPath", res)
   return res
 end
@@ -63,17 +35,17 @@ function Graph:knownWorldBorder(overworld)
   return self.graphWithKeys:knownWorldBorder(overworld)
 end
 
-function Graph:discover(x, y, overworld)
-  self.graphWithKeys:discover(x, y, overworld)
-  self.graphWithoutKeys:discover(x, y, overworld)
+function Graph:discover(x, y, game)
+  -- log.debug("Graph:discover", x, y, game == nil)
+  self.graphWithKeys:discover(x, y, game)
+  self.graphWithoutKeys:discover(x, y, game)
 end
 
 -- TODO: get these from elsewhere
-OverWorldId = 1
 TantegelThroneRoom = 5
 
 function Graph:unlockThroneRoomDoor()
-  log.debug("unlocking throne room door")
+  -- log.debug("unlocking throne room door")
   self.graphWithoutKeys.rows[TantegelThroneRoom] = self.graphWithKeys.rows[TantegelThroneRoom]
 end
 
@@ -94,12 +66,12 @@ function Graph:addWarp(warp, overworld)
   self:fixOverworldNeighbors(warp, overworld)
 end
 
-function Graph:grindableNeighbors(overworld,x,y)
+function Graph:grindableNeighbors(game,x,y)
   -- log.debug("in grindableNeighbors", x, y)
-  local neighbors = self.graphWithKeys:getNodeAt(OverWorldId,x,y).neighbors
+  local neighbors = self.graphWithKeys:getNodeAt(OverWorldId,x,y,game).neighbors
   return list.filter(neighbors, function(n)
     if n.mapId ~= OverWorldId then return false end
-    local tileId = overworld:getTileIdAt(n.x, n.y, self)
+    local tileId = game.overworld:getTileIdAt(n.x, n.y, game)
     local res = (tileId ~= SwampId and tileId < TownId) or tileId == BridgeId
     -- log.debug("in grindableNeighbors filter", n.mapId, n.x, n.y, tileId, res)
     return res
@@ -159,21 +131,23 @@ function NewGraph:getNodeAtPoint(p)
   return self.rows[p.mapId][p.y][p.x]
 end
 
-function NewGraph:getTileAtPoint(p, overworld, staticMaps)
+function NewGraph:getTileAtPoint(p, game)
   if p.mapId == OverWorldId then
-    return overworld:getTileAt(p.x, p.y, self)
+    return game.overworld:getTileAt_NoUpdate(p.x, p.y, game)
   else
-    return staticMaps[p.mapId]:getTileAt(p.x, p.y, self)
+    return game.staticMaps[p.mapId]:getTileAt(p.x, p.y, game)
   end
 end
 
-function NewGraph:getWeightAtPoint(p, overworld, staticMaps)
-  return self:getTileAtPoint(p, overworld, staticMaps).weight
+function NewGraph:getWeightAtPoint(p, game)
+  return self:getTileAtPoint(p, game).weight
 end
 
 function NewGraph:discover(x, y, overworld)
-  if self:isDiscovered(OverWorldId,x,y) or not overworld:getTileAt_NoUpdate(x,y).walkable
-    then return
+  if self:isDiscovered(OverWorldId,x,y) then return end
+  if not overworld:getTileAt_NoUpdate(x,y).walkable
+    then self.rows[OverWorldId][y][x] = GraphNode(GraphNodeType.KNOWN)
+    return
   end
 
   function discovered(n) return self:isDiscovered(n.mapId, n.x, n.y) end
@@ -195,102 +169,13 @@ function NewGraph:discover(x, y, overworld)
   list.foreach(discoveredNeighborsOfXY, addNeighbor)
 end
 
-function NewGraph:shortestPath(src, destination, overworld, staticMaps)
-  return self:dijkstra(src, destination, overworld, staticMaps)
--- TODO: probably just kill all this code, along with bfs.
---   local b = self:bfs     (src, destination, overworld, staticMaps)
---   local d = self:dijkstra(src, destination, overworld, staticMaps)
---
---   if #b == #d then return d
---   else
---     log.debug("BFS", #b, tostring(b))
---     log.debug("dijkstra",     #d, tostring(d))
---     error("shortestPath and dijkstra not the same!", #b, b, #d, d)
---   end
-end
-
-function NewGraph:bfs(startNode, endNode, overworld, staticMaps)
-  -- log.debug("in newgraph:bfs", startNode, endNode)
-  function insertPoint(tbl, p, value)
-    -- log.debug("insertPoint", "p", p, "value", value)
-    if tbl[p.mapId] == nil then tbl[p.mapId] = {} end
-    if tbl[p.mapId][p.x] == nil then tbl[p.mapId][p.x] = {} end
-    tbl[p.mapId][p.x][p.y] = value
-  end
-
-  function solve(s)
-    local q = Queue()
-    q:push(s)
-
-    local visited = {}
-    local prev = {}
-    insertPoint(visited, s, true)
-
-    while not q:isEmpty() do
-      local node = q:pop()
-      -- we have to do this check here because we may have pushed on a neighbor that we've never seen on the overworld.
-      -- and therefore it wouldn't appear in the graph.
-      if self:isDiscovered(node.mapId, node.x, node.y) then
-        local nodeAtXY = self:getNodeAt(node.mapId, node.x, node.y)
-        local neighbors = nodeAtXY.neighbors
-        for _, neighbor in ipairs(neighbors) do
-          if not containsPoint(visited, neighbor) then
-            q:push(neighbor)
-            insertPoint(visited, neighbor, true)
-            insertPoint(prev, neighbor, {node, neighbor})
-          end
-        end
-      end
-    end
-
-    return prev
-  end
-
-  function reconstruct(s, e, prev)
-    -- log.debug("reconstruct", s, e, prev)
-    local path = {}
-    local at = e
-    while not (at == nil) do
-      -- log.debug("at", at)
-      if prev[at.mapId] == nil or prev[at.mapId][at.x] == nil or prev[at.mapId][at.x][at.y] == nil
-        then
-          table.insert(path, at)
-          at = nil
-        else
-          table.insert(path, prev[at.mapId][at.x][at.y][2])
-          at = prev[at.mapId][at.x][at.y][1]
-      end
-    end
-    -- TODO: maybe ideally we would throw an error here instead of returning {}, but im honestly not sure yet.
-    if #path == 0 then return {}
-    else
-      local pathR = table.reverse(path)
-      if pathR[1] == nil then return {}
-      else
-        -- log.debug("pathR[1]", pathR[1])
-        return pathR[1]:equals(s) and pathR or {}
-      end
-    end
-  end
-  return reconstruct(startNode, endNode, solve(startNode))
+function NewGraph:shortestPath(src, destination, game)
+  return self:dijkstra(src, destination, game)
 end
 
 -- Find the shortest path between the current and dest nodes
-function NewGraph:dijkstra (src, dest, overworld, staticMaps)
+function NewGraph:dijkstra (src, dest, game)
   -- log.debug("entering dijkstra", src, dest)
-
-  function insertPoint3D(tbl, p, value)
-    if tbl[p.mapId] == nil then tbl[p.mapId] = {} end
-    if tbl[p.mapId][p.x] == nil then tbl[p.mapId][p.x] = {} end
-    tbl[p.mapId][p.x][p.y] = value
-  end
-
-  function readPoint3D(tbl, p, default)
-    if tbl[p.mapId] == nil then return default end
-    if tbl[p.mapId][p.x] == nil then return default end
-    if tbl[p.mapId][p.x][p.y] == nil then return default end
-    return tbl[p.mapId][p.x][p.y]
-  end
 
   local distanceTo, trail = {}, {}
   local pq = PriorityQueue()
@@ -298,20 +183,8 @@ function NewGraph:dijkstra (src, dest, overworld, staticMaps)
   insertPoint3D(distanceTo, src, 0)
 
   function getDistanceTo(p) return readPoint3D(distanceTo, p, math.huge) end
-  function getWeightAtPoint(p) return self:getWeightAtPoint(p, overworld, staticMaps) end
+  function getWeightAtPoint(p) return self:getWeightAtPoint(p, game) end
   function getPrevious(p) return readPoint3D(trail, p) end
-
-  function print3dTable(tbl, name)
-    log.debug("====" .. name .. "====")
-    for i,v in pairs(tbl) do
-      for j,v2 in pairs(v) do
-        for k,v3 in pairs(v2) do
-          log.debug(i, j, k, v3)
-        end
-      end
-    end
-    log.debug("====end " .. name .. "====")
-  end
 
   function printTrail() print3dTable(trail, "trail") end
   function printDistanceTo() print3dTable(distanceTo, "distanceTo") end
@@ -320,7 +193,7 @@ function NewGraph:dijkstra (src, dest, overworld, staticMaps)
     local current = pq:dequeue()
     local distanceToCurrent = getDistanceTo(current)
     for _,neighbor in pairs(self:getNodeAtPoint(current).neighbors) do
-      local newWeight = distanceToCurrent + getWeightAtPoint(neighbor)
+      local newWeight = distanceToCurrent + getWeightAtPoint(neighbor, game)
       if newWeight < getDistanceTo(neighbor) then
         insertPoint3D(distanceTo, neighbor, newWeight)
         insertPoint3D(trail, neighbor, {mapId = current.mapId, x = current.x, y = current.y, dir = neighbor.dir})
@@ -475,11 +348,10 @@ function mkStaticMapGraph (staticMap, haveKeys)
   end
 
   function entranceNeighbors(x,y)
-    -- log.debug("entranceNeighbors", staticMap.mapId, staticMap.entrances)
     if staticMap.mapType ~= MapType.DUNGEON or staticMap.entrances == nil then return {} end
     local res = {}
     list.foreach(staticMap.entrances, function(e)
-      if e.x == x and e.y == y then
+      if e.to.x == x and e.to.y == y then
         local neighbor = Neighbor(e.from.mapId, e.from.x, e.from.y, NeighborDir.STAIRS)
         -- log.debug("adding entrance neighbor: ", staticMap.mapId, x, y, neighbor)
         table.insert(res, neighbor)
@@ -499,55 +371,69 @@ function mkStaticMapGraph (staticMap, haveKeys)
   return res
 end
 
--- function NewGraph:__tostring ()
---
---   local contains = table.containsUsingDotEquals
---
---   function printTile(x,y,neighbors)
---     if neighbors == nil then return "   " end
---     local res = ""
---     if contains(neighbors, Point(self.staticMap.mapId, x-1, y)) then res = res .. "←" else res = res .. " " end
---     if contains(neighbors, Point(self.staticMap.mapId, x, y-1)) and contains(neighbors, Point(self.staticMap.mapId, x, y+1))
---       then res = res .. "↕"
---       elseif contains(neighbors, Point(self.staticMap.mapId, x, y-1)) then res = res .. "↑"
---       elseif contains(neighbors, Point(self.staticMap.mapId, x, y+1)) then res = res .. "↓"
---       else res = res .. " "
---     end
---     if contains(neighbors, Point(self.staticMap.mapId, x+1, y)) then res = res .. "→" else res = res .. " " end
---     return res
---   end
---
---   local tileSet = self.staticMap:getTileSet()
---   local res = ""
---   for y = 0,self.staticMap.height-1 do
---     local row = ""
---     for x = 0,self.staticMap.width-1 do
---       row = row .. "|" .. printTile(x, y, self.graph[y][x])
---     end
---     res = res .. row .. " |\n"
---   end
---   return res
--- end
+function NewGraph:printMap(mapId, game, printImportantLocations)
+  local bottomRight = nil
+  if mapId == OverWorldId
+    then bottomRight = Point(mapId, 119, 119)
+    else bottomRight = Point(mapId, game.staticMaps[mapId].width - 1, game.staticMaps[mapId].height - 1)
+  end
 
+  return self:printSquare(Square(Point(mapId, 0, 0), bottomRight), game, printImportantLocations)
+end
 
--- function NewGraph:iterate(f)
---   iterate3(self.rows, f)
--- end
---
--- function iterate3(tbl, f)
---   for mapId, mapRows in ipairs(tbl) do
---     for y, row in ipairs(mapRows) do
---       for x, neighbors in ipairs(row) do
---         f(Point(mapId, x, y), neighbors)
---       end
---     end
---   end
--- end
---
--- function NewGraph:print(mapId)
---   for y, row in ipairs(self.rows[mapId]) do
---     for x, neighbors in ipairs(row) do
---       log.debug(Point(mapId, x, y), neighbors)
---     end
---   end
--- end
+-- bounds :: Square
+-- game   :: Game
+function NewGraph:printSquare(square, game, printImportantLocations)
+  -- log.debug("printSquare", square, printImportantLocations)
+  local mapId = square.topLeft.mapId
+
+  function printTile(x,y,neighbors)
+
+    if not self:isDiscovered(mapId, x, y) then return " ? " end
+
+    local neighborsCopy = table.copy(neighbors)
+    if neighborsCopy == nil then return "   " end
+    local res = ""
+
+    function findNeighbor(x,y)
+      local i = list.findWithIndex(neighborsCopy, function(n)
+        local res = n:getPoint():equals(Point(mapId,x,y))
+        return res
+      end)
+      if i ~= nil then list.delete(neighborsCopy, i.index) end
+      return i
+    end
+
+    local l,r,t,b = findNeighbor(x-1,y), findNeighbor(x+1,y), findNeighbor(x,y-1), findNeighbor(x,y+1)
+
+    if l ~= nil then res = res .. "←" else res = res .. " " end
+    local tile = self:getTileAtPoint(Point(mapId, x, y), game)
+    if mapId == OverWorldId and printImportantLocations and tile.id >= 8 and tile.id <= 10 then
+      -- log.debug("x", x, "y", y, "tileId", tile.id)
+      if tile.id == 8  then res = res .. "T"  end -- town
+      if tile.id == 9  then res = res .. "@"  end -- cave
+      if tile.id == 10 then res = res .. "C" end -- castle
+    else
+      if t ~= nil and b ~= nil
+        then res = res .. "↕"
+        elseif t ~= nil then res = res .. "↑"
+        elseif b ~= nil then res = res .. "↓"
+        else res = res .. " "
+      end
+    end
+    if r ~= nil then res = res .. "→" else res = res .. " " end
+
+    -- TODO: here we can iterate through any remaining neighbors (which must be to another map or something)
+    return res
+  end
+
+  local res = square:titleRow()
+  local row = ""
+
+  square:iterate(
+    function(x,y) row = row .. "|" .. printTile(x, y, self:getNodeAt(mapId,x,y).neighbors) end,
+    function(y) row = padded(y) .. " " end,
+    function(y) res = res .. row .. "|\n" end
+  )
+  return res
+end

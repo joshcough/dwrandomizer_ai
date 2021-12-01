@@ -2,6 +2,7 @@ require 'Class'
 require 'controller'
 enum = require("enum")
 require 'helpers'
+require 'locations'
 require 'player_data'
 require 'static_maps'
 
@@ -310,10 +311,8 @@ function OnMap(m) return Eq(GetMap, Value(m)) end
 
 Scripts = class(function(a,entrances)
 
-  -- log.debug("entrances", entrances)
-
-  charlockLocation = entrances[Charlock][1].from
-  a.tantegelLocation = entrances[Tantegel][1].from
+  charlockLocation = entrances[Charlock][1]
+  a.tantegelLocation = entrances[Tantegel][1]
   -- log.debug("charlockLocation", charlockLocation)
   -- log.debug("tantegelLocation", a.tantegelLocation)
 
@@ -506,14 +505,14 @@ Scripts = class(function(a,entrances)
     IfThenScript(
       "Have we already created the rainbow bridge?",
       StatusScript("rainbowBridge"),
-      GotoPoint(charlockLocation),
+      GotoPoint(charlockLocation.to),
       IfThenScript(
         "Do we have the rainbow drop?",
         HaveItem(RainbowDrop),
         Consecutive("Enter Charlock", {
-          Goto(OverWorldId, charlockLocation.x + 3, charlockLocation.y),
+          Goto(OverWorldId, charlockLocation.from.x + 3, charlockLocation.from.y),
           UseItem(RainbowDrop),
-          GotoPoint(charlockLocation),
+          GotoPoint(charlockLocation.from),
           WaitUntil("In Charlock", OnMap(Charlock), 240)
         }),
         DoNothing

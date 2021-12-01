@@ -2,20 +2,24 @@ require 'Class'
 require 'controller'
 enum = require("enum")
 require 'helpers'
+require 'locations'
 require 'map_scripts'
 require 'mem'
 require 'overworld'
 require 'player_data'
 require 'static_maps'
 
-Game = class(function(a, memory, warps, graph, overworld, maps)
+Game = class(function(a, memory, warps, graph, overworld, staticMaps)
   -- map related stuff
-  a.scripts = Scripts(getAllEntranceCoordinates(memory))
+  a.entrances = getAllEntranceCoordinates(memory)
+  a.scripts = Scripts(a.entrances)
   a.memory = memory
   a.warps = warps
   a.graph = graph
   a.overworld = overworld
-  a.staticMaps = maps
+  a.staticMaps = staticMaps
+  local chests = memory:readChests()
+  a.importantLocations = buildAllImportantLocations(staticMaps, chests)
 
   -- events/signals that happen in game
   a.inBattle = false
@@ -31,7 +35,7 @@ Game = class(function(a, memory, warps, graph, overworld, maps)
   a.unlockedDoors = {}
   a.weaponAndArmorShops = memory:readWeaponAndArmorShops()
   a.searchSpots = memory:readSearchSpots()
-  a.chests = memory:readChests()
+  a.chests = chests
   a.lastPrintedPercentage = 0
   -- we start on the menu screen, so on no map at all.
   a.currentMapId = 0
@@ -49,10 +53,10 @@ end
 
 -- function newGameWithNoOverworld(memory)
 --   local warps = table.concat(WARPS, list.map(WARPS, swapSrcAndDest))
---   local maps = readAllStaticMaps(memory, warps)
---   local graphsWithKeys = readAllGraphs(memory, true, maps, warps)
---   local graphsWithoutKeys = readAllGraphs(memory, false, maps, warps)
---   return Game(memory, warps, nil, maps, graphsWithKeys, graphsWithoutKeys)
+--   local staticMaps = readAllStaticMaps(memory, warps)
+--   local graphsWithKeys = readAllGraphs(memory, true, staticMaps, warps)
+--   local graphsWithoutKeys = readAllGraphs(memory, false, staticMaps, warps)
+--   return Game(memory, warps, nil, staticMaps, graphsWithKeys, graphsWithoutKeys)
 -- end
 
 function Game:readPlayerData()
@@ -84,7 +88,7 @@ function Game:percentageOfWorldSeen()
 end
 
 function Game:printVisibleGrid()
-  return self.overworld:printVisibleGrid(self:getX(), self:getY(), self.graph)
+  return self.overworld:printVisibleGrid(self:getX(), self:getY(), self)
 end
 
 -- these are reasons that we have exited the followPath function
@@ -145,7 +149,9 @@ end
 -- we immediately want to abandon this path, and walk to the new path.
 function Game:followPath(path)
   local commands = self:convertPathToCommands(path, self.staticMaps)
-  if commands == nil or #commands == 0 then return GotoExitValues.NO_PATH end
+  if commands == nil or #commands == 0 then
+    return GotoExitValues.NO_PATH
+  end
 
   -- log.debug(commands)
 
@@ -162,7 +168,7 @@ function Game:followPath(path)
         dest = c.to
         local loc = self:getLocation()
         if loc.mapId == 1 and not loc:equals(startingLoc) then
-          self.overworld:getVisibleOverworldGrid(self:getX(), self:getY(), self.graph)
+          self.overworld:getVisibleOverworldGrid(self:getX(), self:getY(), self)
           local currentPercentageSeen = round(self:percentageOfWorldSeen())
           if self.lastPrintedPercentage < currentPercentageSeen then
             log.debug("percentageOfWorldSeen: " .. currentPercentageSeen)
@@ -333,19 +339,19 @@ function Game:searchGroundScript ()
   self.searchSpots:searchAt(self:getLocation())
 end
 
--- TODO: this whole function needs to get redone completely. this is just a hack.
 function Game:addWarp(warp)
   if table.containsUsingDotEquals(self.warps, warp) then
     -- log.debug("NOT Adding warp, it already exists!: " .. tostring(warp))
     return
   end
-
   log.debug("Adding warp: " .. tostring(warp))
   table.insert(self.warps, warp)
-
-  -- TODO: this is just terrible....
+  -- todo: the next line can probably still be removed. we only use the warps for two reasons:
+  -- * building the initial graph (very important)
+  -- * printing the message that we've already added the warp (not important)
+  -- this business of reversing the warp just isn't useful here
+  -- unless somehow we later would try to add the warp reversed... its all weird.
   self.warps = table.concat(self.warps, list.map(self.warps, swapSrcAndDest))
-
   self.graph:addWarp(warp, self.overworld)
 end
 
@@ -356,7 +362,7 @@ function containsPoint(tbl, p)
 end
 
 function Game:shortestPath(startNode, endNode)
-  return self.graph:shortestPath(startNode, endNode, self:haveKeys(), self.overworld, self.staticMaps)
+  return self.graph:shortestPath(startNode, endNode, self:haveKeys(), self)
 end
 
 function swapSrcAndDest(w) return w:swap() end
@@ -409,7 +415,7 @@ function Game:convertPathToCommands(pathIn, maps)
 
     function nextTileIsDoor()
       if p2.mapId == OverWorldId then return false
-      else return maps[p2.mapId]:getTileAt(p2.x, p2.y, self.graph).name == "Door"
+      else return maps[p2.mapId]:getTileAt(p2.x, p2.y, self).name == "Door"
       end
     end
 
@@ -444,10 +450,43 @@ end
 function Game:stateMachine()
   if self.dead then self:dealWithDeath()
   elseif self.mapChanged then self:dealWithMapChange()
-  elseif self:getMapId() == 0 then
-    -- log.debug("We are still on map 0 man!")
-    self:interpretScript(self.scripts.GameStartMenuScript)
-  else self:grindOrExplore()
+  elseif self:getMapId() == 0 then self:interpretScript(self.scripts.GameStartMenuScript)
+  else
+    self:grindOrExplore()
+  end
+end
+
+function Game:noExploreDestOrHaventReachedDestYet()
+  if self.exploreDest == nil then return true end
+  return not self.exploreDest:equals(self:getLocation())
+end
+
+function Game:haveExploreDestButHaventReachedDestYet()
+  if self.exploreDest == nil then return false end
+  return not self.exploreDest:equals(self:getLocation())
+end
+
+function Game:atExploreDest()
+  if self.exploreDest == nil then return false end
+  return self.exploreDest:equals(self:getLocation())
+end
+
+function Game:dealWithAnyImportantLocations()
+  log.debug("in dealWithAnyImportantLocations")
+
+  log.debug("=== achievableGoals ===")
+  local achievableGoals = self:seenButNotCompletedImportantLocations()
+  for _,v in pairs(achievableGoals) do log.debug(v) end
+  log.debug("=== end achievableGoals ===")
+
+  -- TODO: if there are multiple new locations, we should pick the closest one.
+  local seeSomethingNew = #achievableGoals > 0
+
+  if seeSomethingNew then
+    local newImportantLoc = achievableGoals[1]
+    log.debug("Headed towards new important location: ", newImportantLoc)
+    return newImportantLoc.location
+  else return nil
   end
 end
 
@@ -462,20 +501,26 @@ function Game:grindOrExplore()
     self:explore()
   elseif self:getMapId() == OverWorldId then
     log.debug("no exploreDest, on the overworld.")
-    local pd = self:readPlayerData()
-    local grind = getGrindInfo(pd, self.graph, self.overworld)
-    -- if we have a good monster to grind on, grind.
-    if grind ~= nil then
-      log.debug("grind", grind)
-      self:grind(grind, pd.stats.level)
-    -- if haven't seen anything worth fighting... then i guess just explore...
+    local newImportantLoc = self:dealWithAnyImportantLocations()
+    if newImportantLoc ~= nil then
+      log.debug("IMPORTANT LOC", newImportantLoc)
+      self:chooseNewDestinationDirectly(newImportantLoc)
     else
-      log.debug("grind was nil, so jumping to self:explore()")
-      self:explore()
+      local pd = self:readPlayerData()
+      local grind = getGrindInfo(pd, self)
+      -- if we have a good monster to grind on, grind.
+      if grind ~= nil then
+        log.debug("grind", grind)
+        self:grind(grind, pd.stats.level)
+      -- if haven't seen anything worth fighting... then i guess just explore...
+      else
+        log.debug("important loc and grind were both nil, so picking a random border tile")
+        self:chooseNewDestination(function (k) return self:chooseRandomBorderTile(k) end)
+      end
     end
   else
     log.debug("not on the overworld, jumping to self:explore()")
-    self:explore()
+    self:exploreStaticMap()
   end
 end
 
@@ -483,7 +528,7 @@ function Game:grind(grind, currentLevel)
   log.debug("GRINDING at: ", tostring(grind), "current location: ", self:getLocation())
   -- TODO: if one is forest and the other is desert, we want to pick desert.
   -- in general, we want to pick the tiles with the highest encounter rate.
-  local neighbor = self.graph:grindableNeighbors(self.overworld, grind.location.x, grind.location.y)[1]
+  local neighbor = self.graph:grindableNeighbors(self, grind.location.x, grind.location.y)[1]
   log.debug("The neighbor to grind on", neighbor)
 
   while(self.memory:getLevel() == currentLevel and not self.dead) do
@@ -492,49 +537,35 @@ function Game:grind(grind, currentLevel)
   end
 end
 
-function Game:atFirstImportantLocation()
-  return self.overworld.importantLocations ~= nil and
-         #(self.overworld.importantLocations) > 0 and
-         self.overworld.importantLocations[1].location:equals(self:getLocation())
+function Game:reachedDestination()
+  local loc = self:getLocation()
+  log.debug("We have reached our destination, so picking a new one. Currently at: " .. tostring(loc))
+
+  local importantLocHere = self:importantLocationAt(loc)
+  if importantLocHere ~= nil
+  then
+    importantLocHere.completed = true
+    log.debug("setting completed to true", importantLocHere)
+  end
+  waitFrames(120)
+  self.exploreDest = nil
 end
 
+-- TODO: we need to make it so that we ALWAYS have a destination when we get into this function
+-- it will just be easier to deal with.
+-- so basically it means removing the call to exploreStart()
 function Game:explore()
+  log.debug("in explore, self.exploreDest is:" , self.exploreDest)
   local loc = self:getLocation()
-  local atDestination = self.exploreDest ~= nil and self.exploreDest:equals(loc)
 
-  if atDestination then
-    -- log.debug("we are already at our destination...so gonna pick a new one... currently at: " .. tostring(loc))
-    if loc.mapId == OverWorldId then
-      -- log.debug("we are on the overworld, at our destination")
-      -- if the location is in overworld.importantLocations, then we have to remove it.
-      -- TODO: this code is awful
-      if self:atFirstImportantLocation()
-      then
-        -- log.debug("removing important location")
-        self:removeFirstImportantLocation()
-        self.exploreDest = nil
-        self:exploreStaticMap()
-     else
-        -- log.debug("not at first important location, starting to explore")
-        self:exploreStart()
-      end
-    else
-      -- log.debug("we are not on the overworld, so exploring static map")
-      self:exploreStaticMap()
-    end
+  if self:atExploreDest() then self:reachedDestination()
   else
-    -- log.debug("we are not at our destination")
+    log.debug("we are not at our destination")
     if loc.mapId == OverWorldId then
-      -- log.debug("we are on the overworld, not at our destination")
-      if self.exploreDest ~= nil then
-        -- log.debug("we have en exploreDest, calling exploreMove")
-        self:exploreMove()
-      else
-        -- log.debug("we dont have en exploreDest, calling exploreStart")
-        self:exploreStart()
-      end
+      log.debug("we are on the overworld, not at our destination")
+      self:exploreMove()
     else
-      -- log.debug("not at our destination, and not on the overworld. calling exploreStaticMap")
+      log.debug("not at our destination, and not on the overworld. calling exploreStaticMap")
       self:exploreStaticMap()
     end
   end
@@ -549,42 +580,10 @@ function Game:exploreStaticMap()
   if script ~= nil then self:interpretScript(script)
   else
     if (emu.framecount() % 60 == 0) then
-      log.debug("i don't yet know how to explore this map: " .. tostring(loc), ", " .. tostring(STATIC_MAP_METADATA[loc.mapId]))
+      log.debug("i don't yet know how to explore this map: " .. tostring(loc), ", "
+        .. tostring(STATIC_MAP_METADATA[loc.mapId]))
     end
   end
-end
-
-function Game:removeFirstImportantLocation()
-  self.overworld.importantLocations = list.delete(self.overworld.importantLocations, 1)
-end
-
-function Game:exploreStart()
-  -- log.debug("no destination yet, about to get one")
-  local loc = self:getLocation()
-  -- TODO: if there are multiple new locations, we should pick the closest one.
-  local seeSomethingNew = #(self.overworld.importantLocations) > 0
-  if seeSomethingNew then
-    local newImportantLoc = self.overworld.importantLocations[1]
-    -- if the the new location we have spotted on the overworld is tantegel itself, ignore it.
-    if newImportantLoc.location:equals(self.scripts.tantegelLocation) then
-      -- log.debug("I see a castle, but its just tantegel, so I'm ignoring it")
-     -- log.debug("removing important location in exploreStart (1)")
-     self:removeFirstImportantLocation()
-    elseif self.overworld.importantLocations[1].type == ImportantLocationType.CHARLOCK then
-      log.debug("I see Charlock!")
-      self:interpretScript(self.scripts.EnterCharlock)
-     -- log.debug("removing important location in exploreStart (2)")
-      self:removeFirstImportantLocation()
-    else
-      if self.exploreDest == nil or not self.exploreDest:equals(newImportantLoc.location) then
-        -- log.debug("Headed towards new important location: ", newImportantLoc)
-        self:chooseNewDestinationDirectly(self.overworld.importantLocations[1].location)
-      end
-    end
-  else
-    self:chooseNewDestination(function (k) return self:chooseClosestBorderTile(k) end)
-  end
-  log.debug("new destination is: " .. tostring(self.exploreDest))
 end
 
 -- what we really should do here is pick a random walkable border tile
@@ -624,7 +623,7 @@ function Game:chooseNewDestination(tileSelectionStrat)
 end
 
 function Game:chooseNewDestinationDirectly(newDestination)
-  -- log.debug("new destination", newDestination, self.overworld:getTileAt(newDestination.x, newDestination.y))
+  log.debug("new destination", newDestination)
   self.exploreDest = newDestination
 end
 
@@ -753,10 +752,15 @@ function Game:dealWithDeath()
 end
 
 function Game:dealWithMapChange()
-  log.debug("dealing with map change")
   local oldMapId = self.currentMapId
   local newMapId = self:getMapId()
   local newLoc   = self:getLocation()
+  log.debug("dealing with map change... oldMap", oldMapId, "newMap", newMapId, "newLoc", newLoc)
+
+  if oldMapId == newMapId then
+    self.mapChanged = false
+    return
+  end
 
   -- catch transition from 0 to 5!
   -- this means that the game is just starting
@@ -783,11 +787,10 @@ function Game:dealWithMapChange()
     self.chests:closeAll()
     -- we can see a bunch of new land now (potentially on another continent)
     -- we have to call this so that the knownWorld gets updated properly to see the new land.
-    self.overworld:getVisibleOverworldGrid(newLoc.x, newLoc.y, self.graph)
+    self.overworld:getVisibleOverworldGrid(newLoc.x, newLoc.y, self)
   elseif newMapId > 1 and newMapId <= 29 then
     if not self.staticMaps[newMapId].seenByPlayer then
-      log.debug("now seen by player: ", self.staticMaps[newMapId].mapName)
-      self.staticMaps[newMapId].seenByPlayer = true
+      self.staticMaps[newMapId]:markSeenByPlayer(self.staticMaps)
     end
   end
 
@@ -888,7 +891,7 @@ end
 
 function Game:useRainbowDrop()
   self:useItem(RainbowDrop)
-  self.overworld:useRainbowDrop(self:getLocation(), self.graph)
+  self.overworld:useRainbowDrop(self:getLocation(), self)
 end
 
 function Game:haveKeys()
@@ -1048,4 +1051,55 @@ function Game:closestHealingLocation()
     log.debug("distance from " .. tostring(loc) .. " to " .. tostring(dest) .. " is " .. tostring(distance))
     return distance
   end)
+end
+
+-- discover a tile on the overworld
+function Game:discoverOverworldTile(x,y)
+  self.graph:discover(x, y, self.overworld)
+
+  -- there are two definitions of seen
+  -- one is that we have spotted it on the overworld, but not yet entered
+  -- and the other is that we have actually entered it (or actually opened the chest, searched, etc)
+
+  -- they are defined like so:
+  -- a.seenByPlayer = false
+  -- a.completed = false
+
+  -- when we spot a location on the overworld, we mark it as seenByPlayer
+  -- and when we actually enter/open/search, we will mark it as completed.
+
+  -- then when exploring, we check for important locations that are seen by the player, but not completed
+  -- if there are any, pick the closest one and go to it. finally when there, mark it as completed.
+  local newImportantLoc = self:importantLocationAt(Point(OverWorldId, x, y))
+  if newImportantLoc ~= nil then
+    log.debug("Discovered " .. tostring(newImportantLoc.type) .. " at " .. tostring(newImportantLoc.location))
+    newImportantLoc.seenByPlayer = true
+
+    if newImportantLoc.type == ImportantLocationType.TANTEGEL then
+      log.debug("I see Tantegel.")
+      newImportantLoc.completed = true
+    elseif newImportantLoc.type == ImportantLocationType.CHARLOCK then
+      log.debug("I see Charlock!")
+      -- TODO: JC 12/5/21 this is really weird now...
+      -- i feel like we should have a function for dealing with important locs
+      -- like an interpreter, and this next line should be in there.
+      -- self:interpretScript(self.scripts.EnterCharlock)
+      -- newImportantLoc.completed = true
+    end
+  end
+end
+
+
+-- TODO: every time we discover an overworld tile, we loop through many important locs.
+-- this could be done more efficiently if we had a (Map Location ImportantLocation)
+function Game:importantLocationAt(p)
+  return list.find(self.importantLocations, function(loc) return loc.location:equals(p) end)
+end
+
+-- TODO: giant todo: we have to only use the important locations
+-- that we can actually get to. like, ones that we have seen, and aren't hidden behind a locked door.
+-- maybe thats as simple as just ones that we can create a path to?
+-- but this might be inefficient.
+function Game:seenButNotCompletedImportantLocations()
+  return list.filter(self.importantLocations, function(loc) return loc.seenByPlayer and not loc.completed end)
 end

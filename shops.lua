@@ -293,46 +293,83 @@ function Chest:__tostring()
     .. " (opened ever: " .. tostring(self.everOpened) .. ")"
 end
 
-Chests = class(function(a,chests)
-  a.chests = chests
-end)
-
-function Chests:__tostring()
-  local res = "=== Chests ===\n"
+-- chests :: [Chest]
+-- returns Map MapId [Chest]
+function getChestsByMapId(chests)
+  local res = {}
+  for i = 2, 29 do res[i] = {} end
   for i = 1,31 do
-    res = res .. "  " .. tostring(self.chests[i]) .. "\n"
+    table.insert(res[chests[i].location.mapId], c)
   end
   return res
 end
 
+Chests = class(function(a,chests)
+  -- chests :: [Chest]
+  a.chests = chests
+  -- chestsByMapId :: Map MapId [Chest]
+  a.chestsByMapId = getChestsByMapId(chests)
+end)
+
+function Chests:foreach(f)
+  for i = 1,31 do f(self.chests[i]) end
+end
+
+function Chests:__tostring()
+  local res = "=== Chests ===\n"
+  self.chests:foreach(function (c)
+    res = res .. "  " .. tostring(c) .. "\n"
+  end)
+  return res
+end
+
 function Chests:isChestOpen(location)
-  for i = 1,31 do
-    if self.chests[i].location:equals(location) then return self.chests[i].currentlyOpen end
+  log.debug("isChestOpen", location)
+  return self:chestAt(location).currentlyOpen
+end
+
+function Chests:chestAt(location)
+  local f = list.find(self.chests, function (c) return c.location:equals(location) end)
+  if f == nil then
+    local msg = "No chest at location"
+    log.debug(msg, location)
+    error(msg, location)
   end
-  return false
+  return f
 end
 
 function Chests:hasChestEverBeenOpened(location)
-  for i = 1,31 do
-    if self.chests[i].location:equals(location) then return self.chests[i].everOpened end
-  end
-  return false
+  log.debug("hasChestEverBeenOpened", location)
+  return self:chestAt(location).everOpened
 end
 
 function Chests:openChestAt(location)
-  for i = 1,31 do
-    if self.chests[i].location:equals(location) then
-      self.chests[i].currentlyOpen = true
-      return
-    end
-  end
+  log.debug("openChestAt", location)
+  local c = self:chestAt(location)
+  c.currentlyOpen = true
+  c.everOpened = true
 end
 
 function Chests:closeAll()
   -- log.debug("Closing all chests!")
-  for i = 1,31 do
-    self.chests[i].currentlyOpen = false
+  self:foreach(function (c) c.currentlyOpen = false end)
+end
+
+-- get all the chests that we have seen
+-- but have never been opened
+function Chests:getAllChestsThatWeveSeenButNeverOpened(staticMaps)
+  -- log.debug("getAllChestsThatWeveSeenButNeverOpened!")
+  local res = {}
+
+  for i,chest in pairs(self.chests) do
+    -- log.debug("getAllChestsThatWeveSeenButNeverOpened", i, "chest", self.chests[i], "map seen", staticMaps[self.chests[i].location.mapId].seenByPlayer)
+    if (not self.chests[i].everOpened) and staticMaps[self.chests[i].location.mapId].seenByPlayer then
+      -- log.debug("there's a chest we could go to at: ", chest.location)
+      table.insert(res, self.chests[i])
+    end
   end
+
+  return res
 end
 
 SearchSpot = class(function(a,location,item)

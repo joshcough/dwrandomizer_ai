@@ -1,8 +1,7 @@
 require 'helpers'
 require 'Class'
 require 'graph'
-
-OverWorldId = 1
+require 'locations'
 
 -- MAP_DATA = {
 --   [1] = {["name"] = "Overworld", ["size"] = {["w"]=120,["h"]=120}, ["romAddr"] = 0x1D6D},
@@ -10,10 +9,17 @@ OverWorldId = 1
 
 OverworldTile = class(function(a,id,name,weight)
   a.id = id
+  a.tileId = id
   a.name = name
   a.weight = weight
   a.walkable = weight ~= nil
 end)
+
+function OverworldTile:__tostring()
+  local w = self.walkable and "true" or "false"
+  return "{ tileId: " .. self.tileId .. ", name: " .. self.name
+     .. ", walkable: " .. w .. ", weight: " .. self.weight .. "}"
+end
 
 GrassId    = 0
 DesertId   = 1
@@ -124,100 +130,30 @@ OverWorld = class(function(a,rows)
   a.overworldRows = rows
   a.knownWorld = {}
   a.nrTilesSeen = 0
-  a.importantLocations = {}
 end)
 
 function OverWorld:percentageOfWorldSeen()
   return self.nrTilesSeen/MAX_TILES*100
 end
 
-function OverWorld:getTileAt(x, y, graph)
-  -- log.debug("OverWorld:getTileAt(x, y, graph)", x, y, graph)
-  return OVERWORLD_TILES[self:getTileIdAt(x, y, graph)]
+function OverWorld:getTileAt(x, y, game)
+  -- log.debug("OverWorld:getTileAt(x, y, game)", x, y)
+  return OVERWORLD_TILES[self:getTileIdAt(x, y, game)]
 end
 
 function OverWorld:getTileAt_NoUpdate(x, y)
   return OVERWORLD_TILES[self.overworldRows[y][x]]
 end
 
-ImportantLocationType = enum.new("Types of important locations on the Overworld", {
-  "CHARLOCK", -- Could be CASTLE, but, we already know where Tantegel is, so, it just must be Charlock
-  "TOWN",
-  "CAVE",
-})
-
-function locationTypeFromTile(tileId)
-  if     tileId == 8  then return ImportantLocationType.TOWN
-  elseif tileId == 9  then return ImportantLocationType.CAVE
-  elseif tileId == 10 then return ImportantLocationType.CHARLOCK
-  end
-end
-
-ImportantLocation = class(function(a,x,y,tileId)
-  a.location = Point(OverWorldId, x, y)
-  a.type = locationTypeFromTile(tileId)
-end)
-
-function OverWorld:updateKnownWorld(x, y, tileId, graph)
+function OverWorld:updateKnownWorld(x, y, tileId, game)
   if self.knownWorld[y] == nil then self.knownWorld[y] = {} end
   if self.knownWorld[y][x] == nil
     then
       self.knownWorld[y][x] = tileId
       self.nrTilesSeen=self.nrTilesSeen+1
-      local tileName = getOverworldTileName(tileId)
-      -- this print statement is important... but its so damn noisy.
-      -- log.debug ("discovered new tile at (x: " .. x .. ", y: " .. y .. ")" .. " tile is: " .. tileName .. " tile id is: " .. tileId)
-      if tileId >= 8 and tileId <= 10 then
-        log.debug ("discovered important location at (x: " .. x .. ", y: " .. y .. ")" .. " it is a: " .. tileName)
-        table.insert(self.importantLocations, ImportantLocation(x, y, tileId))
-      end
+      game:discoverOverworldTile(x, y)
   end
-
-  graph:discover(x, y, self)
 end
-
-
--- for the actual graph for the overworld...
--- when we discover a new tile (by just moving around), we need to get its neighbors and put them in the graph.
--- however, we can only get the neighbors that we've actually seen.
--- for example if we move left to uncover tile at x=10, one of its neighbors is x=9, but we've never seen that
--- so we can't add it to the graph.
--- finally we take another step to uncover x=9, then we need to go back and update the neighbors of x=10 to include x=9
---
--- so basically when we uncover a tile, we need to update its neighbors in the graph
--- but also update its neighbors neighbors! but only for those neighbors that we have seen.
---
--- but how do we know what we have seen?
---
--- one possible approach is to fill in the entire graph with one of these constructors:
---
--- GraphNodeUnknown | GraphNodeKnown
---
--- if its known, it would have neighbors in it, like
---
--- GraphNodeKnown{ neighbors: { ... } }
---
--- and obviously when we uncover a new tile, it would be GraphNodeUnknown in the graph, and we'd change it to GraphNodeKnown
--- and we would get its "Neighbors4" and for each of those at are GraphNodeKnown, we would put them into its neighbors
--- and also for each of those that are GraphNodeKnown, we would include this node into their neighbors.
-
-
-
-
--- function OverWorld:knownWorldGraph()
---   local res = {}
---   for y,row in pairs(self.knownWorld) do
---     for x,tile in pairs(row) do
---       local overworldTile = OVERWORLD_TILES[self.overworldRows[y][x]]
---       if overworldTile.walkable then
---         if res[y] == nil then res[y] = {} end
---         res[y][x] = self:neighbors(x,y)
---       end
---     end
---   end
---   return res
--- end
-
 
 --         x,y-1
 -- x-1,y   x,y     x+1,y
@@ -290,25 +226,26 @@ end
 
 -- returns the tile id for the given (x,y) for the overworld
 -- {["name"] = "Overworld", ["size"] = {120,120}, ["romAddr"] = {0x1D6D, 0x2668}},
-function OverWorld:getTileIdAt(x, y, graph)
+function OverWorld:getTileIdAt(x, y, game)
+  -- log.debug("OverWorld:getTileIdAt", x, y)
   local tileId = self.overworldRows[y][x]
   -- optimization... each time we get a visible tile, record it in what we have seen
-  -- log.debug("OverWorld:getTileIdAt", x, y, graph)
-  self:updateKnownWorld(x,y,tileId,graph)
+  self:updateKnownWorld(x, y, tileId, game)
   return tileId
 end
 
 -- TODO: big todo... we need to update the graph when we do this.
-function OverWorld:setOverworldMapTileIdAt(x, y, tileId, graph)
+function OverWorld:setOverworldMapTileIdAt(x, y, tileId, game)
   self.overworldRows[y][x] = tileId
 end
 
 -- this is always done from one tile right of where the bridge will be
-function OverWorld:useRainbowDrop(loc, graph)
-  self:setOverworldMapTileIdAt(loc.x - 1, loc.y, 0xB, graph) -- 0xB is a bridge
+function OverWorld:useRainbowDrop(loc, game)
+  self:setOverworldMapTileIdAt(loc.x - 1, loc.y, 0xB, game) -- 0xB is a bridge
 end
 
-function OverWorld:getVisibleOverworldGrid(currentX, currentY, graph)
+function OverWorld:getVisibleOverworldGrid(currentX, currentY, game)
+  -- log.debug("in getVisibleOverworldGrid", currentX, currentY)
   local upperLeftX = math.max(0, currentX - 8)
   local upperLeftY = math.max(0, currentY - 6)
 
@@ -319,14 +256,14 @@ function OverWorld:getVisibleOverworldGrid(currentX, currentY, graph)
   for y = upperLeftY, bottomRightY do
     res[y-upperLeftY] = {}
     for x = upperLeftX, bottomRightX do
-      res[y-upperLeftY][x-upperLeftX]=self:getTileIdAt(x, y, graph)
+      res[y-upperLeftY][x-upperLeftX]=self:getTileIdAt(x, y, game)
     end
   end
   return res
 end
 
-function OverWorld:printVisibleGrid (currentX, currentY, graph)
-  local grid = self:getVisibleOverworldGrid(currentX, currentY, graph)
+function OverWorld:printVisibleGrid (currentX, currentY, game)
+  local grid = self:getVisibleOverworldGrid(currentX, currentY, game)
   for y = 0, #(grid) do
     local row = ""
     for x = 0, #(grid[y]) do

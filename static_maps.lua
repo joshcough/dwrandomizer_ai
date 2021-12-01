@@ -1,6 +1,7 @@
-require 'helpers'
 require 'Class'
 require 'controller'
+require 'helpers'
+require 'locations'
 
 Charlock           = 2
 Hauksness          = 3
@@ -117,21 +118,41 @@ function MapSize:__tostring()
   return "MapSize(height: " .. self.height .. ", width: " .. self.width .. ")"
 end
 
-EntranceMetaData = class(function(a, x, y, warpRomAddr)
-  a.x = x
-  a.y = y
+-- 'to' is the source, and `warpRomAddr` contains the address to read the `from`
+-- also seen Entrance right below.
+EntranceMetaData = class(function(a, to, warpRomAddr, entranceType)
+  a.to = to
   a.warpRomAddr = warpRomAddr
+  a.entranceType = entranceType
 end)
 
-Entrance = class(function(a, x, y, from)
-  a.x = x
-  a.y = y
+function EntranceMetaData:__tostring()
+  return "<EntranceMetaData to:" .. tostring(self.to) .. ", warpRomAddr:" .. tostring(self.warpRomAddr) .. ">"
+end
+
+-- TODO: at this point... is an Entrance any different from a Warp?
+-- could we get rid of Entrance and just use Warp?
+-- NOTE: 'from' is the "overworld"
+-- (""s because the entrance could be to a basement and so from might actually be tantegel or garinham)
+Entrance = class(function(a, from, to, entranceType)
+  a.to = to
   a.from = from
+  a.entranceType = entranceType
 end)
+
+function Entrance:__tostring()
+  return "<Entrance from:" .. tostring(self.from) ..
+                 ", to:" .. tostring(self.to) ..
+                 ", entranceType:" .. tostring(self.entranceType) .. ">"
+end
+
+function Entrance:equals(e)
+  return self.from:equals(e.from) and self.to:equals(e.to)
+end
 
 function EntranceMetaData:convertToEntrance(memory)
-  local p = Point(memory:readROM(self.warpRomAddr), memory:readROM(self.warpRomAddr+1), memory:readROM(self.warpRomAddr+2))
-  local res = Entrance(self.x, self.y, p)
+  local from = Point(memory:readROM(self.warpRomAddr), memory:readROM(self.warpRomAddr+1), memory:readROM(self.warpRomAddr+2))
+  local res = Entrance(from, self.to, self.entranceType)
   return res
 end
 
@@ -157,33 +178,33 @@ end
 MapType = enum.new("Map Type", { "TOWN", "DUNGEON", "BOTH", "OTHER" })
 
 STATIC_MAP_METADATA = {
-  [2]  = StaticMapMetadata(2,  "Charlock",             MapType.BOTH,    MapSize(20, 20), 0xC0,   {EntranceMetaData(10, 19, 0xF3EA)}),
-  [3]  = StaticMapMetadata(3,  "Hauksness",            MapType.BOTH,    MapSize(20, 20), 0x188,  {EntranceMetaData( 0, 10, 0xF3F6)}),
-  [4]  = StaticMapMetadata(4,  "Tantegel",             MapType.TOWN,    MapSize(30, 30), 0x250,  {EntranceMetaData(11, 29, 0xF3E4)}),
+  [2]  = StaticMapMetadata(2,  "Charlock",             MapType.BOTH,    MapSize(20, 20), 0xC0,   {EntranceMetaData(Point( 2, 10, 19), 0xF3EA, ImportantLocationType.CHARLOCK)}),
+  [3]  = StaticMapMetadata(3,  "Hauksness",            MapType.BOTH,    MapSize(20, 20), 0x188,  {EntranceMetaData(Point( 3,  0, 10), 0xF3F6, ImportantLocationType.TOWN)}),
+  [4]  = StaticMapMetadata(4,  "Tantegel",             MapType.TOWN,    MapSize(30, 30), 0x250,  {EntranceMetaData(Point( 4, 11, 29), 0xF3E4, ImportantLocationType.TANTEGEL)}),
   [5]  = StaticMapMetadata(5,  "Tantegel Throne Room", MapType.OTHER,   MapSize(10, 10), 0x412),
   [6]  = StaticMapMetadata(6,  "Charlock Throne Room", MapType.DUNGEON, MapSize(30, 30), 0x444),
-  [7]  = StaticMapMetadata(7,  "Kol",                  MapType.TOWN,    MapSize(24, 24), 0x606,  {EntranceMetaData(19, 23, 0xF3DE)}),
-  [8]  = StaticMapMetadata(8,  "Brecconary",           MapType.TOWN,    MapSize(30, 30), 0x726,  {EntranceMetaData( 0, 15, 0xF3E1)}),
-  [9]  = StaticMapMetadata(9,  "Garinham",             MapType.TOWN,    MapSize(20, 20), 0xAAA,  {EntranceMetaData( 0, 14, 0xF3D8)}),
-  [10] = StaticMapMetadata(10, "Cantlin",              MapType.TOWN,    MapSize(30, 30), 0x8E8,  {EntranceMetaData( 5, 15, 0xF3F9)}),
-  [11] = StaticMapMetadata(11, "Rimuldar",             MapType.TOWN,    MapSize(30, 30), 0xB72,  {EntranceMetaData(29, 14, 0xF3F3)}),
-  [12] = StaticMapMetadata(12, "Tantegel Basement",    MapType.OTHER,   MapSize(10, 10), 0xD34,  {EntranceMetaData( 0,  4, 0xF40B)}),
-  [13] = StaticMapMetadata(13, "Northern Shrine",      MapType.OTHER,   MapSize(10, 10), 0xD66,  {EntranceMetaData( 4,  9, 0xF3DB)}),
-  [14] = StaticMapMetadata(14, "Southern Shrine",      MapType.OTHER,   MapSize(10, 10), 0xD98,  {EntranceMetaData( 0,  4, 0xF3FC)}),
+  [7]  = StaticMapMetadata(7,  "Kol",                  MapType.TOWN,    MapSize(24, 24), 0x606,  {EntranceMetaData(Point(  7, 19, 23), 0xF3DE, ImportantLocationType.TOWN)}),
+  [8]  = StaticMapMetadata(8,  "Brecconary",           MapType.TOWN,    MapSize(30, 30), 0x726,  {EntranceMetaData(Point(  8,  0, 15), 0xF3E1, ImportantLocationType.TOWN)}),
+  [9]  = StaticMapMetadata(9,  "Garinham",             MapType.TOWN,    MapSize(20, 20), 0xAAA,  {EntranceMetaData(Point(  9,  0, 14), 0xF3D8, ImportantLocationType.TOWN)}),
+  [10] = StaticMapMetadata(10, "Cantlin",              MapType.TOWN,    MapSize(30, 30), 0x8E8,  {EntranceMetaData(Point( 10,  5, 15), 0xF3F9, ImportantLocationType.TOWN)}),
+  [11] = StaticMapMetadata(11, "Rimuldar",             MapType.TOWN,    MapSize(30, 30), 0xB72,  {EntranceMetaData(Point( 11, 29, 14), 0xF3F3, ImportantLocationType.TOWN)}),
+  [12] = StaticMapMetadata(12, "Tantegel Basement",    MapType.OTHER,   MapSize(10, 10), 0xD34,  {EntranceMetaData(Point( 12,  0,  4), 0xF40B, ImportantLocationType.CAVE)}),
+  [13] = StaticMapMetadata(13, "Northern Shrine",      MapType.OTHER,   MapSize(10, 10), 0xD66,  {EntranceMetaData(Point( 13,  4,  9), 0xF3DB, ImportantLocationType.CAVE)}),
+  [14] = StaticMapMetadata(14, "Southern Shrine",      MapType.OTHER,   MapSize(10, 10), 0xD98,  {EntranceMetaData(Point( 14,  0,  4), 0xF3FC, ImportantLocationType.CAVE)}),
   [15] = StaticMapMetadata(15, "Charlock Cave Lv 1",   MapType.DUNGEON, MapSize(20, 20), 0xDCA),
   [16] = StaticMapMetadata(16, "Charlock Cave Lv 2",   MapType.DUNGEON, MapSize(10, 10), 0xE92),
   [17] = StaticMapMetadata(17, "Charlock Cave Lv 3",   MapType.DUNGEON, MapSize(10, 10), 0xEC4),
   [18] = StaticMapMetadata(18, "Charlock Cave Lv 4",   MapType.DUNGEON, MapSize(10, 10), 0xEF6),
   [19] = StaticMapMetadata(19, "Charlock Cave Lv 5",   MapType.DUNGEON, MapSize(10, 10), 0xF28),
   [20] = StaticMapMetadata(20, "Charlock Cave Lv 6",   MapType.DUNGEON, MapSize(10, 10), 0xF5A),
-  [21] = StaticMapMetadata(21, "Swamp Cave",           MapType.DUNGEON, MapSize( 6, 30), 0xF8C,  {EntranceMetaData( 0,  0, 0xF3E7), EntranceMetaData(0,  29, 0xF3ED)}),
-  [22] = StaticMapMetadata(22, "Mountain Cave",        MapType.DUNGEON, MapSize(14, 14), 0xFE6,  {EntranceMetaData( 0,  7, 0xF3F0)}),
+  [21] = StaticMapMetadata(21, "Swamp Cave",           MapType.DUNGEON, MapSize( 6, 30), 0xF8C,  {EntranceMetaData(Point( 21,  0,  0), 0xF3E7, ImportantLocationType.CAVE), EntranceMetaData(Point(21, 0, 29), 0xF3ED, ImportantLocationType.CAVE)}),
+  [22] = StaticMapMetadata(22, "Mountain Cave",        MapType.DUNGEON, MapSize(14, 14), 0xFE6,  {EntranceMetaData(Point( 22,  0,  7), 0xF3F0, ImportantLocationType.CAVE)}),
   [23] = StaticMapMetadata(23, "Mountain Cave Lv 2",   MapType.DUNGEON, MapSize(14, 14), 0x1048),
-  [24] = StaticMapMetadata(24, "Garin's Grave Lv 1",   MapType.DUNGEON, MapSize(20, 20), 0x10AA, {EntranceMetaData( 6, 11, 0xF411)}),
+  [24] = StaticMapMetadata(24, "Garin's Grave Lv 1",   MapType.DUNGEON, MapSize(20, 20), 0x10AA, {EntranceMetaData(Point( 24,  6, 11), 0xF411, ImportantLocationType.CAVE)}),
   [25] = StaticMapMetadata(25, "Garin's Grave Lv 2",   MapType.DUNGEON, MapSize(14, 12), 0x126C),
   [26] = StaticMapMetadata(26, "Garin's Grave Lv 3",   MapType.DUNGEON, MapSize(20, 20), 0x1172),
   [27] = StaticMapMetadata(27, "Garin's Grave Lv 4",   MapType.DUNGEON, MapSize(10, 10), 0x123A),
-  [28] = StaticMapMetadata(28, "Erdrick's Cave",       MapType.DUNGEON, MapSize(10, 10), 0x12C0, {EntranceMetaData( 0,  0, 0xF3FF)}),
+  [28] = StaticMapMetadata(28, "Erdrick's Cave",       MapType.DUNGEON, MapSize(10, 10), 0x12C0, {EntranceMetaData(Point( 28,  0,  0), 0xF3FF, ImportantLocationType.CAVE)}),
   [29] = StaticMapMetadata(29, "Erdrick's Cave Lv 2",  MapType.DUNGEON, MapSize(10, 10), 0x12F2),
 }
 
@@ -204,27 +225,26 @@ function getAllEntranceCoordinates(memory)
   return res
 end
 
-function getMockEntranceCoordinates()
-  return
-    {[2]= {Entrance(19, 10, Point(1, 54,  87))},
-     [3]= {Entrance(10,  0, Point(1, 29, 112))},
-     [4]= {Entrance(29, 11, Point(1, 85,  90))},
-     [7]= {Entrance(23, 19, Point(1, 55,  67))},
-     [8]= {Entrance(15,  0, Point(1, 98,  98))},
-     [9]= {Entrance(14,  0, Point(1, 74, 108))},
-     [10]={Entrance(15,  5, Point(1, 36,  44))},
-     [11]={Entrance(14, 29, Point(1, 74, 110))},
-     [12]={Entrance( 4,  0, Point(4, 29,  29))},
-     [13]={Entrance( 9,  4, Point(1, 58, 106))},
-     [14]={Entrance( 4,  0, Point(1, 82,   8))},
-     [21]={Entrance( 0,  0, Point(1, 90,  78)), Entrance(29, 0, Point(1, 93, 63))},
-     [22]={Entrance( 7,  0, Point(1, 96,  99))},
-     [24]={Entrance(11,  6, Point(9, 19,   0))},
-     [28]={Entrance( 0,  0, Point(1, 86,  84))}
-   }
-end
+mockEntranceCoordinates = {
+   [2]= {Entrance(Point( 2, 19, 10), Point(1, 54,  87), ImportantLocationType.CHARLOCK)},
+   [3]= {Entrance(Point( 3, 10,  0), Point(1, 29, 112), ImportantLocationType.TOWN)},
+   [4]= {Entrance(Point( 4, 29, 11), Point(1, 85,  90), ImportantLocationType.TANTEGEL)},
+   [7]= {Entrance(Point( 7, 23, 19), Point(1, 55,  67), ImportantLocationType.TOWN)},
+   [8]= {Entrance(Point( 8, 15,  0), Point(1, 98,  98), ImportantLocationType.TOWN)},
+   [9]= {Entrance(Point( 9, 14,  0), Point(1, 74, 108), ImportantLocationType.TOWN)},
+   [10]={Entrance(Point(10, 15,  5), Point(1, 36,  44), ImportantLocationType.TOWN)},
+   [11]={Entrance(Point(11, 14, 29), Point(1, 74, 110), ImportantLocationType.TOWN)},
+   [12]={Entrance(Point(12,  4,  0), Point(4, 29,  29), ImportantLocationType.CAVE)},
+   [13]={Entrance(Point(13,  9,  4), Point(1, 58, 106), ImportantLocationType.CAVE)},
+   [14]={Entrance(Point(14,  4,  0), Point(1, 82,   8), ImportantLocationType.CAVE)},
+   [21]={Entrance(Point(21,  0,  0), Point(1, 90,  78), ImportantLocationType.CAVE), Entrance(Point(21, 29, 0), Point(1, 93, 63), ImportantLocationType.CAVE)},
+   [22]={Entrance(Point(22,  7,  0), Point(1, 96,  99), ImportantLocationType.CAVE)},
+   [24]={Entrance(Point(24, 11,  6), Point(9, 19,   0), ImportantLocationType.CAVE)},
+   [28]={Entrance(Point(28,  0,  0), Point(1, 86,  84), ImportantLocationType.CAVE)}
+  }
 
 StaticMapTile = class(function(a,tileId,name,walkable,walkableWithKeys)
+  a.id = tileId
   a.tileId = tileId
   a.name = name
   a.walkable = walkable
@@ -337,6 +357,26 @@ end
 
 function StaticMap:setTileAt(x, y, newTileId)
   self.rows[y][x] = newTileId
+end
+
+function StaticMap:childrenIds()
+  if     self.mapId ==  2 then return {6,15,16,17,18,19,20}
+  elseif self.mapId ==  4 then return {5}
+  elseif self.mapId ==  5 then return {4}
+  elseif self.mapId == 22 then return {23}
+  elseif self.mapId == 24 then return {25,26,27}
+  elseif self.mapId == 28 then return {29}
+  else return {}
+  end
+end
+
+function StaticMap:markSeenByPlayer(allStaticMaps)
+  log.debug("now seen by player: ", self.mapName)
+  self.seenByPlayer = true
+  for _,childId in pairs(self:childrenIds()) do
+    log.debug("now seen by player: ", allStaticMaps[childId].mapName)
+    allStaticMaps[childId].seenByPlayer = true
+  end
 end
 
 PRINT_TILE_NAME    = 1

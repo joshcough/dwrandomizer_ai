@@ -165,7 +165,7 @@ function table.load( sfile )
 end
 
 function table.dump( t )
-  for i,v in ipairs(t) do
+  for i,v in pairs(t) do
     log.debug(i,v)
   end
 end
@@ -263,6 +263,7 @@ function list.map(t, f)
 end
 
 function list.foreach(t, f)
+  if t == nil then return nil end
   for i = 1, #(t) do f(t[i]) end
 end
 
@@ -311,19 +312,18 @@ function list.indexOf(t, v, eqOp)
   return nil
 end
 
-function list.find(t, v, eqOp)
+function list.find(t, predicate)
   for i = 1, #t do
-    if eqOp == nil then
-      if v == t[i] then return t[i] end
-    else
-      if eqOp(v,t[i]) then return t[i] end
-    end
+    if predicate(t[i]) then return t[i] end
   end
   return nil
 end
 
-function list.findUsingDotEquals(t,v)
-  return list.find(t, v, function(v2) return v:equals(v2) end)
+function list.findWithIndex(t, predicate)
+  for i = 1, #t do
+    if predicate(t[i]) then return { index=i, value=t[i] } end
+  end
+  return nil
 end
 
 function list.exists(t, v, eqOp)
@@ -429,67 +429,6 @@ function table.log(arr, indentLevel)
     return str
 end
 
-Point = class(function(a, mapId, x, y)
-  a.mapId = mapId
-  a.x = x
-  a.y = y
-end)
-
-function Point:__tostring()
-  return "<Point mapId:" .. self.mapId .. ", x:" .. self.x .. ", y:" .. self.y .. ">"
-end
-
-function Point:equals(p2)
-  if p2 == nil then return false end
-  return self.mapId == p2.mapId and self.x == p2.x and self.y == p2.y
-end
-
-function Point:equalsPoint(p2) return self:equals(p2) end
-
-NeighborDir = enum.new("Neighbor Direction", {
-  "LEFT",
-  "RIGHT",
-  "UP",
-  "DOWN",
-  "STAIRS",
-})
-
--- todo: can this be NeighborDir:oppositeDirection? can we put functions on enums?
-function oppositeDirection(newNeighborDir)
-  if      newNeighborDir == NeighborDir.LEFT  then return NeighborDir.RIGHT
-  elseif newNeighborDir == NeighborDir.RIGHT then return NeighborDir.LEFT
-  elseif newNeighborDir == NeighborDir.UP    then return NeighborDir.DOWN
-  elseif newNeighborDir == NeighborDir.DOWN  then return NeighborDir.UP
-  else return NeighborDir.STAIRS
-  end
-end
-
-Neighbor = class(function(a, mapId, x, y, dir)
-  a.mapId = mapId
-  a.x = x
-  a.y = y
-  a.dir = dir
-  a.loc = Point(mapId, x, y)
-end)
-
-function Neighbor:__tostring()
-  return "<Neighbor mapId:" .. self.mapId .. ", x:" .. self.x .. ", y:" .. self.y .. ", dir: " .. self.dir.name .. ">"
-end
-
-function Neighbor:equals(n)
-  if n == nil then return false end
-  return self.mapId == n.mapId and self.x == n.x and self.y == n.y -- and self.dir == n.dir
-end
-
-function Neighbor:equalsPoint(p)
-  if n == nil then return false end
-  return self.loc:equals(n)
-end
-
-function Neighbor:getPoint()
-  return Point(self.mapId, self.x, self.y)
-end
-
 Queue = class(function(a)
   a.stack = {}
 end)
@@ -510,4 +449,38 @@ end
 
 function Queue:isEmpty()
   return self:size() == 0
+end
+
+
+function insertPoint3D(tbl, p, value)
+  if tbl[p.mapId] == nil then tbl[p.mapId] = {} end
+  if tbl[p.mapId][p.x] == nil then tbl[p.mapId][p.x] = {} end
+  tbl[p.mapId][p.x][p.y] = value
+end
+
+function readPoint3D(tbl, p, default)
+  if tbl[p.mapId] == nil then return default end
+  if tbl[p.mapId][p.x] == nil then return default end
+  if tbl[p.mapId][p.x][p.y] == nil then return default end
+  return tbl[p.mapId][p.x][p.y]
+end
+
+function print3dTable(tbl, name)
+  log.debug("====" .. name .. "====")
+  for i,v in pairs(tbl) do
+    for j,v2 in pairs(v) do
+      for k,v3 in pairs(v2) do
+        log.debug(i, j, k, v3)
+      end
+    end
+  end
+  log.debug("====end " .. name .. "====")
+end
+
+function padded(x)
+  local res = tostring(x)
+  if     #res == 1 then return "  " .. res
+  elseif #res == 2 then return " " .. res
+  else return res
+  end
 end

@@ -9,6 +9,7 @@ ln -s /Users/joshcough/work/dwrandomizer_ai/game.lua /usr/local/Cellar/fceux/2.4
 ln -s /Users/joshcough/work/dwrandomizer_ai/graph.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/graph.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/helpers.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/helpers.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/hud.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/hud.lua
+ln -s /Users/joshcough/work/dwrandomizer_ai/locations.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/locations.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/map_scripts.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/map_scripts.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/mem.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/mem.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/overworld.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/overworld.lua

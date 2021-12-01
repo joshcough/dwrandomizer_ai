@@ -1,6 +1,7 @@
 require "Class"
 enum = require("enum")
 require "helpers"
+require "locations"
 
 SlimeId         = 0
 RedSlimeId      = 1
@@ -139,12 +140,9 @@ end
 --        hmmm.... .10% of the amount remaining? or 10% of the whole?
 --    if that is true, then walk to one of the locs where we've seen that enemy and just walk back and forth
 --    fighting it (and others) until we get to the next level
-function getGrindInfo(playerData, graph, overworld)
+function getGrindInfo(playerData, game)
   local bestEnemy = nil
   local bestEnemyLocs = nil
-
-  -- TODO: get this from somewhere else!
-  OverWorldId = 1
 
   -- filter out locations
   -- remove all things that aren't the overworld
@@ -155,7 +153,7 @@ function getGrindInfo(playerData, graph, overworld)
   -- if there are no non-swamp locations, we wont grind there.
   function filterOutUngrindableLocs(locs)
     return list.filter(locs, function(l) return
-      l.mapId == OverWorldId and overworld:getTileAt(l.x, l.y, graph) ~= Swamp
+      l.mapId == OverWorldId and game.overworld:getTileAt(l.x, l.y, game) ~= Swamp
     end)
   end
 
@@ -163,7 +161,7 @@ function getGrindInfo(playerData, graph, overworld)
     local nonSwampLocations = filterOutUngrindableLocs(enemy.locations)
     --- return only the locations who are not a swamp and have at least one non-swamp neighbor
     local nonSwampLocationsWithNonSwampNeighbors = list.filter(nonSwampLocations, function(loc)
-      local gn = graph:grindableNeighbors(overworld, loc.x, loc.y)
+      local gn = game.graph:grindableNeighbors(game, loc.x, loc.y)
       return #gn > 0
     end)
 

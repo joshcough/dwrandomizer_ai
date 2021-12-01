@@ -262,7 +262,9 @@ function Memory:readChests()
     local x = self:readROM(addr + 1)
     local y = self:readROM(addr + 2)
     local contents = self:readROM(addr + 3)
-    table.insert(chests, Chest(Point(mapId, x, y), CHEST_CONTENT[contents]))
+    local chest = Chest(Point(mapId, x, y), CHEST_CONTENT[contents])
+    -- log.debug("chest", chest)
+    table.insert(chests, chest)
   end
   return Chests(chests)
 end

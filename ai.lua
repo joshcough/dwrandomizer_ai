@@ -5,6 +5,7 @@ require 'enemies'
 require 'game'
 require 'helpers'
 require 'hud'
+require 'locations'
 require 'map_scripts'
 require 'overworld'
 require 'static_maps'
@@ -178,3 +179,12 @@ main()
 --   log.debug("totalXpToNextLevel(4):", pd:totalXpToNextLevel(4))
 
 --   log.debug(mem:readWeaponAndArmorShops())
+
+-- if we cant find a path, we can print stuff like this to debug:
+--   log.debug(self:shortestPath(Point(29,9,3), Point(28,0,0)))
+--   log.debug(self:shortestPath(Point(28,0,0), Point(1,86,84)))
+--   log.debug("Point(28,0,0)", self.graph.graphWithKeys:getNodeAt(28,0,0))
+--   log.debug("Point(1,86,84)", self.graph.graphWithKeys:getNodeAt(1,86,84))
+--   log.debug(self.graph.graphWithKeys:printSquare(Square(Point(1, 70, 70), Point(1, 100, 100)), self, true))
+--   log.debug(self.graph.graphWithKeys:printMap(28, self, true))
+--   log.debug(self.graph.graphWithKeys:printMap(29, self, true))
