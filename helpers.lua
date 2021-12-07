@@ -39,6 +39,19 @@ function round(n)
   return n % 1 >= 0.5 and math.ceil(n) or math.floor(n)
 end
 
+aiLogFile = io.open("/Users/joshcough/work/dwrandomizer_ai/ai.out", "w")
+
+log = {}
+
+function log.debug(...)
+  local args = { ... }
+	for _, v in ipairs( args ) do
+		aiLogFile:write(tostring(v) .. "\t")
+	end
+  aiLogFile:write("\n")
+  aiLogFile:flush()
+end
+
 function table.shallow_copy(t)
   local t2 = {}
   for k,v in pairs(t) do
@@ -152,8 +165,8 @@ function table.load( sfile )
 end
 
 function table.dump( t )
-  for i,v in ipairs(t) do
-    print(i,v)
+  for i,v in pairs(t) do
+    log.debug(i,v)
   end
 end
 
@@ -249,6 +262,11 @@ function list.map(t, f)
   return res
 end
 
+function list.foreach(t, f)
+  if t == nil then return nil end
+  for i = 1, #(t) do f(t[i]) end
+end
+
 function list.join(t)
   local res = {}
   for i = 1, #(t) do
@@ -294,19 +312,18 @@ function list.indexOf(t, v, eqOp)
   return nil
 end
 
-function list.find(t, v, eqOp)
+function list.find(t, predicate)
   for i = 1, #t do
-    if eqOp == nil then
-      if v == t[i] then return t[i] end
-    else
-      if eqOp(v,t[i]) then return t[i] end
-    end
+    if predicate(t[i]) then return t[i] end
   end
   return nil
 end
 
-function list.findUsingDotEquals(t,v)
-  return list.find(t, v, function(v2) return v:equals(v2) end)
+function list.findWithIndex(t, predicate)
+  for i = 1, #t do
+    if predicate(t[i]) then return { index=i, value=t[i] } end
+  end
+  return nil
 end
 
 function list.exists(t, v, eqOp)
@@ -359,6 +376,14 @@ function list.filter(t, f)
   return res
 end
 
+function list.filter3(t, f)
+  return
+    list.filter(t,
+      function(t2)
+        return list.filter(t2, function(t3) return list.filter(t3, f) end)
+      end)
+end
+
 function list.span(t, pred)
   local resL = {}
   local resR = {}
@@ -377,12 +402,16 @@ function list.span(t, pred)
   return {resL, resR}
 end
 
-function table.print(arr, indentLevel)
+function list.log(l)
+  for _, item in ipairs(l) do log.debug(item) end
+end
+
+function table.log(arr, indentLevel)
     local str = ""
     local indentStr = "#"
 
     if(indentLevel == nil) then
-        print(table.print(arr, 0))
+        log.debug(table.log(arr, 0))
         return
     end
 
@@ -392,56 +421,12 @@ function table.print(arr, indentLevel)
 
     for index,value in pairs(arr) do
         if type(value) == "table" then
-            str = str..indentStr..index..": \n"..table.print(value, (indentLevel + 1))
+            str = str..indentStr..index..": \n"..table.log(value, (indentLevel + 1))
         else
             str = str..indentStr..index..": "..tostring(value).."\n"
         end
     end
     return str
-end
-
-Point = class(function(a, mapId, x, y)
-  a.mapId = mapId
-  a.x = x
-  a.y = y
-end)
-
-function Point:__tostring()
-  return "<Point mapId:" .. self.mapId .. ", x:" .. self.x .. ", y:" .. self.y .. ">"
-end
-
-function Point:equals(p2)
-  if p2 == nil then return false end
-  return self.mapId == p2.mapId and self.x == p2.x and self.y == p2.y
-end
-
-NeighborType = enum.new("Neighbor Type", {
-  "SAME_MAP",
-  "STAIRS",
-  "BORDER_LEFT",
-  "BORDER_RIGHT",
-  "BORDER_UP",
-  "BORDER_DOWN",
-})
-
-Neighbor = class(function(a, mapId, x, y, type)
-  a.mapId = mapId
-  a.x = x
-  a.y = y
-  a.type = type
-end)
-
-function Neighbor:__tostring()
-  return "<Neighbor mapId:" .. self.mapId .. ", x:" .. self.x .. ", y:" .. self.y .. ", type: " .. self.type.name .. ">"
-end
-
-function Neighbor:equalsPoint(p)
-  if p == nil then return false end
-  return self.mapId == p.mapId and self.x == p.x and self.y == p.y
-end
-
-function Neighbor:getPoint()
-  return Point(self.mapId, self.x, self.y)
 end
 
 Queue = class(function(a)
@@ -464,4 +449,38 @@ end
 
 function Queue:isEmpty()
   return self:size() == 0
+end
+
+
+function insertPoint3D(tbl, p, value)
+  if tbl[p.mapId] == nil then tbl[p.mapId] = {} end
+  if tbl[p.mapId][p.x] == nil then tbl[p.mapId][p.x] = {} end
+  tbl[p.mapId][p.x][p.y] = value
+end
+
+function readPoint3D(tbl, p, default)
+  if tbl[p.mapId] == nil then return default end
+  if tbl[p.mapId][p.x] == nil then return default end
+  if tbl[p.mapId][p.x][p.y] == nil then return default end
+  return tbl[p.mapId][p.x][p.y]
+end
+
+function print3dTable(tbl, name)
+  log.debug("====" .. name .. "====")
+  for i,v in pairs(tbl) do
+    for j,v2 in pairs(v) do
+      for k,v3 in pairs(v2) do
+        log.debug(i, j, k, v3)
+      end
+    end
+  end
+  log.debug("====end " .. name .. "====")
+end
+
+function padded(x)
+  local res = tostring(x)
+  if     #res == 1 then return "  " .. res
+  elseif #res == 2 then return " " .. res
+  else return res
+  end
 end

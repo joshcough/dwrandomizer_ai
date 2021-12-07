@@ -92,7 +92,7 @@ function Items:itemIndex(item)
   if item == Herb and self:haveHerbs() then return 1
   elseif item == MagicKey and self:haveKeys() then return keyOffset
   else
-    local slotIndex = list.indexOf(self.slots, item, function(i1, i2) return i1 == i2 end)
+    local slotIndex = list.indexOf(self.slots, item)
     return indexOffset + slotIndex
   end
 end

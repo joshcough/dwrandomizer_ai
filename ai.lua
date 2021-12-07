@@ -5,19 +5,24 @@ require 'enemies'
 require 'game'
 require 'helpers'
 require 'hud'
+require 'locations'
 require 'map_scripts'
 require 'overworld'
 require 'static_maps'
 
 -- TODO:
--- keep track of monster abilities (so that we can make better decisions about running/fighting)
--- fix the shortestPath algorithm as to avoid swamps in the overworld if possible.
---   so, need weighting and therefore like... A* or something similar.
--- ive seen it soft lock opening a chest... maybe use the menuing x/y coordinates to fix this.
--- fight the dragon lord
--- save the princess
--- use heal in battle
--- if enemy isn't worth fighting (too low xp) then we should run from it.
+-- * keep track of monster abilities (so that we can make better decisions about running/fighting)
+-- * ive seen it soft lock opening a chest... maybe use the menuing x/y coordinates to fix this.
+-- * fight the dragon lord
+-- * save the princess
+-- * use heal in battle
+-- * if enemy isn't worth fighting (too low xp) then we should run from it.
+-- * we can't open a chest when we have a full inventory. we dont know how to detect that and/or drop something.
+-- * we will eventually want to be able to grind in dungeons
+-- * we will definitely want to be able to grind on spike tiles
+-- *   in fact, we haven't really dealt with spike tiles at all! we really need to.
+-- * i haven't seen it go into the basement of charlock. i think its time to adjust that script.
+-- * are healing locations actually working? i dont remember if we are going to heal when we need to or not. check.
 
 AI = class(function(a, game) a.game = game end)
 
@@ -34,7 +39,7 @@ function AI:enemyDefeated()    return function(address) self.game:enemyDefeated(
 function AI:playerDefeated()   return function(address) self.game:playerDefeated()   end end
 
 function AI:register(memory)
-  memory.registerexecute(0xcf44, self:onEncounter())
+  memory.registerexecute(0xE4DF, self:onEncounter())
   memory.registerexecute(0xefc8, self:enemyRun())
   memory.registerexecute(0xe8a4, self:playerRunSuccess())
   memory.registerexecute(0xe89D, self:playerRunFailed())
@@ -52,8 +57,9 @@ end
 -- but for now it just helps me survive to test exploration
 -- give ourself gold, xp, best equipment, etc
 function cheat(mem)
-  cheat_giveMaxXP()
-  cheat_giveMaxGold()
+  log.debug("cheating...")
+  cheat_giveMaxXP(mem)
+  cheat_giveMaxGold(mem)
 
   mem:writeRAM(0xbe, 255) -- best equipment
   -- mem:writeRAM(0xbe, 0) -- no equipment
@@ -97,7 +103,7 @@ function main()
   -- right now this gets called when we move
   -- but we need to call it here once before we move, too.
   if(game:getLocation().mapId == 1) then
-    game.overworld:getVisibleOverworldGrid(game:getX(), game:getY())
+    game.overworld:getVisibleOverworldGrid(game:getX(), game:getY(), game.graph)
   end
 
   while true do
@@ -115,43 +121,43 @@ main()
 -- oldish stuff that i need to evaluate if i really want to keep
 -- game:cast(Repel)
 --     local spells = game.memory:readPlayerData().spells
---     print(spells:spellIndex(Healmore))
+--     log.debug(spells:spellIndex(Healmore))
 --   game:interpretScript(scripts.throneRoomOpeningGameScript())
 --   mem:setReturnWarpLocation(30,83) -- tangegel
 
---   print(game.maps[SwampCave].overworldCoordinates)
---   print(game.maps[Garinham].overworldCoordinates)
---   print(game.scripts.MapScripts[Tantegel])
+--   log.debug(game.staticMaps[SwampCave].entrances)
+--   log.debug(game.staticMaps[Garinham].entrances)
+--   log.debug(game.scripts.MapScripts[Tantegel])
 
 --   mem:printNPCs()
---   print(game.playerData)
---   print(game.weaponAndArmorShops)
---   print(game.searchSpots)
---   print(game.chests)
+--   log.debug(game.playerData)
+--   log.debug(game.weaponAndArmorShops)
+--   log.debug(game.searchSpots)
+--   log.debug(game.chests)
 
 -- game:gameStartScript()
 --   game:goTo(Point(Tantegel, 29,29))
 --   game:takeStairs(Point(Tantegel, 29,29))
 --   game:goTo(Point(TantegelThroneRoom, 3,4))
 
---   print(game.memory:readPlayerData().items:hasFairyFlute())
+--   log.debug(game.memory:readPlayerData().items:hasFairyFlute())
 
 -- i run this each time to make sure nothing has changed.
 -- if anything changes, git will tell me.
 -- saveStaticMaps(mem, warps)
 
 -- i print this out just to make sure things look sane when i start the script.
--- table.print(shortestPath(Point(TantegelThroneRoom, 1,1), Point(TantegelThroneRoom, 1,8), true, graphs))
+-- table.log(shortestPath(Point(TantegelThroneRoom, 1,1), Point(TantegelThroneRoom, 1,8), true, graphs))
 -- can also do this, which loads the maps from files instead of memory:
--- table.print(shortestPath(Point(TantegelThroneRoom, 1,1), Point(TantegelThroneRoom, 1,8), true))
--- table.print(shortestPath(Point(Charlock, 10,19), Point(CharlockThroneRoom, 17,24), true))
+-- table.log(shortestPath(Point(TantegelThroneRoom, 1,1), Point(TantegelThroneRoom, 1,8), true))
+-- table.log(shortestPath(Point(Charlock, 10,19), Point(CharlockThroneRoom, 17,24), true))
 
 -- These are some cool things, but, I don't think I actually really need them
 -- so just dumping them here.
 
 --   -- .alias RadiantTimer     $DA     ;Remaining time for radiant spell.
 --   memory.registerwrite(0xDA, function(address)
---     print(self.game.memory:readRAM(0xDA))
+--     log.debug(self.game.memory:readRAM(0xDA))
 --   end)
 --   -- .alias RepelTimer       $DB     ;Remining repel spell time.
 --   memory.registerwrite(0xDB, function(address)
@@ -164,10 +170,19 @@ main()
 --   game:useItem(MagicKey)
 --   game:useItem(RainbowDrop)
 --
---   print("levels: ", mem:readLevels())
+--   log.debug("levels: ", mem:readLevels())
 --   local pd = mem:readPlayerData()
---   print("totalXpToNextLevelFromCurrentLevel:", pd:totalXpToNextLevelFromCurrentLevel())
---   print("totalXpToNextLevel(1):", pd:totalXpToNextLevel(1)) ...
---   print("totalXpToNextLevel(4):", pd:totalXpToNextLevel(4))
+--   log.debug("totalXpToNextLevelFromCurrentLevel:", pd:totalXpToNextLevelFromCurrentLevel())
+--   log.debug("totalXpToNextLevel(1):", pd:totalXpToNextLevel(1)) ...
+--   log.debug("totalXpToNextLevel(4):", pd:totalXpToNextLevel(4))
 
---   print(mem:readWeaponAndArmorShops())
+--   log.debug(mem:readWeaponAndArmorShops())
+
+-- if we cant find a path, we can print stuff like this to debug:
+--   log.debug(self:shortestPath(Point(29,9,3), Point(28,0,0)))
+--   log.debug(self:shortestPath(Point(28,0,0), Point(1,86,84)))
+--   log.debug("Point(28,0,0)", self.graph.graphWithKeys:getNodeAt(28,0,0))
+--   log.debug("Point(1,86,84)", self.graph.graphWithKeys:getNodeAt(1,86,84))
+--   log.debug(self.graph.graphWithKeys:printSquare(Square(Point(1, 70, 70), Point(1, 100, 100)), self, true))
+--   log.debug(self.graph.graphWithKeys:printMap(28, self, true))
+--   log.debug(self.graph.graphWithKeys:printMap(29, self, true))

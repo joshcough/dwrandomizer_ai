@@ -25,3 +25,11 @@ EXIT
 can't cast Outside, spell hasn't been learned.
 The map has changed! current position: {mapId:26, x:13, y:6}, old map: 1
 now seen by player:  Garin's Grave Lv 3
+
+
+====
+
+12/6/21
+I think we died fighting a monster on a chest before we opened it
+and then when we got into the throne room, we tried to open it and shit hit the fan
+threw an error saying, "no chest at this location" or whatever

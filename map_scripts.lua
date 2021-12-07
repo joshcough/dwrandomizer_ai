@@ -1,6 +1,8 @@
 require 'Class'
 require 'controller'
 enum = require("enum")
+require 'helpers'
+require 'locations'
 require 'player_data'
 require 'static_maps'
 
@@ -107,8 +109,8 @@ Search         = ActionScript("SEARCH")
 DeathWarp      = ActionScript("DEATH_WARP")
 SavePrincess   = ActionScript("RESCUE_PRINCESS")
 DragonLord     = ActionScript("DRAGONLORD")
-TalkToOldMan   = ActionScript("TALK_TO_OLD_MAN")
 ShopKeeper     = ActionScript("TALK_TO_SHOP_KEEPER")
+DoBattle       = ActionScript("DO_BATTLE")
 
 SaveUnlockedDoor = class(ActionScript, function(a, loc)
   ActionScript.init(a, "SAVE_UNLOCKED_DOOR: " .. tostring(loc))
@@ -127,7 +129,7 @@ end)
 
 ConditionScript = class(Script, function(a, name) Script.init(a, name) end)
 
-function AtLocation(mapId, x, y) return DotEq(GetLocation, Point(mapId, x, y)) end
+function AtLocation(mapId, x, y) return DotEq(GetLocation, Value(Point(mapId, x, y))) end
 
 IsChestOpen = class(ConditionScript, function(a, location)
   ConditionScript.init(a, "IS_CHEST_OPEN")
@@ -156,54 +158,31 @@ function IsDoorOpen:__tostring()
   return self.name .. ": " .. tostring(self.location)
 end
 
-BinaryOperator = class(ConditionScript, function(a, name, l, r)
+InBattle = class(ConditionScript, function(a)
+  ConditionScript.init(a, "IN_BATTLE")
+end)
+
+BinaryOperator = class(ConditionScript, function(a, name, l, r, f)
   ConditionScript.init(a, tostring(l) .. " " .. name .. " " .. tostring(r))
   a.location = location
+  a.f = f
   a.l = l
   a.r = r
 end)
 
-Eq = class(BinaryOperator, function(a, l, r)
-  BinaryOperator.init(a, "==", l, r)
-  a.l = l
-  a.r = r
-end)
-
-DotEq = class(BinaryOperator, function(a, l, r)
-  BinaryOperator.init(a, "equals", l, r)
-  a.l = l
-  a.r = r
-end)
-
-NotEq = class(BinaryOperator, function(a, l, r)
-  BinaryOperator.init(a, "!=", l, r)
-  a.l = l
-  a.r = r
-end)
-
-Lt = class(BinaryOperator, function(a, l, r)
-  BinaryOperator.init(a, "<", l, r)
-  a.l = l
-  a.r = r
-end)
-
-LtEq = class(BinaryOperator, function(a, l, r)
-  BinaryOperator.init(a, "<=", l, r)
-  a.l = l
-  a.r = r
-end)
-
-Gt = class(BinaryOperator, function(a, l, r)
-  BinaryOperator.init(a, ">", l, r)
-  a.l = l
-  a.r = r
-end)
-
-GtEq = class(BinaryOperator, function(a, l, r)
-  BinaryOperator.init(a, ">=", l, r)
-  a.l = l
-  a.r = r
-end)
+function Eq(l,r)    return BinaryOperator("==",  l, r, function(lv,rv) return lv == rv end) end
+function DotEq(l,r) return BinaryOperator(":eq", l, r, function(lv,rv) return lv:equals(rv) end) end
+function NotEq(l,r) return BinaryOperator("~=",  l, r, function(lv,rv) return lv ~= rv end) end
+function Add(l,r)   return BinaryOperator("+",   l, r, function(lv,rv) return lv + rv end) end
+function Sub(l,r)   return BinaryOperator("-",   l, r, function(lv,rv) return lv - rv end) end
+function Mult(l,r)  return BinaryOperator("*",   l, r, function(lv,rv) return lv * rv end) end
+function Div(l,r)   return BinaryOperator("/",   l, r, function(lv,rv) return lv / rv end) end
+function Max(l,r)   return BinaryOperator("max", l, r, function(lv,rv) return math.max(lv,rv) end) end
+function Min(l,r)   return BinaryOperator("min", l, r, function(lv,rv) return math.min(lv,rv) end) end
+function Lt(l,r)    return BinaryOperator("min", l, r, function(lv,rv) return lv < rv end) end
+function LtEq(l,r)  return BinaryOperator("min", l, r, function(lv,rv) return lv <= rv end) end
+function Gt(l,r)    return BinaryOperator("min", l, r, function(lv,rv) return lv > rv end) end
+function GtEq(l,r)  return BinaryOperator("min", l, r, function(lv,rv) return lv >= rv end) end
 
 Any = class(ConditionScript, function(a, conditions)
   ConditionScript.init(a, "ANY")
@@ -224,7 +203,7 @@ All = class(ConditionScript, function(a, conditions)
 end)
 
 function All:__tostring()
-  local res = "All of:\n"
+  local res = "ALL of:\n"
   for i,s in pairs(self.conditions) do
     res = res .. "  " .. tostring(s) .. "\n"
   end
@@ -241,7 +220,7 @@ function Not:__tostring()
 end
 
 Contains = class(ConditionScript, function(a, container, v)
-  ConditionScript.init(a, "CONTAINS" .. tostring(v))
+  ConditionScript.init(a, "CONTAINS: " .. tostring(v))
   a.container = container
   a.v = v
 end)
@@ -261,6 +240,22 @@ GetMap      = PlayerDataScript("MAP", function(pd) return pd.loc.mapId end)
 GetItems    = PlayerDataScript("Player's Items", function(pd) return pd.items end)
 GetSpells   = PlayerDataScript("Player's Spells", function(pd) return pd.spells end)
 GetStatuses = PlayerDataScript("Game statuses", function(pd) return pd.statuses end)
+
+GetHP       = PlayerDataScript("Amount of HP the player has.", function(pd) return pd.stats.currentHP end)
+GetMP       = PlayerDataScript("Amount of MP the player has.", function(pd) return pd.stats.currentMP end)
+GetMaxHP    = PlayerDataScript("Amount of HP the player has.", function(pd) return pd.stats.maxHP end)
+GetMaxMP    = PlayerDataScript("Amount of MP the player has.", function(pd) return pd.stats.maxMP end)
+
+function CanAfford(amount)
+ return GtEq(GetGold, Value(53))
+end
+
+function CanCast(spell)
+  return All({
+    HaveSpell(spell),
+    GtEq(GetMP, Value(spell.mp))
+  })
+end
 
 PlayerDirScript = class(Script, function(a)
   Script.init(a, "HEADING")
@@ -296,6 +291,12 @@ Consecutive = class(Script, function(a, name, scripts)
   a.scripts = scripts
 end)
 
+NTimes = class(Script, function(a, n, script)
+  Script.init(a, "NTimes(" .. tostring(n) .. "," .. tostring(script) .. ")")
+  a.n = n
+  a.script = script
+end)
+
 -- TODO: we need to do indent level stuff here, but right now i dont feel like it.
 function Consecutive:__tostring()
   local res = self.name .. ":\n"
@@ -308,14 +309,12 @@ end
 OnStaticMap = All({Gt(GetMap, Value(1)), LtEq(GetMap, Value(29))})
 function OnMap(m) return Eq(GetMap, Value(m)) end
 
-Scripts = class(function(a,mem)
+Scripts = class(function(a,entrances)
 
-  coordinates = getAllOverworldCoordinates(mem)
-
-  charlockLocation = coordinates[Charlock][1]
-  a.tantegelLocation = coordinates[Tantegel][1]
---   print("charlockLocation", charlockLocation)
---   print("tantegelLocation", a.tantegelLocation)
+  charlockLocation = entrances[Charlock][1]
+  a.tantegelLocation = entrances[Tantegel][1]
+  -- log.debug("charlockLocation", charlockLocation)
+  -- log.debug("tantegelLocation", a.tantegelLocation)
 
   OpenMenu = Consecutive("Open Menu", { HoldA(30), WaitFrames(10) })
   OpenItemMenu = Consecutive("Open Item Menu", { OpenMenu, PressRight(2), PressDown(2), PressA(2), WaitFrames(30) })
@@ -323,9 +322,10 @@ Scripts = class(function(a,mem)
   Talk = Consecutive("Talk", { HoldA(30), WaitFrames(10), PressA(2) })
   TakeStairs = Consecutive("Take Stairs", { OpenMenu, PressDown(2), PressDown(2), PressA(60) })
 
-  function VisitShop(mapId, x, y)
+  function VisitShop(mapId, x, y, dir)
     return Consecutive("Visiting shop at: " .. tostring(Point(mapId, x, y)), {
       Goto(mapId, x, y),
+      dir,
       Talk,
       WaitFrames(30),
       PressA(30),
@@ -333,16 +333,22 @@ Scripts = class(function(a,mem)
     })
   end
 
-  function VisitInn(mapId, x, y, directionScript)
-    return Consecutive("Visiting inn at: " .. tostring(Point(mapId, x, y)), {
-      Goto(mapId, x, y),
-      directionScript,
-      Talk,
-      PressA(30),
-      PressA(180),
-      PressA(30),
-      PressB(2)
-    })
+  function VisitInn(p, cost, directionScript)
+    return IfThenScript(
+      "If we can afford the inn, use it.",
+      CanAfford(cost),
+      Consecutive("Visiting inn at: " .. tostring(p), {
+        CanAfford(53),
+        GotoPoint(p),
+        directionScript,
+        Talk,
+        PressA(30),
+        PressA(300),
+        PressA(30),
+        PressB(2)
+      }),
+      DoNothing
+    )
   end
 
   function OpenDoor(loc)
@@ -356,9 +362,10 @@ Scripts = class(function(a,mem)
     )
   end
 
-  function SearchAt(mapId, x, y)
+  function SearchAtWith(mapId, x, y, script)
     return Consecutive("Searching at: " .. tostring(Point(mapId, x, y)), {
       Goto(mapId, x, y),
+      script,
       OpenMenu,
       PressUp(2),
       PressA(40),
@@ -367,12 +374,27 @@ Scripts = class(function(a,mem)
     })
   end
 
+  function SearchSpikeTile(mapId, x, y)
+    return SearchAtWith(mapId, x, y,
+      Consecutive("Fighting monster on spike tile.", {
+        WaitUntil("In Battle", InBattle(), 240),
+        DoBattle,
+        WaitUntil("Not in Battle", Not(InBattle()), 240),
+      })
+    )
+  end
+
+  function SearchAt(mapId, x, y)
+    return SearchAtWith(mapId, x, y, DoNothing)
+  end
+
   function IfHaveKeys(name, t, f)
     return IfThenScript(name, Gt(GetNrKeys, Value(2)), t, f)
   end
 
   openChestMenuing = Consecutive("Menuing for opening Chest at",
-    { OpenMenu, PressUp(2), PressRight(2), HoldA(40), OpenChest }
+    -- TODO: see if we can reduce this 90 to 60 or 75. I don't remember.
+    { OpenMenu, PressUp(10), PressRight(10), HoldA(90), OpenChest }
   )
 
   function OpenChestAt(mapId, x, y)
@@ -389,14 +411,14 @@ Scripts = class(function(a,mem)
   end
 
   function GotoOverworld(fromMap)
-    local p = coordinates[fromMap][1]
+    local p = entrances[fromMap][1].from
     return Goto(p.mapId, p.x, p.y)
   end
 
   function LeaveDungeon(mapId)
     return IfThenScript(
       "Figure out how to leave map: " .. tostring(mapId),
-      HaveSpell(Outside),
+      CanCast(Outside),
       CastSpell(Outside),
       GotoOverworld(mapId)
     )
@@ -424,6 +446,22 @@ Scripts = class(function(a,mem)
     PressUp(30),
     PressA(30),
   })
+
+  BuyKeys = Consecutive("Buy Keys", {
+    Talk,
+    WaitFrames(30),
+    NTimes(Sub(Value(6), GetNrKeys), PressA(60)),
+    PressB(2),
+    PressB(30)
+  })
+
+  InnScripts = {
+    [Kol]        = VisitInn(Point(Kol,       19,  2),  20, FaceDown),
+    [Brecconary] = VisitInn(Point(Brecconary, 8, 21),   6, FaceRight),
+    [Garinham]   = VisitInn(Point(Garinham,  15, 15),  25, FaceRight),
+    [Cantlin]    = VisitInn(Point(Cantlin,    8,  5), 100, FaceUp),
+    [Rimuldar]   = VisitInn(Point(Rimuldar,  18, 18),  55, FaceLeft),
+  }
 
   saveWithKingScript =
     Consecutive("Save with the king", {
@@ -459,7 +497,7 @@ Scripts = class(function(a,mem)
 
   exploreHauksness =
     Consecutive("Hauksness", {
-      SearchAt(Hauksness, 18, 12),
+      SearchSpikeTile(Hauksness, 18, 12),
       GotoOverworld(Hauksness)
     })
 
@@ -467,14 +505,14 @@ Scripts = class(function(a,mem)
     IfThenScript(
       "Have we already created the rainbow bridge?",
       StatusScript("rainbowBridge"),
-      GotoPoint(charlockLocation),
+      GotoPoint(charlockLocation.to),
       IfThenScript(
         "Do we have the rainbow drop?",
         HaveItem(RainbowDrop),
         Consecutive("Enter Charlock", {
-          Goto(OverWorldId, charlockLocation.x + 3, charlockLocation.y),
+          Goto(OverWorldId, charlockLocation.from.x + 3, charlockLocation.from.y),
           UseItem(RainbowDrop),
-          GotoPoint(charlockLocation),
+          GotoPoint(charlockLocation.from),
           WaitUntil("In Charlock", OnMap(Charlock), 240)
         }),
         DoNothing
@@ -501,7 +539,7 @@ Scripts = class(function(a,mem)
       HaveItem(SilverHarp),
       Consecutive("Get Staff", {
         Goto(NorthernShrine, 5, 4),
-        Consecutive("Talk to old man", { Talk, HoldA(60), PressB }),
+        Consecutive("Talk to old man", { Talk, HoldA(60), PressB(2) }),
         OpenChestAt(NorthernShrine, 3, 4),
         Goto(NorthernShrine, 4, 9),
         TakeStairs
@@ -515,7 +553,7 @@ Scripts = class(function(a,mem)
       All ({ HaveItem(StaffOfRain), HaveItem(StonesOfSunlight), HaveItem(ErdricksToken) }),
       Consecutive("Talk to old man", {
         Goto(SouthernShrine, 3, 5),
-        TalkToOldMan,
+        Consecutive("Talk to old man", { Talk, HoldA(60), PressB(2) }),
         GotoOverworld(SouthernShrine)
       }),
       TakeStairs
@@ -533,8 +571,8 @@ Scripts = class(function(a,mem)
         }),
         DoNothing
       ),
-      VisitShop(Garinham, 10, 16),
-      VisitInn(Garinham, 15, 15, FaceRight),
+      VisitShop(Garinham, 10, 16, FaceDown),
+      InnScripts[Garinham],
       GotoOverworld(Garinham)
     })
 
@@ -590,11 +628,11 @@ Scripts = class(function(a,mem)
 
   kol =
     Consecutive("Kol", {
-      -- todo: dont search if we already have
+      -- TODO: dont search if we already have
       -- unless we are doing a ghetto grind
       SearchAt(Kol, 9, 6),
-      VisitShop(Kol, 20, 12),
-      VisitInn(Kol, 19, 2, FaceDown),
+      VisitShop(Kol, 20, 12, FaceRight),
+      InnScripts[Kol],
       -- TODO: we can't go to this one yet
       -- because its not a weapon and armor shop
       -- and thats currently all we know how to handle
@@ -604,16 +642,17 @@ Scripts = class(function(a,mem)
 
   rimuldar =
     Consecutive("Rimuldar", {
-      IfThenScript("Do we need keys?", All(NeedKeys, GtEq(GetGold, Value(53))),
-        Consecutive("Buy Keys in Rimuldar", {Goto(Rimuldar, 4, 5), ShopKeeper}),
+      IfThenScript("Do we need keys?", All({Lt(GetNrKeys,Value(6)), CanAfford(53)}),
+        Consecutive("Buy Keys in Rimuldar", {Goto(Rimuldar, 4, 5), BuyKeys}),
         DoNothing
       ),
-      IfThenScript("Do we have two keys?", All(GtEq(GetNrKeys, Value(2)), Not(HasChestEverBeenOpened(Rimuldar, 24, 23))),
-        Consecutive("Get chest Rimuldar", {Goto(Rimuldar, 24, 23), OpenChest}),
+      IfThenScript("Open the chest in Rimuldar?", All({GtEq(GetNrKeys, Value(2)), Not(HasChestEverBeenOpened(Point(Rimuldar, 24, 23)))}),
+        Consecutive("Get chest Rimuldar", {OpenChestAt(Rimuldar, 24, 23)}),
         DoNothing
       ),
-      VisitShop(Rimuldar, 23, 9),
-      VisitInn(Rimuldar, 18, 18, FaceLeft)
+      VisitShop(Rimuldar, 23, 9, FaceUp),
+      InnScripts[Rimuldar],
+      GotoOverworld(Rimuldar)
     })
 
   -- TODO: a lot of work needs to be done on this script
@@ -621,6 +660,8 @@ Scripts = class(function(a,mem)
     IfThenScript(
       "Are we at swamp north?",
       AtLocation(SwampCave, 0, 0),
+      -- TODO: we can keep track of if weve ever been at swamp south
+      -- if we have, then it might not make any sense to go there
       Consecutive("Go to swamp south and exit", {
         Goto(SwampCave, 0, 29), TakeStairs
       }),
@@ -631,17 +672,17 @@ Scripts = class(function(a,mem)
     )
 
   cantlin = Consecutive( "Cantlin", {
-    VisitShop(Cantlin, 25, 26),
+    VisitShop(Cantlin, 25, 26, FaceRight),
     -- VisitShop(Cantlin, 26, 12), -- TODO: this one we can only do if we have keys:
     -- this one has the guy that moves around
     -- WeaponAndArmorShop({Point(Cantlin, 20, 3), Point(Cantlin, 20, 4), Point(Cantlin, 20, 5), Point(Cantlin, 20, 6)}, getShopItems(c1))
-    VisitInn(Cantlin, 8, 5, FaceUp),
+    InnScripts[Cantlin],
     GotoOverworld(Cantlin)
   })
 
   brecconary = Consecutive("Brecconary", {
-    VisitShop(Brecconary, 5, 6),
-    VisitInn(Brecconary, 8, 21, FaceRight),
+    VisitShop(Brecconary, 5, 6, FaceUp),
+    InnScripts[Brecconary],
     GotoOverworld(Brecconary)
   })
 
@@ -659,7 +700,7 @@ Scripts = class(function(a,mem)
     [Hauksness] = exploreHauksness,
     -- TODO we will need to have more here, but its not terrible for now.
     [Tantegel] = leaveTantegalOnFoot,
-    -- todo this one is kinda broken. i need to see why im in the room
+    -- TODO this one is kinda broken. i need to see why im in the room
     -- is it my first time there? or did i walk in there to save? or did i just die?
     [TantegelThroneRoom] = throneRoomScript,
     [CharlockThroneRoom] = exploreCharlockThroneRoom,
@@ -688,6 +729,7 @@ Scripts = class(function(a,mem)
     [ErdricksCaveLv2] = NA,
   }
 
+  a.InnScripts = InnScripts
   a.OpenMenu = OpenMenu
   a.OpenItemMenu = OpenItemMenu
   a.OpenSpellMenu = OpenSpellMenu

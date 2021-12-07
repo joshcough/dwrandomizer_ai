@@ -6,12 +6,15 @@ ln -s /Users/joshcough/work/dwrandomizer_ai/controller.lua /usr/local/Cellar/fce
 ln -s /Users/joshcough/work/dwrandomizer_ai/enemies.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/enemies.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/enum.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/enum.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/game.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/game.lua
+ln -s /Users/joshcough/work/dwrandomizer_ai/graph.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/graph.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/helpers.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/helpers.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/hud.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/hud.lua
+ln -s /Users/joshcough/work/dwrandomizer_ai/locations.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/locations.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/map_scripts.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/map_scripts.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/mem.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/mem.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/overworld.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/overworld.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/player_data.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/player_data.lua
+ln -s /Users/joshcough/work/dwrandomizer_ai/PriorityQueue.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/PriorityQueue.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/shops.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/shops.lua
 ln -s /Users/joshcough/work/dwrandomizer_ai/static_maps.lua /usr/local/Cellar/fceux/2.4.0/share/fceux/luaScripts/static_maps.lua
 

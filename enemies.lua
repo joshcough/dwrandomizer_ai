@@ -1,5 +1,7 @@
 require "Class"
 enum = require("enum")
+require "helpers"
+require "locations"
 
 SlimeId         = 0
 RedSlimeId      = 1
@@ -129,33 +131,33 @@ function Grind:__tostring()
   return "Grinding: at: " .. tostring(self.location) .. ", vs: " .. tostring(self.enemy.name)
 end
 
--- TODO: pretty major one... if we attempt to grind in a dungeon, this is going to all break
--- because the code is assuming the overworld. see `overworld:grindableNeighbors`
--- it really shouldn't be that way. we need a static map version of grindableNeighbors as well.
-
 -- have we seen any enemies that we can kill (or have killed) ?
 -- does that enemy give "good" experience (where good is 10% or more of what it takes to get to the next level)
 --        hmmm.... .10% of the amount remaining? or 10% of the whole?
 --    if that is true, then walk to one of the locs where we've seen that enemy and just walk back and forth
 --    fighting it (and others) until we get to the next level
-function getGrindInfo(playerData, overworld)
+function getGrindInfo(playerData, game)
   local bestEnemy = nil
   local bestEnemyLocs = nil
 
-  -- filter out swamps from the locations
-  -- and the neighbors of the locations (because we want back and forth and dont want to grind on one)
+  -- filter out locations
+  -- remove all things that aren't the overworld
+  -- remove all swamps
+  -- and the neighbors of the locations (because we want back and forth and dont want to grind on a swamp)
   -- we only need to worry about the neighbors if they are _all_ swamp.
   -- if one is non-swamp, then we would want to pick that one to walk back and forth on
   -- if there are no non-swamp locations, we wont grind there.
-  function filterOutSwamps(locs)
-    return list.filter(locs, function(l) return overworld:getOverworldMapTileAt(l.x, l.y) ~= Swamp end)
+  function filterOutUngrindableLocs(locs)
+    return list.filter(locs, function(l) return
+      l.mapId == OverWorldId and game.overworld:getTileAt(l.x, l.y, game) ~= Swamp
+    end)
   end
 
   for _, enemy in ipairs(Enemies) do
-    local nonSwampLocations = filterOutSwamps(enemy.locations)
+    local nonSwampLocations = filterOutUngrindableLocs(enemy.locations)
     --- return only the locations who are not a swamp and have at least one non-swamp neighbor
     local nonSwampLocationsWithNonSwampNeighbors = list.filter(nonSwampLocations, function(loc)
-      local gn = overworld:grindableNeighbors(loc.x, loc.y)
+      local gn = game.graph:grindableNeighbors(game, loc.x, loc.y)
       return #gn > 0
     end)
 
@@ -171,13 +173,13 @@ function getGrindInfo(playerData, overworld)
     end
   end
   if bestEnemy ~= nil
-  then return Grind(chooseClosestTile(playerData.loc, bestEnemyLocs), bestEnemy)
+  then return Grind(chooseClosestTileForGrinding(playerData.loc, bestEnemyLocs), bestEnemy)
   else return nil
   end
 end
 
-function chooseClosestTile(playerLoc, enemyLocations)
-  print("picking closest tile to the player for grinding")
+function chooseClosestTileForGrinding(playerLoc, enemyLocations)
+  log.debug("picking closest tile to the player for grinding")
   local d = list.min(enemyLocations, function(t)
     return math.abs(t.x - playerLoc.x) + math.abs(t.y - playerLoc.y)
   end)
@@ -188,12 +190,12 @@ function Enemy:executeBattle(game)
 
   if not table.containsUsingDotEquals(self.locations, game:getLocation()) then
     table.insert(self.locations, game:getLocation())
-    -- print("have now seen " .. self.name .. " at: ", tostring(self.locations))
+    -- log.debug("have now seen " .. self.name .. " at: ", tostring(self.locations))
   end
 
   function battleStarted() return game.inBattle end
   function battleEnded()
-    -- print("self.enemyKilled", self.enemyKilled, "self.dead", self.dead, "self.inBattle: ", self.inBattle)
+    -- log.debug("self.enemyKilled", self.enemyKilled, "self.dead", self.dead, "self.inBattle: ", self.inBattle)
     return game.enemyKilled  -- i killed the enemy
       or   game.dead         -- the enemy killed me
       or   not game.inBattle -- the enemy ran
@@ -204,7 +206,7 @@ function Enemy:executeBattle(game)
   local enemyCanBeDefeated =
     self:canBeDefeatedByPlayer(game:readPlayerData()) or self.id == MetalSlimeId
 
-  print("canBeDefeatedByPlayer", enemyCanBeDefeated, "oneRoundDamageRange", self:oneRoundDamageRange(game:readPlayerData()))
+  log.debug("canBeDefeatedByPlayer", enemyCanBeDefeated, "oneRoundDamageRange", self:oneRoundDamageRange(game:readPlayerData()))
 
   if enemyCanBeDefeated then
     holdAUntil(battleEnded, "battle has ended")
@@ -217,5 +219,5 @@ function Enemy:executeBattle(game)
     end
   end
 
-  print("xpToNextLevel: ", game:readPlayerData():xpToNextLevel(), "self.stats.level", game:readPlayerData().stats.level)
+  log.debug("xpToNextLevel: ", game:readPlayerData():xpToNextLevel(), "self.stats.level", game:readPlayerData().stats.level)
 end
