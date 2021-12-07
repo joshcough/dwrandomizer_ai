@@ -212,7 +212,7 @@ function buildAllImportantLocations(staticMaps, chests)
           -- log.debug(mapId, entrance)
           if entrance.from.mapId == OverWorldId then
             local loc = ImportantLocation_Overworld(entrance)
-            log.debug("adding important location from entrance: ", loc)
+            -- log.debug("adding important location from entrance: ", loc)
             table.insert(res, loc)
           end
         end
@@ -223,7 +223,7 @@ function buildAllImportantLocations(staticMaps, chests)
   function addLocsFromChests()
     for i = 1, #chests.chests do
       local loc = ImportantLocation_Chest(chests.chests[i])
-      log.debug("adding important location from chest: ", loc)
+      -- log.debug("adding important location from chest: ", loc)
       table.insert(res, loc)
     end
   end

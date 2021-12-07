@@ -23,6 +23,12 @@ require 'static_maps'
 -- *   in fact, we haven't really dealt with spike tiles at all! we really need to.
 -- * i haven't seen it go into the basement of charlock. i think its time to adjust that script.
 -- * are healing locations actually working? i dont remember if we are going to heal when we need to or not. check.
+-- * we sometimes get into weird RNG loops where we end up dying to the same monster over and over.here
+--   i am not sure how to fix this... maybe we need to start keeping track of where we are dying
+--   and what is happening during battles... and if we die the same way a few times in a row
+--   then choose a different location to go to. i guess...
+--   or if we can somehow detect we are in an RNG loop, maybe we can take a few unnecessary steps
+--   in the throne room to disrupt the loop
 
 AI = class(function(a, game) a.game = game end)
 
