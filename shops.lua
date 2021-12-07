@@ -276,7 +276,7 @@ CHEST_CONTENT = {
  [15] = StonesOfSunlight,
  [16] = StaffOfRain,
  [17] = ErdricksSword,
- [18] = "Gold" -- TODO: umm... how much gold?
+ [18] = "Gold" -- TODO: umm... how much gold? though, not sure it actually matters.
 }
 
 Chest = class(function(a,location,item)
@@ -407,9 +407,9 @@ end
 
 -- TODO: we have to check if we are on the coordinates here!
 function SearchSpots:searchAt(loc)
-  if loc:equals(Point(Kol, 9, 6))
+  if loc:equals(Point(Kol, 9, 6)) -- TODO: constants
     then self.kol.seenByPlayer = true
-  elseif loc:equals(Point(Hauksness, 18, 12))
+  elseif loc:equals(Point(Hauksness, 18, 12)) -- TODO: constants
     then self.hauksness.seenByPlayer = true
   else return
   end

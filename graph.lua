@@ -54,9 +54,9 @@ function Graph:unlockRimuldar()
   self.graphWithoutKeys.rows[Rimuldar] = self.graphWithKeys.rows[Rimuldar]
 end
 
---TODO: when we see an important location (town/cave/castle)
+--when we see an important location (town/cave/castle)
 -- we can add the neighbors normally to the neighbors4.
--- but when we actually go into it, then i think we want to replace those neighbors
+-- but when we actually go into it, then we replace those neighbors
 -- with instead of the overworld location, the actual warp location
 function Graph:addWarp(warp, overworld)
   if not (warp.src.mapId == OverWorldId or warp.dest.mapId == OverWorldId) then
@@ -386,6 +386,8 @@ end
 
 -- bounds :: Square
 -- game   :: Game
+-- TODO: i feel like this needs to be redone using the Neighbors direction
+-- instead of all this stuff: findNeighbor(x-1,y), ..., findNeighbor(x,y+1)
 function NewGraph:printSquare(square, game, printImportantLocations)
   -- log.debug("printSquare", square, printImportantLocations)
   local mapId = square.topLeft.mapId

@@ -235,6 +235,9 @@ function OverWorld:getTileIdAt(x, y, game)
 end
 
 -- TODO: big TODO... we need to update the graph when we do this.
+-- we only currently call this function when we use the rainbow drop
+-- maybe we can just get rid of it altogether, but, probably not.
+-- because sometimes we check the map to see what tile is there.
 function OverWorld:setOverworldMapTileIdAt(x, y, tileId, game)
   self.overworldRows[y][x] = tileId
 end

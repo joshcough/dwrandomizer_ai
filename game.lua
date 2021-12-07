@@ -492,7 +492,6 @@ function Game:grindOrExplore()
   self:healIfNecessary()
 
   -- TODO: i think these if statements can be simplified.
-  -- they are weird now because there are several calls to self:explore()
   if self.exploreDest ~= nil then
     log.debug("we had an exploreDest, so going to that instead of grinding", self.exploreDest)
     self:explore()
@@ -602,11 +601,12 @@ function Game:chooseNewDestination(tileSelectionStrat)
   -- otherwise, we either dont have a destination so we need to get one
   -- or we are at our destination already, so we need a new one
   local borderOfKnownWorld = self.graph:knownWorldBorder(self.overworld)
-  log.debug("Border of known world:", borderOfKnownWorld)
+  -- log.debug("Border of known world:", borderOfKnownWorld)
   local nrBorderTiles = #borderOfKnownWorld
   -- TODO: this is an error case that i might need to deal with somehow.
   if nrBorderTiles == 0 then
     log.debug("NO BORDER TILES!")
+    error("NO BORDER TILES!")
     return
   end
 

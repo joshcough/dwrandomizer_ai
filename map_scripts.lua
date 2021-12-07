@@ -7,6 +7,7 @@ require 'player_data'
 require 'static_maps'
 
 Script = class(function(a, name, body) a.name = name end)
+-- TODO: we need to do indent level stuff here, but right now i dont feel like it.
 function Script:__tostring() return self.name end
 
 Value = class(Script, function(a, v)
@@ -277,7 +278,6 @@ IfThenScript = class(Script, function(a, name, condition, trueBranch, falseBranc
   a.falseBranch = falseBranch
 end)
 
--- TODO: we need to do indent level stuff here, but right now i dont feel like it.
 function IfThenScript:__tostring()
   local res = self.name .. ":\n"
   res = res .. "  Condition " .. tostring(self.condition) .. "\n"
@@ -297,7 +297,6 @@ NTimes = class(Script, function(a, n, script)
   a.script = script
 end)
 
--- TODO: we need to do indent level stuff here, but right now i dont feel like it.
 function Consecutive:__tostring()
   local res = self.name .. ":\n"
   for i,s in pairs(self.scripts) do
@@ -673,8 +672,9 @@ Scripts = class(function(a,entrances)
 
   cantlin = Consecutive( "Cantlin", {
     VisitShop(Cantlin, 25, 26, FaceRight),
-    -- VisitShop(Cantlin, 26, 12), -- TODO: this one we can only do if we have keys:
-    -- this one has the guy that moves around
+    -- TODO: this one we can only do if we have keys:
+    -- VisitShop(Cantlin, 26, 12),
+    -- TODO: this one has the guy that moves around:
     -- WeaponAndArmorShop({Point(Cantlin, 20, 3), Point(Cantlin, 20, 4), Point(Cantlin, 20, 5), Point(Cantlin, 20, 6)}, getShopItems(c1))
     InnScripts[Cantlin],
     GotoOverworld(Cantlin)
@@ -698,10 +698,7 @@ Scripts = class(function(a,entrances)
   a.MapScripts = {
     [Charlock] = exploreCharlock,
     [Hauksness] = exploreHauksness,
-    -- TODO we will need to have more here, but its not terrible for now.
     [Tantegel] = leaveTantegalOnFoot,
-    -- TODO this one is kinda broken. i need to see why im in the room
-    -- is it my first time there? or did i walk in there to save? or did i just die?
     [TantegelThroneRoom] = throneRoomScript,
     [CharlockThroneRoom] = exploreCharlockThroneRoom,
     [Kol] = kol,

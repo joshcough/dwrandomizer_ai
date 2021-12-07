@@ -221,9 +221,6 @@ function Memory:readWeaponAndArmorShops()
     addr = rs[2]
   end
 
-  -- TODO: these might have to be redone
-  -- because one shop sometimes has 5 things, and sometimes 6
-  -- and all the shops end with a special delimiter (253 i think)
   return WeaponAndArmorShops(
     t[2], -- Brecconary
     t[4], -- Cantlin1
