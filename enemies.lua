@@ -131,10 +131,6 @@ function Grind:__tostring()
   return "Grinding: at: " .. tostring(self.location) .. ", vs: " .. tostring(self.enemy.name)
 end
 
--- TODO: pretty major one... if we attempt to grind in a dungeon, this is going to all break
--- because the code is assuming the overworld. see `overworld:grindableNeighbors`
--- it really shouldn't be that way. we need a static map version of grindableNeighbors as well.
-
 -- have we seen any enemies that we can kill (or have killed) ?
 -- does that enemy give "good" experience (where good is 10% or more of what it takes to get to the next level)
 --        hmmm.... .10% of the amount remaining? or 10% of the whole?

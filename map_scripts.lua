@@ -628,7 +628,7 @@ Scripts = class(function(a,entrances)
 
   kol =
     Consecutive("Kol", {
-      -- todo: dont search if we already have
+      -- TODO: dont search if we already have
       -- unless we are doing a ghetto grind
       SearchAt(Kol, 9, 6),
       VisitShop(Kol, 20, 12, FaceRight),
@@ -700,7 +700,7 @@ Scripts = class(function(a,entrances)
     [Hauksness] = exploreHauksness,
     -- TODO we will need to have more here, but its not terrible for now.
     [Tantegel] = leaveTantegalOnFoot,
-    -- todo this one is kinda broken. i need to see why im in the room
+    -- TODO this one is kinda broken. i need to see why im in the room
     -- is it my first time there? or did i walk in there to save? or did i just die?
     [TantegelThroneRoom] = throneRoomScript,
     [CharlockThroneRoom] = exploreCharlockThroneRoom,

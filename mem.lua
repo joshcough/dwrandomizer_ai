@@ -122,7 +122,7 @@ function Memory:getXP()
 end
 
 function Memory:getGold()
-  -- todo have to check this with values over 256
+  -- TODO have to check this with values over 256
   local highB = self.ram.readbyte(0xbd)
   local lowB = self.ram.readbyte(0xbc)
   return (highB * 2^8 + lowB)

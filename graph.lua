@@ -66,6 +66,9 @@ function Graph:addWarp(warp, overworld)
   self:fixOverworldNeighbors(warp, overworld)
 end
 
+-- TODO: pretty major one... if we attempt to grind in a dungeon, this is going to all break
+-- because the code is assuming the overworld. see `overworld:grindableNeighbors`
+-- it really shouldn't be that way. we need a static map version of grindableNeighbors as well.
 function Graph:grindableNeighbors(game,x,y)
   -- log.debug("in grindableNeighbors", x, y)
   local neighbors = self.graphWithKeys:getNodeAt(OverWorldId,x,y,game).neighbors

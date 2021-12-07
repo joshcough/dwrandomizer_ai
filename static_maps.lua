@@ -434,7 +434,7 @@ function loadStaticMapFromFile (mapId, allWarps)
   local mapData = STATIC_MAP_METADATA[mapId]
   local mapName = mapData.name
   local mapFileName = MAP_DIRECTORY .. mapName
-  -- todo: these overworld coordinates are wrong. we definitely have a problem
+  -- TODO: these overworld coordinates are wrong. we definitely have a problem
   -- reading from files now.
   return StaticMap(mapId, mapName, mapData.mapType, mapData.overworldCoordinates,
                    mapData.size.width, mapData.size.height, table.load(mapFileName), allWarps)

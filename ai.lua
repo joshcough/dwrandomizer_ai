@@ -12,19 +12,17 @@ require 'static_maps'
 
 -- TODO:
 -- * keep track of monster abilities (so that we can make better decisions about running/fighting)
--- * fix the shortestPath algorithm as to avoid swamps in the overworld if possible.
---   so, need weighting and therefore like... A* or something similar.
 -- * ive seen it soft lock opening a chest... maybe use the menuing x/y coordinates to fix this.
 -- * fight the dragon lord
 -- * save the princess
 -- * use heal in battle
 -- * if enemy isn't worth fighting (too low xp) then we should run from it.
--- * keep track of which caves we have been to,
---   i think we are already keeping track of which chests in them we have opened, and havent
---   but we have no way to associate this with a cave and be able to say,
---   "ok go back to this cave to try to get the last unopened chest" or whatever.
--- * we must prioritize visiting important locations over grinding, if we see them
 -- * we can't open a chest when we have a full inventory. we dont know how to detect that and/or drop something.
+-- * we will eventually want to be able to grind in dungeons
+-- * we will definitely want to be able to grind on spike tiles
+-- *   in fact, we haven't really dealt with spike tiles at all! we really need to.
+-- * i haven't seen it go into the basement of charlock. i think its time to adjust that script.
+-- * are healing locations actually working? i dont remember if we are going to heal when we need to or not. check.
 
 AI = class(function(a, game) a.game = game end)
 

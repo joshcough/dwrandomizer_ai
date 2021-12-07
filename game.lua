@@ -136,7 +136,6 @@ function Game:goTo(dest)
     elseif res == GotoExitValues.MAP_CHANGED
       then
         self:dealWithMapChange()
-        -- waitFrames(120)
         self:goTo(dest)
     else
       return res -- TODO: can we even do anything with the others? NO_PATH, BUG? AT_LOCATION?
@@ -175,9 +174,6 @@ function Game:followPath(path)
             self.lastPrintedPercentage = currentPercentageSeen
           end
         end
-        -- log.debug("current point: ", memory:getLocation(), "c.to: ", c.to, "equal?: ", p:equals(c.to))
-        -- TODO: ugh... in  some situations it seems like we do need to abort on mapChanged
-        -- and others it seems that we can't. i'm not sure how to resolve this yet. :(
         return loc:equals(c.to) or self.inBattle or self.repelTimerWindowOpen or self.dead -- or self.mapChanged
       end)
     end
@@ -194,7 +190,7 @@ function Game:followPath(path)
   end
 end
 
--- todo: what should this function return?
+-- TODO: what should this function return?
 function Game:interpretScript(s)
   -- log.debug("Script: " .. tostring(s))
   -- TODO: im not sure if these first two cases are really needed, but they dont hurt.
@@ -346,7 +342,7 @@ function Game:addWarp(warp)
   end
   log.debug("Adding warp: " .. tostring(warp))
   table.insert(self.warps, warp)
-  -- todo: the next line can probably still be removed. we only use the warps for two reasons:
+  -- TODO: the next line can probably still be removed. we only use the warps for two reasons:
   -- * building the initial graph (very important)
   -- * printing the message that we've already added the warp (not important)
   -- this business of reversing the warp just isn't useful here
@@ -367,6 +363,7 @@ end
 
 function swapSrcAndDest(w) return w:swap() end
 
+-- TODO: is this really needed? isnt this information just in memory somewhere? i swear it was.
 function Game:isDoorOpen(loc)
   local res = table.containsUsingDotEquals(list.map(self.unlockedDoors, function(d) return d.loc end), loc.loc)
   -- log.debug("in Game:isDoorOpen", "loc", loc, "self.unlockedDoors", self.unlockedDoors, res)
@@ -432,7 +429,7 @@ function Game:convertPathToCommands(pathIn, maps)
 
   local path = table.copy(pathIn)
 
-  -- todo: consider if we should just throw an error here.
+  -- TODO: consider if we should just throw an error here.
   -- an empty path would be really weird
   if(#(path) == 0) then return {} end
 
@@ -551,9 +548,6 @@ function Game:reachedDestination()
   self.exploreDest = nil
 end
 
--- TODO: we need to make it so that we ALWAYS have a destination when we get into this function
--- it will just be easier to deal with.
--- so basically it means removing the call to exploreStart()
 function Game:explore()
   log.debug("in explore, self.exploreDest is:" , self.exploreDest)
   local loc = self:getLocation()
@@ -608,10 +602,7 @@ function Game:chooseNewDestination(tileSelectionStrat)
   -- otherwise, we either dont have a destination so we need to get one
   -- or we are at our destination already, so we need a new one
   local borderOfKnownWorld = self.graph:knownWorldBorder(self.overworld)
---   log.debug("Border of known world:")
---   log.debug(borderOfKnownWorld)
---   log.debug(#borderOfKnownWorld)
---   log.debug("END Border of known world")
+  log.debug("Border of known world:", borderOfKnownWorld)
   local nrBorderTiles = #borderOfKnownWorld
   -- TODO: this is an error case that i might need to deal with somehow.
   if nrBorderTiles == 0 then
@@ -692,7 +683,7 @@ function Game:healIfNecessary()
 
   function castMaybe(spell) if needHealing() then  self:cast(spell) end end
 
-  -- todo: we can do better than all this
+  -- TODO: we can do better than all this
   -- like, if we have 20 out of 40 HP, we should only cast heal
   castMaybe(Healmore)
   castMaybe(Heal)
@@ -986,7 +977,7 @@ function Game:buyItem(shop, itemId, sellExisting)
   local itemIndex = shop:indexOf(itemId)
   -- log.debug("itemIndex: ", itemIndex)
 
-  -- todo: i think i can make this into a script
+  -- TODO: i think i can make this into a script
   -- by just adding `NTimes(n, script)` to the language.
   -- the rest of this should be easy too, but
   -- it will need to take a boolean argument `sellExisting`
@@ -1096,7 +1087,7 @@ function Game:importantLocationAt(p)
   return list.find(self.importantLocations, function(loc) return loc.location:equals(p) end)
 end
 
--- TODO: giant todo: we have to only use the important locations
+-- TODO: giant TODO: we have to only use the important locations
 -- that we can actually get to. like, ones that we have seen, and aren't hidden behind a locked door.
 -- maybe thats as simple as just ones that we can create a path to?
 -- but this might be inefficient.

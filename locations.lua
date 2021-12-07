@@ -40,7 +40,7 @@ Square = class(function(a, topLeft, bottomRight)
     log.debug(msg, topLeft, bottomRight)
     error(msg, topLeft, bottomRight)
   end
-  -- todo: could also check here that tl.x <= br.x, tl.y <= br.y
+  -- TODO: could also check here that tl.x <= br.x, tl.y <= br.y
   -- or could figure out which one really is the top left and just swap them if needed.
   -- for now this is fine though. whatever.
   a.topLeft = topLeft
@@ -89,7 +89,7 @@ NeighborDir = enum.new("Neighbor Direction", {
   "STAIRS",
 })
 
--- todo: can this be NeighborDir:oppositeDirection? can we put functions on enums?
+-- TODO: can this be NeighborDir:oppositeDirection? can we put functions on enums?
 function oppositeDirection(newNeighborDir)
   if     newNeighborDir == NeighborDir.LEFT  then return NeighborDir.RIGHT
   elseif newNeighborDir == NeighborDir.RIGHT then return NeighborDir.LEFT

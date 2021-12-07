@@ -276,7 +276,7 @@ CHEST_CONTENT = {
  [15] = StonesOfSunlight,
  [16] = StaffOfRain,
  [17] = ErdricksSword,
- [18] = "Gold" -- todo: umm... how much gold?
+ [18] = "Gold" -- TODO: umm... how much gold?
 }
 
 Chest = class(function(a,location,item)
@@ -355,22 +355,26 @@ function Chests:closeAll()
   self:foreach(function (c) c.currentlyOpen = false end)
 end
 
--- get all the chests that we have seen
--- but have never been opened
-function Chests:getAllChestsThatWeveSeenButNeverOpened(staticMaps)
-  -- log.debug("getAllChestsThatWeveSeenButNeverOpened!")
-  local res = {}
-
-  for i,chest in pairs(self.chests) do
-    -- log.debug("getAllChestsThatWeveSeenButNeverOpened", i, "chest", self.chests[i], "map seen", staticMaps[self.chests[i].location.mapId].seenByPlayer)
-    if (not self.chests[i].everOpened) and staticMaps[self.chests[i].location.mapId].seenByPlayer then
-      -- log.debug("there's a chest we could go to at: ", chest.location)
-      table.insert(res, self.chests[i])
-    end
-  end
-
-  return res
-end
+-- TODO: this currently isn't used and we are doing similar stuff with
+-- the new ImportantLocations. so maybe this should just die?
+-- but im going to keep it around for now... i have this feeling like it might be useful
+-- if im wrong then later we just kill it, nbd.
+-- -- get all the chests that we have seen
+-- -- but have never been opened
+-- function Chests:getAllChestsThatWeveSeenButNeverOpened(staticMaps)
+--   -- log.debug("getAllChestsThatWeveSeenButNeverOpened!")
+--   local res = {}
+--
+--   for i,chest in pairs(self.chests) do
+--     -- log.debug("getAllChestsThatWeveSeenButNeverOpened", i, "chest", self.chests[i], "map seen", staticMaps[self.chests[i].location.mapId].seenByPlayer)
+--     if (not self.chests[i].everOpened) and staticMaps[self.chests[i].location.mapId].seenByPlayer then
+--       -- log.debug("there's a chest we could go to at: ", chest.location)
+--       table.insert(res, self.chests[i])
+--     end
+--   end
+--
+--   return res
+-- end
 
 SearchSpot = class(function(a,location,item)
   a.location = location

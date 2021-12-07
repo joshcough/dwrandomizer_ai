@@ -234,7 +234,7 @@ function OverWorld:getTileIdAt(x, y, game)
   return tileId
 end
 
--- TODO: big todo... we need to update the graph when we do this.
+-- TODO: big TODO... we need to update the graph when we do this.
 function OverWorld:setOverworldMapTileIdAt(x, y, tileId, game)
   self.overworldRows[y][x] = tileId
 end
