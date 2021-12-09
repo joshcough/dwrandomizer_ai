@@ -199,6 +199,7 @@ function table.copy(tbl)
   return t
 end
 
+-- TODO: maybe this should be list.reverse, along with several other functions in here.
 function table.reverse(tbl)
   local t = {}
   for i=1, #tbl do
@@ -267,6 +268,7 @@ function list.foreach(t, f)
   for i = 1, #(t) do f(t[i]) end
 end
 
+-- join :: [[a]] -> [a]
 function list.join(t)
   local res = {}
   for i = 1, #(t) do
@@ -275,6 +277,11 @@ function list.join(t)
     end
   end
   return res
+end
+
+-- bind :: [a] -> (a -> [b]) -> [b]
+function list.bind(l, f)
+  return list.join(list.map(l,f))
 end
 
 -- intersperse :: a -> [a] -> [a]
@@ -402,9 +409,8 @@ function list.span(t, pred)
   return {resL, resR}
 end
 
-function list.log(l)
-  for _, item in ipairs(l) do log.debug(item) end
-end
+function list.debug(l) list.foreach(l, log.debug) end
+function list.print(l) list.foreach(l, print) end
 
 function table.log(arr, indentLevel)
     local str = ""
@@ -451,31 +457,31 @@ function Queue:isEmpty()
   return self:size() == 0
 end
 
-
-function insertPoint3D(tbl, p, value)
-  if tbl[p.mapId] == nil then tbl[p.mapId] = {} end
-  if tbl[p.mapId][p.x] == nil then tbl[p.mapId][p.x] = {} end
-  tbl[p.mapId][p.x][p.y] = value
-end
-
-function readPoint3D(tbl, p, default)
-  if tbl[p.mapId] == nil then return default end
-  if tbl[p.mapId][p.x] == nil then return default end
-  if tbl[p.mapId][p.x][p.y] == nil then return default end
-  return tbl[p.mapId][p.x][p.y]
-end
-
-function print3dTable(tbl, name)
-  log.debug("====" .. name .. "====")
-  for i,v in pairs(tbl) do
-    for j,v2 in pairs(v) do
-      for k,v3 in pairs(v2) do
-        log.debug(i, j, k, v3)
-      end
-    end
-  end
-  log.debug("====end " .. name .. "====")
-end
+--
+-- function insertPoint3D(tbl, p, value)
+--   if tbl[p.mapId] == nil then tbl[p.mapId] = {} end
+--   if tbl[p.mapId][p.x] == nil then tbl[p.mapId][p.x] = {} end
+--   tbl[p.mapId][p.x][p.y] = value
+-- end
+--
+-- function readPoint3D(tbl, p, default)
+--   if tbl[p.mapId] == nil then return default end
+--   if tbl[p.mapId][p.x] == nil then return default end
+--   if tbl[p.mapId][p.x][p.y] == nil then return default end
+--   return tbl[p.mapId][p.x][p.y]
+-- end
+--
+-- function print3dTable(tbl, name)
+--   log.debug("====" .. name .. "====")
+--   for i,v in pairs(tbl) do
+--     for j,v2 in pairs(v) do
+--       for k,v3 in pairs(v2) do
+--         log.debug(i, j, k, v3)
+--       end
+--     end
+--   end
+--   log.debug("====end " .. name .. "====")
+-- end
 
 function padded(x)
   local res = tostring(x)
@@ -484,3 +490,149 @@ function padded(x)
   else return res
   end
 end
+
+Table3D = class(function(a)
+  a.body = {}
+end)
+
+function Table3D:insert(p, value)
+  if self.body[p.mapId] == nil then self.body[p.mapId] = {} end
+  if self.body[p.mapId][p.x] == nil then self.body[p.mapId][p.x] = {} end
+  self.body[p.mapId][p.x][p.y] = value
+end
+
+function Table3D:lookup(p, default)
+  if self.body[p.mapId] == nil then return default end
+  if self.body[p.mapId][p.x] == nil then return default end
+  if self.body[p.mapId][p.x][p.y] == nil then return default end
+  return self.body[p.mapId][p.x][p.y]
+end
+
+function Table3D:contains(p)
+  if self.body[p.mapId] == nil then return false end
+  if self.body[p.mapId][p.x] == nil then return false end
+  return self.body[p.mapId][p.x][p.y] ~= nil
+end
+
+function Table3D:debug(name)
+  log.debug("====" .. name .. "====")
+
+  for i,v in pairs(self.body) do
+    for j,v2 in pairs(v) do
+      for k,v3 in pairs(v2) do
+        log.debug(Point(i, j, k), v3)
+      end
+    end
+  end
+
+--   self:iterate(function(p, a) log.debug(p,a) end)
+  log.debug("====end " .. name .. "====")
+end
+
+function Table3D:iterate(f)
+  for i,v in pairs(self.body) do
+    for j,v2 in pairs(v) do
+      for k,v3 in pairs(v2) do
+        f(Point(i, j, k), v3)
+      end
+    end
+  end
+end
+
+-- @self :: Table3D a
+-- @f :: a -> b
+-- @returns Table3D b
+function Table3D:map(f)
+  local res = Table3D()
+  self:iterate(function (p, a) res:insert(p,a) end)
+  return res
+end
+
+-- @self :: Table3D a
+-- @f :: a -> Bool
+-- @returns Table3D a
+function Table3D:filter(f)
+  local res = Table3D()
+  self:iterate(function(p, a)
+    if f(a) then
+      -- log.debug("filter was good for: ", p, a)
+      res:insert(p,a)
+    end
+  end)
+  return res
+end
+
+-- @self :: Table3D a
+-- @returns [a]
+function Table3D:toList()
+  local res = {}
+  self:iterate(function (_, a) table.insert(res, a) end)
+  return res
+end
+
+Maybe = class(function(a) end)
+
+Just = class(Maybe, function(a, value)
+  Maybe.init(a)
+  a.value = value
+end)
+
+function Just:__tostring()
+  return "<Just " .. tostring(self.value) .. ">"
+end
+
+PrivateNothing = class(Maybe, function(a)
+  Maybe.init(a)
+end)
+
+function PrivateNothing:__tostring()
+  return "<Nothing>"
+end
+
+Nothing = PrivateNothing()
+
+function toMaybe(a)
+  if a == nil then return Nothing
+  else return Just(a)
+  end
+end
+
+function maybe(m, default, f)
+  if m == Nothing then return default
+  else return f(m.value) -- must be a Just
+  end
+end
+
+function list.catMaybes(listOfMaybes)
+  local res = {}
+  list.foreach(listOfMaybes, function(m)
+    maybe(m, nil, function(v) table.insert(res, v) end)
+  end)
+  return res
+end
+
+--[[
+catMaybes :: [Maybe a] -> [a]
+catMaybes = mapMaybe id -- use mapMaybe to allow fusion (#18574)
+
+mapMaybe          :: (a -> Maybe b) -> [a] -> [b]
+mapMaybe _ []     = []
+mapMaybe f (x:xs) =
+ let rs = mapMaybe f xs in
+ case f x of
+  Nothing -> rs
+  Just r  -> r:rs
+ ]]
+
+
+-- List = class(function(a)
+--   a.body = {}
+-- end)
+--
+-- function List:map(f)
+--   return List(list.map(self.body, f))
+-- end
+--
+-- function List:filter(f)
+--   return List(list.filter(self.body, f))
+-- end

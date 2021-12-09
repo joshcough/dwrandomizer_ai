@@ -333,7 +333,10 @@ function Chests:chestAt(location)
   if f == nil then
     local msg = "No chest at location"
     log.debug(msg, location)
-    error(msg, location)
+    -- TODO: i wanted to have an error here, but, it kept happening in front of the king
+    -- my theory is that we were dying on top of a chest, and still trying to open it after death.
+    -- but i haven't been able to verify that yet.
+    -- error(msg, location)
   end
   return f
 end

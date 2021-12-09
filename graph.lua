@@ -23,10 +23,19 @@ Graph = class(function (a, staticMaps)
   a.graphWithoutKeys = NewGraph(createStaticMapGraphs(staticMaps, false), false)
 end)
 
+-- TODO: make this call shortestPaths?
 function Graph:shortestPath(startNode, endNode, haveKeys, game)
   local res = nil
   res = haveKeys and self.graphWithKeys:shortestPath(startNode, endNode, game)
                  or  self.graphWithoutKeys:shortestPath(startNode, endNode, game)
+  -- log.debug("in shortestPath", res)
+  return res.path
+end
+
+function Graph:shortestPaths(startNode, endNodes, haveKeys, game)
+  local res = nil
+  res = haveKeys and self.graphWithKeys:shortestPaths(startNode, endNodes, game)
+                 or  self.graphWithoutKeys:shortestPaths(startNode, endNodes, game)
   -- log.debug("in shortestPath", res)
   return res
 end
@@ -173,50 +182,69 @@ function NewGraph:discover(x, y, overworld)
 end
 
 function NewGraph:shortestPath(src, destination, game)
-  return self:dijkstra(src, destination, game)
+  local res = self:dijkstra(src, {destination}, game)
+  if #res == 0 then return {} else return res[1] end
+end
+
+function NewGraph:shortestPaths(src, destinations, game)
+  return self:dijkstra(src, destinations, game)
+end
+
+Path = class(function (a, src, dest, weight, path)
+  a.src    = src
+  a.dest   = dest
+  a.weight = weight
+  a.path   = path
+end)
+
+function Path:__tostring()
+  return "<Path src: " .. tostring(self.src) ..
+         ", dest:"     .. tostring(self.dest) ..
+         ", weight:"   .. tostring(self.weight) ..
+         ", path:"     .. list.intercalateS(", ", self.path) ..
+         ">"
 end
 
 -- Find the shortest path between the current and dest nodes
-function NewGraph:dijkstra (src, dest, game)
-  -- log.debug("entering dijkstra", src, dest)
+-- @src :: Point
+-- @dests :: [Point]
+-- @game :: Game
+-- @returns :: [Path] (sorted by weight, ASC)
+function NewGraph:dijkstra (src, dests, game)
+  -- log.debug("entering dijkstra", src, list.intercalateS(", ", dests))
 
-  local distanceTo, trail = {}, {}
+  local distanceTo, trail = Table3D(), Table3D()
+  function getDistanceTo(p) return distanceTo:lookup(p, math.huge) end
+
   local pq = PriorityQueue()
   pq:enqueue(src, 0)
-  insertPoint3D(distanceTo, src, 0)
-
-  function getDistanceTo(p) return readPoint3D(distanceTo, p, math.huge) end
-  function getWeightAtPoint(p) return self:getWeightAtPoint(p, game) end
-  function getPrevious(p) return readPoint3D(trail, p) end
-
-  function printTrail() print3dTable(trail, "trail") end
-  function printDistanceTo() print3dTable(distanceTo, "distanceTo") end
+  distanceTo:insert(src, 0)
 
   while not pq:empty() do
     local current = pq:dequeue()
     local distanceToCurrent = getDistanceTo(current)
     for _,neighbor in pairs(self:getNodeAtPoint(current).neighbors) do
-      local newWeight = distanceToCurrent + getWeightAtPoint(neighbor, game)
+      local newWeight = distanceToCurrent + self:getWeightAtPoint(neighbor, game)
       if newWeight < getDistanceTo(neighbor) then
-        insertPoint3D(distanceTo, neighbor, newWeight)
-        insertPoint3D(trail, neighbor, {mapId = current.mapId, x = current.x, y = current.y, dir = neighbor.dir})
+        distanceTo:insert(neighbor, newWeight)
+        trail:insert(neighbor, {mapId = current.mapId, x = current.x, y = current.y, dir = neighbor.dir})
         pq:enqueue(neighbor:getPoint(), newWeight)
       end
     end
   end
 
   -- Create path string from table of previous nodes
-  function followTrailToDest ()
-    -- log.debug("followTrailTo", dest, "getPrevious(dest)", getPrevious(dest))
-    local path, prev = {}, getPrevious(dest)
+  -- @dest :: Loc
+  -- @returns :: Maybe Path
+  function followTrailToDest (dest)
+    -- log.debug("followTrailTo", dest, "trail:lookup(dest)", trail:lookup(dest))
+    local path, prev = {}, trail:lookup(dest)
 
     -- if prev is nil it means there was no path to the destination.
     -- for example, it could be on a little island or something that we cant get to.
     if prev == nil then
-      -- printTrail()
-      -- printDistanceTo()
       -- log.debug("in followTrailToDest, prev is nil!! src", src, "dest", dest)
-      return {}
+      return Nothing
     else
       table.insert(path, Neighbor(dest.mapId, dest.x, dest.y, prev.dir))
     end
@@ -225,17 +253,21 @@ function NewGraph:dijkstra (src, dest, game)
       if src:equalsPoint(prev) then
         table.insert(path, Point(prev.mapId, prev.x, prev.y))
       else
-        local prev2 = getPrevious(prev)
+        local prev2 = trail:lookup(prev)
         table.insert(path, Neighbor(prev.mapId, prev.x, prev.y, prev2.dir))
       end
-      prev = getPrevious(prev)
+      prev = trail:lookup(prev)
     end
-    return path
+    local res = Path(src, dest, getDistanceTo(dest), table.reverse(path))
+    -- log.debug("res inside", res)
+    return Just(res)
   end
 
-
-  local res = table.reverse(followTrailToDest())
---   log.debug("done in dijkstra")
+  -- trail:debug("trail")
+  -- distanceTo:debug("distanceTo")
+  local res = list.catMaybes(list.map(dests, followTrailToDest))
+  table.sort(res, function(a,b) return a.weight < b.weight end)
+  -- log.debug("res", res)
   return res
 end
 

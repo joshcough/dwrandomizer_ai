@@ -175,12 +175,13 @@ ImportantLocation_Spike = class(ImportantLocation, function(a, mapId, x, y)
 end)
 
 -- the search spot / coordinates / token location or whatever tf.
-ImportantLocation_Coordinates = class(ImportantLocation, function(a, mapId, x, y)
-  ImportantLocation.init(a, Point(mapId, x, y), ImportantLocationType.COORDINATES)
+ImportantLocation_Coordinates = class(ImportantLocation, function(a, loc)
+  ImportantLocation.init(a, loc, ImportantLocationType.COORDINATES)
 end)
 
-ImportantLocation_Basement = class(ImportantLocation, function(a, mapId, x, y)
-  ImportantLocation.init(a, Point(mapId, x, y), ImportantLocationType.BASEMENT)
+ImportantLocation_Basement = class(ImportantLocation, function(a, entrance)
+  ImportantLocation.init(a, entrance.from, ImportantLocationType.BASEMENT)
+  a.entrance = entrance
 end)
 
 --[[
@@ -203,17 +204,24 @@ end)
 
 -- TODO: this just builds the overworld locs, not the chests and others.
 function buildAllImportantLocations(staticMaps, chests)
-  local res = {}
+  local res = Table3D()
 
-  function addLocsFromEntrances(m)
+  function addLocsFromEntrances()
     for mapId, m in pairs(staticMaps) do
       if m.entrances ~= nil then
         for _, entrance in pairs(m.entrances) do
           -- log.debug(mapId, entrance)
+          -- TODO: why is this only on the overworld?
+          -- yes we have a ImportantLocation_Basement, but, is it actually needed?
+          -- why can't we just use something like ImportantLocation_Entrance
           if entrance.from.mapId == OverWorldId then
             local loc = ImportantLocation_Overworld(entrance)
-            -- log.debug("adding important location from entrance: ", loc)
-            table.insert(res, loc)
+            log.debug("adding important overworld location: ", loc)
+            res:insert(loc.location, loc)
+          else
+            local loc = ImportantLocation_Basement(entrance)
+            log.debug("adding important basement location: ", loc)
+            res:insert(loc.location, loc)
           end
         end
       end
@@ -223,12 +231,12 @@ function buildAllImportantLocations(staticMaps, chests)
   function addLocsFromChests()
     for i = 1, #chests.chests do
       local loc = ImportantLocation_Chest(chests.chests[i])
-      -- log.debug("adding important location from chest: ", loc)
-      table.insert(res, loc)
+      log.debug("adding important location from chest: ", loc)
+      res:insert(loc.location, loc)
     end
   end
 
-  addLocsFromEntrances(m)
+  addLocsFromEntrances()
   addLocsFromChests()
 
   return res

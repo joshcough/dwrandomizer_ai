@@ -453,26 +453,35 @@ function Game:stateMachine()
   end
 end
 
+function Game:getExploreDest()
+  -- log.debug("in Game:getExploreDest", "self.exploreDest", self.exploreDest)
+  return self.exploreDest
+end
+
+function Game:setExploreDest(newDest)
+  self.exploreDest = newDest
+end
+
 function Game:noExploreDestOrHaventReachedDestYet()
-  if self.exploreDest == nil then return true end
-  return not self.exploreDest:equals(self:getLocation())
+  if self:getExploreDest() == nil then return true end
+  return not self:getExploreDest():equals(self:getLocation())
 end
 
 function Game:haveExploreDestButHaventReachedDestYet()
-  if self.exploreDest == nil then return false end
-  return not self.exploreDest:equals(self:getLocation())
+  if self:getExploreDest() == nil then return false end
+  return not self:getExploreDest():equals(self:getLocation())
 end
 
 function Game:atExploreDest()
-  if self.exploreDest == nil then return false end
-  return self.exploreDest:equals(self:getLocation())
+  if self:getExploreDest() == nil then return false end
+  return self:getExploreDest():equals(self:getLocation())
 end
 
 function Game:dealWithAnyImportantLocations()
   log.debug("in dealWithAnyImportantLocations")
 
   log.debug("=== achievableGoals ===")
-  local achievableGoals = self:seenButNotCompletedImportantLocations()
+  local achievableGoals = self:seenButNotCompletedImportantLocations(self:getLocation())
   for _,v in pairs(achievableGoals) do log.debug(v) end
   log.debug("=== end achievableGoals ===")
 
@@ -480,9 +489,10 @@ function Game:dealWithAnyImportantLocations()
   local seeSomethingNew = #achievableGoals > 0
 
   if seeSomethingNew then
-    local newImportantLoc = achievableGoals[1]
-    log.debug("Headed towards new important location: ", newImportantLoc)
-    return newImportantLoc.location
+    log.debug(achievableGoals[1])
+    local newImportantLoc = achievableGoals[1].v.location
+    log.debug("Headed towards new important location for achievable goal : ", newImportantLoc)
+    return newImportantLoc
   else return nil
   end
 end
@@ -492,14 +502,17 @@ function Game:grindOrExplore()
   self:healIfNecessary()
 
   -- TODO: i think these if statements can be simplified.
-  if self.exploreDest ~= nil then
-    log.debug("we had an exploreDest, so going to that instead of grinding", self.exploreDest)
+  if self:haveExploreDestButHaventReachedDestYet() then
+    log.debug("we had an exploreDest, so going to that instead of grinding", self:getExploreDest())
     self:explore()
+    log.debug("returning from grindOrExplore after having called explore()")
+  elseif self:atExploreDest()
+    then self:reachedDestination()
   elseif self:getMapId() == OverWorldId then
     log.debug("no exploreDest, on the overworld.")
     local newImportantLoc = self:dealWithAnyImportantLocations()
+    log.debug("newImportantLoc", newImportantLoc)
     if newImportantLoc ~= nil then
-      log.debug("IMPORTANT LOC", newImportantLoc)
       self:chooseNewDestinationDirectly(newImportantLoc)
     else
       local pd = self:readPlayerData()
@@ -535,32 +548,29 @@ end
 
 function Game:reachedDestination()
   local loc = self:getLocation()
-  log.debug("We have reached our destination, so picking a new one. Currently at: " .. tostring(loc))
+  log.debug("We have reached our destination:" .. tostring(loc))
 
   local importantLocHere = self:importantLocationAt(loc)
   if importantLocHere ~= nil
   then
+    waitFrames(60)
     importantLocHere.completed = true
     log.debug("setting completed to true", importantLocHere)
   end
-  waitFrames(120)
-  self.exploreDest = nil
+  self:setExploreDest(nil)
 end
 
 function Game:explore()
-  log.debug("in explore, self.exploreDest is:" , self.exploreDest)
   local loc = self:getLocation()
-
-  if self:atExploreDest() then self:reachedDestination()
+  log.debug("in explore, self.exploreDest is:" , self:getExploreDest(), "current location: ", loc)
+  if loc.mapId == OverWorldId then
+    log.debug("in explore, we are on the overworld, calling exploreMove")
+    self:exploreMove()
+    log.debug("done with exploreMove, returning from explore.")
   else
-    log.debug("we are not at our destination")
-    if loc.mapId == OverWorldId then
-      log.debug("we are on the overworld, not at our destination")
-      self:exploreMove()
-    else
-      log.debug("not at our destination, and not on the overworld. calling exploreStaticMap")
-      self:exploreStaticMap()
-    end
+    log.debug("in explore, and not on the overworld. calling exploreStaticMap")
+    self:exploreStaticMap()
+    log.debug("done with exploreStaticMap")
   end
 end
 
@@ -615,23 +625,26 @@ end
 
 function Game:chooseNewDestinationDirectly(newDestination)
   log.debug("new destination", newDestination)
-  self.exploreDest = newDestination
+  self:setExploreDest(newDestination)
 end
 
 function Game:exploreMove()
-  log.debug("Moving from: ", self:getLocation(), " to ", self.exploreDest)
+  log.debug("Moving from: ", self:getLocation(), " to ", self:getExploreDest())
   -- TODO: we are calculating the shortest path twice... we need to do better than that
   -- here... if we cant find a path to the destination, then we want to just choose a new destination
-  local path = self:shortestPath(self:getLocation(), self.exploreDest)
+  local path = self:shortestPath(self:getLocation(), self:getExploreDest())
 
   if path == nil or #(path) == 0 then
-    log.debug("couldn't find a path from player location: ", self:getLocation(), " to ", self.exploreDest)
+    log.debug("couldn't find a path from player location: ", self:getLocation(), " to ", self:getExploreDest())
     self:chooseNewDestination(function (k) return self:chooseRandomBorderTile(k) end)
   else
     self:castRepel()
-    local madeItThere = self:goTo(self.exploreDest) == GotoExitValues.AT_LOCATION
+    local madeItThere = self:goTo(self:getExploreDest()) == GotoExitValues.AT_LOCATION
     -- if we are there, we need to nil this out so we can pick up a new destination
-    if madeItThere then self.exploreDest = nil end
+    if madeItThere then
+      self:reachedDestination()
+      self:setExploreDest(nil)
+    end
   end
 end
 
@@ -692,7 +705,7 @@ function Game:healIfNecessary()
     -- if we need mp, we should go the the closest healing location
     local healingLoc = self:closestHealingLocation()
     log.debug("closest healing location:", healingLoc)
-    if healingLoc ~= nil then
+    if healingLoc ~= Nothing then
       self:interpretScript(self.scripts.InnScripts[healingLoc.mapId])
     end
   end
@@ -994,56 +1007,6 @@ function Game:buyItem(shop, itemId, sellExisting)
   pressA(60)
 end
 
-
-HealingLocationType = enum.new("HealingLocationType", { "INN", "OLD_MAN" })
-
-HealingLocation = class(function(a, loc, heading, type)
-  a.loc = loc
-  a.mapId = loc.mapId
-  a.x = loc.x
-  a.y = loc.y
-  a.heading = heading
-  a.type = type
-end)
-
-function HealingLocation:__tostring()
-  return "<HealingLocation - loc: " .. tostring(self.loc) .. ", type: " .. tostring(self.type) .. ">"
-end
-
-OldMan        = HealingLocation(Point(Tantegel,   18, 26), FaceRight, HealingLocationType.OLD_MAN)
-KolInn        = HealingLocation(Point(Kol,        19,  2), FaceDown,  HealingLocationType.INN)
-CantlinInn    = HealingLocation(Point(Cantlin,     8,  5), FaceUp,    HealingLocationType.INN)
-RimuldarInn   = HealingLocation(Point(Rimuldar,   19,  2), FaceLeft,  HealingLocationType.INN)
-BrecconaryInn = HealingLocation(Point(Brecconary,  8, 21), FaceRight, HealingLocationType.INN)
-GarinhamInn   = HealingLocation(Point(Garinham,   15, 15), FaceRight, HealingLocationType.INN)
-
--- for all the towns that we have seen, return the locations of the inns
--- if we have a heal spell, then tantegel castle old man that refills mp
-function Game:healingLocations()
-  local res = {}
-  -- TODO: these aren't actually working. is it possible that seenByPlayer is never being set properly?
-  if self.staticMaps[Brecconary].seenByPlayer then table.insert(res, BrecconaryInn) end
-  if self.staticMaps[Kol].seenByPlayer        then table.insert(res, KolInn)        end
-  if self.staticMaps[Garinham].seenByPlayer   then table.insert(res, GarinhamInn)   end
-  if self.staticMaps[Cantlin].seenByPlayer    then table.insert(res, CantlinInn)    end
-  if self.staticMaps[Rimuldar].seenByPlayer   then table.insert(res, RimuldarInn)   end
-  local spells = self:readPlayerData().spells
-  if spells:contains(Heal) or spells:contains(Healmore) then table.insert(res, OldMan) end
-  return res
-end
-
-function Game:closestHealingLocation()
-  local loc = self:getLocation()
-  local locs = self:healingLocations()
-  return list.min(locs, function(dest)
-    log.debug("getting shortest path to from " .. tostring(loc) .. " to " .. tostring(dest.loc))
-    local path = self:shortestPath(loc, dest.loc)
-    local distance = #path
-    log.debug("distance from " .. tostring(loc) .. " to " .. tostring(dest) .. " is " .. tostring(distance))
-    return distance
-  end)
-end
-
 -- discover a tile on the overworld
 function Game:discoverOverworldTile(x,y)
   self.graph:discover(x, y, self.overworld)
@@ -1080,17 +1043,100 @@ function Game:discoverOverworldTile(x,y)
   end
 end
 
+-- TODO: i feel like all this shit should get moved to locations.lua
+HealingLocationType = enum.new("HealingLocationType", { "INN", "OLD_MAN" })
 
--- TODO: every time we discover an overworld tile, we loop through many important locs.
--- this could be done more efficiently if we had a (Map Location ImportantLocation)
+HealingLocation = class(function(a, location, heading, type)
+  a.location = location
+  a.heading = heading
+  a.type = type
+end)
+
+function HealingLocation:__tostring()
+  return "<HealingLocation - loc: " .. tostring(self.location) .. ", type: " .. tostring(self.type) .. ">"
+end
+
+OldMan        = HealingLocation(Point(Tantegel,   18, 26), FaceRight, HealingLocationType.OLD_MAN)
+KolInn        = HealingLocation(Point(Kol,        19,  2), FaceDown,  HealingLocationType.INN)
+CantlinInn    = HealingLocation(Point(Cantlin,     8,  5), FaceUp,    HealingLocationType.INN)
+RimuldarInn   = HealingLocation(Point(Rimuldar,   19,  2), FaceLeft,  HealingLocationType.INN)
+BrecconaryInn = HealingLocation(Point(Brecconary,  8, 21), FaceRight, HealingLocationType.INN)
+GarinhamInn   = HealingLocation(Point(Garinham,   15, 15), FaceRight, HealingLocationType.INN)
+
+-- for all the towns that we have seen, return the locations of the inns
+-- if we have a heal spell, then tantegel castle old man that refills mp
+-- @returns (Table3D HealingLocation)
+function Game:healingLocations()
+  local res = Table3D()
+  function insert(hLoc) res.insert(hLoc.location, hloc) end
+
+  if self.staticMaps[Brecconary].seenByPlayer then insert(BrecconaryInn) end
+  if self.staticMaps[Kol].seenByPlayer        then insert(KolInn)        end
+  if self.staticMaps[Garinham].seenByPlayer   then insert(GarinhamInn)   end
+  if self.staticMaps[Cantlin].seenByPlayer    then insert(CantlinInn)    end
+  if self.staticMaps[Rimuldar].seenByPlayer   then insert(RimuldarInn)   end
+  local spells = self:readPlayerData().spells
+  if spells:contains(Heal) or spells:contains(Healmore) then insert(OldMan) end
+
+  return res
+end
+
+-- @returns (Maybe HealingLocationWithPath)
+function Game:closestHealingLocation()
+  local res = self:getPathsForTable3D(self:getLocation(), self:healingLocations())[1]
+  return toMaybe(res)
+end
+
 function Game:importantLocationAt(p)
-  return list.find(self.importantLocations, function(loc) return loc.location:equals(p) end)
+  return self.importantLocations:lookup(p)
 end
 
--- TODO: giant TODO: we have to only use the important locations
--- that we can actually get to. like, ones that we have seen, and aren't hidden behind a locked door.
--- maybe thats as simple as just ones that we can create a path to?
--- but this might be inefficient.
-function Game:seenButNotCompletedImportantLocations()
-  return list.filter(self.importantLocations, function(loc) return loc.seenByPlayer and not loc.completed end)
+ObjectWithPath = class(function (a, v, path)
+  a.v    = v
+  a.path = path
+end)
+
+function ObjectWithPath:__tostring()
+  return "<ObjectWithPath v: " .. tostring(self.v) .. ", path:" .. tostring(self.path) .. ">"
 end
+
+-- Returns the ImportLocations that we can reach, ordered by the shortest path to them
+-- also returns the Path to get to the ImportLocation.
+-- @currentLoc the current location of the player
+-- @returns [ObjectWithPath] ordered by distance (from currentLoc) ASC
+function Game:seenButNotCompletedImportantLocations(currentLoc)
+  -- @loc :: ImportantLocation
+  -- @returns :: Bool
+  function goodLoc(loc) return loc.seenByPlayer and not loc.completed end
+  return self:getPathsForTable3D(currentLoc, self.importantLocations:filter(goodLoc))
+end
+
+function Game:shortestPaths(startNode, endNodes)
+  return self.graph:shortestPaths(startNode, endNodes, self:haveKeys(), self)
+end
+
+-- @currentLoc :: Location
+-- @table3d :: (Table3D a) (where is is something that has a .location field)
+-- @returns [ObjectWithPath a] ordered by distance (from currentLoc) ASC
+function Game:getPathsForTable3D(currentLoc, table3d)
+
+  -- @table3dAsList :: [ImportantLocation]
+  local table3dAsList = table3d:toList()
+
+  -- @locs [Location]
+  local locs = list.map(table3dAsList, function(loc) return loc.location end)
+
+  -- @paths :: [Path] (sorted by weight, ASC)
+  -- paths will only contain paths to locations that we can actually reach
+  -- so there might be some important locations that we have seen that aren't in there
+  -- because we can't reach them because they are on an island or we dont have keys or whatever.
+  local paths = self:shortestPaths(currentLoc, locs)
+
+  local res = list.map(paths, function(path)
+    return ObjectWithPath(table3d:lookup(path.dest), path)
+  end)
+
+  return res
+end
+
+
