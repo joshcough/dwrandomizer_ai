@@ -29,6 +29,8 @@ require 'static_maps'
 --   then choose a different location to go to. i guess...
 --   or if we can somehow detect we are in an RNG loop, maybe we can take a few unnecessary steps
 --   in the throne room to disrupt the loop
+-- * i think it might be a good idea to put the static map children directly into the parent, like a tree
+-- * instead of (or at least in addition to) having all the ids inside of the `StaticMap:childrenIds()` function
 
 AI = class(function(a, game) a.game = game end)
 

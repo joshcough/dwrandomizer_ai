@@ -328,7 +328,7 @@ end
 
 function Game:markChestOpened ()
   self.chests:openChestAt(self:getLocation())
-  -- log.debug(self.memory:printDoorsAndChests())
+  self:completeImportantLocationHere(false)
 end
 
 function Game:searchGroundScript ()
@@ -359,6 +359,10 @@ end
 
 function Game:shortestPath(startNode, endNode)
   return self.graph:shortestPath(startNode, endNode, self:haveKeys(), self)
+end
+
+function Game:shortestPaths(startNode, endNodes)
+  return self.graph:shortestPaths(startNode, endNodes, self:haveKeys(), self)
 end
 
 function swapSrcAndDest(w) return w:swap() end
@@ -445,6 +449,7 @@ function Game:convertPathToCommands(pathIn, maps)
 end
 
 function Game:stateMachine()
+  -- log.debug(".")
   if self.dead then self:dealWithDeath()
   elseif self.mapChanged then self:dealWithMapChange()
   elseif self:getMapId() == 0 then self:interpretScript(self.scripts.GameStartMenuScript)
@@ -479,6 +484,8 @@ end
 
 function Game:dealWithAnyImportantLocations()
   log.debug("in dealWithAnyImportantLocations")
+
+  self.importantLocations:debug("all goals")
 
   log.debug("=== achievableGoals ===")
   local achievableGoals = self:seenButNotCompletedImportantLocations(self:getLocation())
@@ -528,7 +535,7 @@ function Game:grindOrExplore()
       end
     end
   else
-    log.debug("not on the overworld, jumping to self:explore()")
+    log.debug("not on the overworld, jumping to self:exploreStaticMap()")
     self:exploreStaticMap()
   end
 end
@@ -547,16 +554,8 @@ function Game:grind(grind, currentLevel)
 end
 
 function Game:reachedDestination()
-  local loc = self:getLocation()
   log.debug("We have reached our destination:" .. tostring(loc))
-
-  local importantLocHere = self:importantLocationAt(loc)
-  if importantLocHere ~= nil
-  then
-    waitFrames(60)
-    importantLocHere.completed = true
-    log.debug("setting completed to true", importantLocHere)
-  end
+  self:completeImportantLocationHere(true)
   self:setExploreDest(nil)
 end
 
@@ -576,7 +575,7 @@ end
 
 function Game:exploreStaticMap()
   waitUntil(function() return self:onStaticMap() end, 240, "on static map")
-  self:dealWithMapChange()
+  if self.mapChanged then self:dealWithMapChange() end
   local loc = self:getLocation()
   local script = self.scripts.MapScripts[loc.mapId]
 
@@ -831,6 +830,17 @@ function Game:dealWithMapChange()
     self:addWarp(Warp(TantegelEntrance, self.staticMaps[Tantegel].entrances[1].from))
   else
     log.debug("nothing to do in dealWithMapChange")
+  end
+
+  -- TODO: factor this out into a function or something.
+  -- here, we have to mark any children important locations to be seenByPlayer
+  -- for example all the chests in a dungeon/town or the basement locations
+  -- so that we can actually go to the basement when we have keys
+  -- TODO: when we go to a town, we instantly execute the town script
+  --       but...sometimes we might just want to go to the important location, no?
+  if newMapId > 1 then
+    local impLocs = self.staticMaps[newMapId]:childImportantLocations(self.importantLocations, self.staticMaps)
+    list.foreach(impLocs, function(impLoc) impLoc.seenByPlayer = true end)
   end
 
   self.currentMapId = newMapId
@@ -1100,8 +1110,8 @@ function ObjectWithPath:__tostring()
   return "<ObjectWithPath v: " .. tostring(self.v) .. ", path:" .. tostring(self.path) .. ">"
 end
 
--- Returns the ImportLocations that we can reach, ordered by the shortest path to them
--- also returns the Path to get to the ImportLocation.
+-- Returns the ImportantLocations that we can reach, ordered by the shortest path to them
+-- also returns the Path to get to the ImportantLocation.
 -- @currentLoc the current location of the player
 -- @returns [ObjectWithPath] ordered by distance (from currentLoc) ASC
 function Game:seenButNotCompletedImportantLocations(currentLoc)
@@ -1111,8 +1121,17 @@ function Game:seenButNotCompletedImportantLocations(currentLoc)
   return self:getPathsForTable3D(currentLoc, self.importantLocations:filter(goodLoc))
 end
 
-function Game:shortestPaths(startNode, endNodes)
-  return self.graph:shortestPaths(startNode, endNodes, self:haveKeys(), self)
+function Game:completeImportantLocationHere(wait)
+  local loc = self:getLocation()
+  local importantLocHere = self:importantLocationAt(loc)
+  if importantLocHere ~= nil
+  then
+    if wait then waitFrames(60) end
+    importantLocHere.completed = true
+    log.debug("setting completed to true", importantLocHere)
+    return true
+  else return false
+  end
 end
 
 -- @currentLoc :: Location

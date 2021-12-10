@@ -379,6 +379,15 @@ function StaticMap:markSeenByPlayer(allStaticMaps)
   end
 end
 
+-- @importantLocs :: Table3D ImportantLocation
+-- @allStaticMaps :: [StaticMap]
+-- @returns :: [ImportantLocation]
+function StaticMap:childImportantLocations(importantLocs, allStaticMaps)
+  local myLoc = importantLocs:allEntriesForMap(self.mapId)
+  local childLocs = list.bind(self:childrenIds(), function(cId) return importantLocs:allEntriesForMap(cId) end)
+  return table.concat(myLoc, childLocs)
+end
+
 PRINT_TILE_NAME    = 1
 PRINT_TILE_NO_KEYS = 2
 PRINT_TILE_KEYS    = 3

@@ -208,6 +208,7 @@ function table.reverse(tbl)
   return t
 end
 
+-- TODO: this should be list.concat right?
 function table.concat(tbl1, tbl2)
   local res = table.copy(tbl1)
   for _,v in ipairs(tbl2) do
@@ -216,15 +217,14 @@ function table.concat(tbl1, tbl2)
   return res
 end
 
+-- TODO: is this join? it looks identical
 function table.concatAll(tbls)
   local res = {}
-
   for i=1, #tbls do
     for _,v in ipairs(tbls[i]) do
       table.insert(res, v)
     end
   end
-
   return res
 end
 
@@ -567,6 +567,15 @@ end
 function Table3D:toList()
   local res = {}
   self:iterate(function (_, a) table.insert(res, a) end)
+  return res
+end
+
+-- @self :: Table3D a
+-- @mapId :: Int / MapId (dont' think MapId actually exists, but it would be nice if it did IMO)
+-- @returns [a]
+function Table3D:allEntriesForMap(mapId)
+  local res = {}
+  self:iterate(function (p, a) if p.mapId == mapId then table.insert(res, a) end end)
   return res
 end
 

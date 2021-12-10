@@ -293,8 +293,8 @@ function Chest:__tostring()
     .. " (opened ever: " .. tostring(self.everOpened) .. ")"
 end
 
--- chests :: [Chest]
--- returns Map MapId [Chest]
+-- @chests :: [Chest]
+-- @returns (Map MapId [Chest])
 function getChestsByMapId(chests)
   local res = {}
   for i = 2, 29 do res[i] = {} end
@@ -310,6 +310,12 @@ Chests = class(function(a,chests)
   -- chestsByMapId :: Map MapId [Chest]
   a.chestsByMapId = getChestsByMapId(chests)
 end)
+
+-- @self :: Chests
+-- @returns :: [Chest]
+function Chests:chestsForMap(mapId)
+  return self.chestsByMapId[mapId]
+end
 
 function Chests:foreach(f)
   for i = 1,31 do f(self.chests[i]) end
@@ -349,8 +355,11 @@ end
 function Chests:openChestAt(location)
   log.debug("openChestAt", location)
   local c = self:chestAt(location)
-  c.currentlyOpen = true
-  c.everOpened = true
+  -- TODO: ick... this just keeps happening. i really need to solve it.
+  if c ~= nil then
+    c.currentlyOpen = true
+    c.everOpened = true
+  end
 end
 
 function Chests:closeAll()

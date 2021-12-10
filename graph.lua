@@ -400,6 +400,7 @@ function mkStaticMapGraph (staticMap, haveKeys)
     res[y] = {}
     for x = 0, staticMap.width - 1 do
       res[y][x] = GraphNode(GraphNodeType.KNOWN)
+      -- todo: maybe use list.join here instead of table.concatAll
       res[y][x].neighbors = table.concatAll({neighbors(x,y), borderNeighbors(x,y), warpNeighbors(x,y), entranceNeighbors(x,y)})
     end
   end

@@ -423,6 +423,18 @@ Scripts = class(function(a,entrances)
     )
   end
 
+  function BuyKeysAt(loc, dir)
+    return Consecutive("Buy Keys", {
+      GotoPoint(loc),
+      dir,
+      Talk,
+      WaitFrames(30),
+      NTimes(Sub(Value(6), GetNrKeys), PressA(60)),
+      PressB(2),
+      PressB(30)
+    })
+  end
+
   GameStartMenuScript = Consecutive("Game start menu", {
     PressStart(30),
     PressStart(30),
@@ -444,14 +456,6 @@ Scripts = class(function(a,entrances)
     PressA(30),
     PressUp(30),
     PressA(30),
-  })
-
-  BuyKeys = Consecutive("Buy Keys", {
-    Talk,
-    WaitFrames(30),
-    NTimes(Sub(Value(6), GetNrKeys), PressA(60)),
-    PressB(2),
-    PressB(30)
   })
 
   InnScripts = {
@@ -558,8 +562,15 @@ Scripts = class(function(a,entrances)
       TakeStairs
     )
 
+  -- TODO: ok something is busted here...
+  -- we get into the grave... and then i think we are trying to go to this shop
+  -- but its all wrong because we are inside the fucking grave man. wtf.
   garinhamScript =
     Consecutive("Garinham", {
+      VisitShop(Garinham, 10, 16, FaceDown),
+      InnScripts[Garinham],
+      -- TODO: we need a way to ask like... are all the chests in garinham and the grave already opened?
+      -- if so, we dont need to do this step at all.
       IfHaveKeys("If we have keys...",
         Consecutive("Get chests and go down stairs in Garinham.", {
           OpenChestAt(Garinham, 8, 6),
@@ -570,8 +581,6 @@ Scripts = class(function(a,entrances)
         }),
         DoNothing
       ),
-      VisitShop(Garinham, 10, 16, FaceDown),
-      InnScripts[Garinham],
       GotoOverworld(Garinham)
     })
 
@@ -642,7 +651,7 @@ Scripts = class(function(a,entrances)
   rimuldar =
     Consecutive("Rimuldar", {
       IfThenScript("Do we need keys?", All({Lt(GetNrKeys,Value(6)), CanAfford(53)}),
-        Consecutive("Buy Keys in Rimuldar", {Goto(Rimuldar, 4, 5), BuyKeys}),
+        BuyKeysAt(Point(Rimuldar, 4, 5), FaceDown),
         DoNothing
       ),
       IfThenScript("Open the chest in Rimuldar?", All({GtEq(GetNrKeys, Value(2)), Not(HasChestEverBeenOpened(Point(Rimuldar, 24, 23)))}),
@@ -684,6 +693,20 @@ Scripts = class(function(a,entrances)
     VisitShop(Brecconary, 5, 6, FaceUp),
     InnScripts[Brecconary],
     GotoOverworld(Brecconary)
+  })
+
+  tantegel = Consecutive("Tantegel", {
+    IfHaveKeys("If we have keys, do all the things in Tantegel",
+      Consecutive("Do all the things in Tantegel with a key", {
+        BuyKeysAt(Point(Tantegel, 24, 3), FaceUp),
+        Goto(Tantegel, 29, 29), -- basement
+        OpenChestAt(Tantegel, 1, 13),
+        OpenChestAt(Tantegel, 1, 15),
+        OpenChestAt(Tantegel, 2, 14),
+        OpenChestAt(Tantegel, 3, 15)
+      }),
+      leaveTantegalOnFoot
+    )
   })
 
   -- This is for maps that we don't really need a script for
