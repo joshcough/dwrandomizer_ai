@@ -352,7 +352,7 @@ Scripts = class(function(a,entrances)
 
   function OpenDoor(loc)
    return IfThenScript(
-      "If the door open at: " .. tostring(loc) .. ", then open it.",
+      "If the door closed at: " .. tostring(loc) .. ", then open it.",
       IsDoorOpen(loc),
       DoNothing,
       Consecutive("Open Door", {
@@ -709,6 +709,7 @@ Scripts = class(function(a,entrances)
     )
   })
 
+  -- TODO: we might want to bring this back.
   -- This is for maps that we don't really need a script for
   -- because they are handled by the first floor of the map, basically.
   -- for example in ErdricksCaveLv1, we just say { OpenChestAt(ErdricksCaveLv2, 9, 3), Exit }
@@ -732,21 +733,21 @@ Scripts = class(function(a,entrances)
     [TantegelBasement] = tantegelBasementShrine,
     [NorthernShrine] = northernShrineScript,
     [SouthernShrine] = southernShrineScript,
-    [CharlockCaveLv1] = NA,
-    [CharlockCaveLv2] = NA,
-    [CharlockCaveLv3] = NA,
-    [CharlockCaveLv4] = NA,
-    [CharlockCaveLv5] = NA,
-    [CharlockCaveLv6] = NA,
+    [CharlockCaveLv1] = LeaveDungeon(Charlock),
+    [CharlockCaveLv2] = LeaveDungeon(Charlock),
+    [CharlockCaveLv3] = LeaveDungeon(Charlock),
+    [CharlockCaveLv4] = LeaveDungeon(Charlock),
+    [CharlockCaveLv5] = LeaveDungeon(Charlock),
+    [CharlockCaveLv6] = LeaveDungeon(Charlock),
     [SwampCave] = swampCave,
     [MountainCaveLv1] = exploreMountainCaveScript,
-    [MountainCaveLv2] = NA,
+    [MountainCaveLv2] = LeaveDungeon(MountainCaveLv1),
     [GarinsGraveLv1] = exploreGraveScript,
-    [GarinsGraveLv2] = NA,
-    [GarinsGraveLv3] = GotoOverworld(GarinsGraveLv1),
-    [GarinsGraveLv4] = NA,
+    [GarinsGraveLv2] = LeaveDungeon(GarinsGraveLv1),
+    [GarinsGraveLv3] = LeaveDungeon(GarinsGraveLv1),
+    [GarinsGraveLv4] = LeaveDungeon(GarinsGraveLv1),
     [ErdricksCaveLv1] = exploreErdricksCaveScript,
-    [ErdricksCaveLv2] = NA,
+    [ErdricksCaveLv2] = LeaveDungeon(ErdricksCaveLv1),
   }
 
   a.InnScripts = InnScripts
