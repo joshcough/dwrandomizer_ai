@@ -61,14 +61,14 @@ PressButtonScript = class(Script, function(a, button, waitFrames)
   a.waitFrames = waitFrames
 end)
 
-function PressA(waitFrames)      return PressButtonScript(Buttons.A, waitFrames) end
-function PressB(waitFrames)      return PressButtonScript(Buttons.B, waitFrames) end
-function PressUp(waitFrames)     return PressButtonScript(Buttons.up, waitFrames) end
-function PressDown(waitFrames)   return PressButtonScript(Buttons.down, waitFrames) end
-function PressLeft(waitFrames)   return PressButtonScript(Buttons.left, waitFrames) end
-function PressRight(waitFrames)  return PressButtonScript(Buttons.right, waitFrames) end
-function PressSelect(waitFrames) return PressButtonScript(Buttons.select, waitFrames) end
-function PressStart(waitFrames)  return PressButtonScript(Buttons.start, waitFrames) end
+function PressA(waitFrames)      return PressButtonScript(Button.A, waitFrames) end
+function PressB(waitFrames)      return PressButtonScript(Button.B, waitFrames) end
+function PressUp(waitFrames)     return PressButtonScript(Button.UP, waitFrames) end
+function PressDown(waitFrames)   return PressButtonScript(Button.DOWN, waitFrames) end
+function PressLeft(waitFrames)   return PressButtonScript(Button.LEFT, waitFrames) end
+function PressRight(waitFrames)  return PressButtonScript(Button.RIGHT, waitFrames) end
+function PressSelect(waitFrames) return PressButtonScript(Button.SELECT, waitFrames) end
+function PressStart(waitFrames)  return PressButtonScript(Button.START, waitFrames) end
 
 HoldButtonScript = class(Script, function(a, button, duration)
   Script.init(a, button.name .. " for " .. duration .. " frames.")
@@ -76,14 +76,14 @@ HoldButtonScript = class(Script, function(a, button, duration)
   a.duration = duration
 end)
 
-function HoldA      (duration) return HoldButtonScript(Buttons.A,      duration) end
-function HoldB      (duration) return HoldButtonScript(Buttons.B,      duration) end
-function HoldUp     (duration) return HoldButtonScript(Buttons.up,     duration) end
-function HoldDown   (duration) return HoldButtonScript(Buttons.down,   duration) end
-function HoldLeft   (duration) return HoldButtonScript(Buttons.left,   duration) end
-function HoldRight  (duration) return HoldButtonScript(Buttons.right,  duration) end
-function HoldSelect (duration) return HoldButtonScript(Buttons.select, duration) end
-function HoldStart  (duration) return HoldButtonScript(Buttons.start,  duration) end
+function HoldA      (duration) return HoldButtonScript(Button.A,      duration) end
+function HoldB      (duration) return HoldButtonScript(Button.B,      duration) end
+function HoldUp     (duration) return HoldButtonScript(Button.UP,     duration) end
+function HoldDown   (duration) return HoldButtonScript(Button.DOWN,   duration) end
+function HoldLeft   (duration) return HoldButtonScript(Button.LEFT,   duration) end
+function HoldRight  (duration) return HoldButtonScript(Button.RIGHT,  duration) end
+function HoldSelect (duration) return HoldButtonScript(Button.SELECT, duration) end
+function HoldStart  (duration) return HoldButtonScript(Button.START,  duration) end
 
 HoldButtonUntilScript = class(Script, function(a, button, condition)
   Script.init(a, button.name .. " until " .. tostring(condition))
@@ -91,14 +91,14 @@ HoldButtonUntilScript = class(Script, function(a, button, condition)
   a.condition = condition
 end)
 
-function HoldAUntil      (condition) return HoldButtonUntilScript(Buttons.A,      condition) end
-function HoldBUntil      (condition) return HoldButtonUntilScript(Buttons.B,      condition) end
-function HoldUpUntil     (condition) return HoldButtonUntilScript(Buttons.up,     condition) end
-function HoldDownUntil   (condition) return HoldButtonUntilScript(Buttons.down,   condition) end
-function HoldLeftUntil   (condition) return HoldButtonUntilScript(Buttons.left,   condition) end
-function HoldRightUntil  (condition) return HoldButtonUntilScript(Buttons.right,  condition) end
-function HoldSelectUntil (condition) return HoldButtonUntilScript(Buttons.select, condition) end
-function HoldStartUntil  (condition) return HoldButtonUntilScript(Buttons.start,  condition) end
+function HoldAUntil      (condition) return HoldButtonUntilScript(Button.A,      condition) end
+function HoldBUntil      (condition) return HoldButtonUntilScript(Button.B,      condition) end
+function HoldUpUntil     (condition) return HoldButtonUntilScript(Button.UP,     condition) end
+function HoldDownUntil   (condition) return HoldButtonUntilScript(Button.DOWN,   condition) end
+function HoldLeftUntil   (condition) return HoldButtonUntilScript(Button.LEFT,   condition) end
+function HoldRightUntil  (condition) return HoldButtonUntilScript(Button.RIGHT,  condition) end
+function HoldSelectUntil (condition) return HoldButtonUntilScript(Button.SELECT, condition) end
+function HoldStartUntil  (condition) return HoldButtonUntilScript(Button.START,  condition) end
 
 ActionScript = class(Script, function(a, name)
   Script.init(a, name)
@@ -262,10 +262,10 @@ PlayerDirScript = class(Script, function(a)
   Script.init(a, "HEADING")
 end)
 
-FaceUp    = HoldUpUntil   (Eq(PlayerDirScript(), Value(UP)))
-FaceDown  = HoldDownUntil (Eq(PlayerDirScript(), Value(DOWN)))
-FaceLeft  = HoldLeftUntil (Eq(PlayerDirScript(), Value(LEFT)))
-FaceRight = HoldRightUntil(Eq(PlayerDirScript(), Value(RIGHT)))
+FaceUp    = HoldUpUntil   (Eq(PlayerDirScript(), Value(Heading.UP)))
+FaceDown  = HoldDownUntil (Eq(PlayerDirScript(), Value(Heading.DOWN)))
+FaceLeft  = HoldLeftUntil (Eq(PlayerDirScript(), Value(Heading.LEFT)))
+FaceRight = HoldRightUntil(Eq(PlayerDirScript(), Value(Heading.RIGHT)))
 
 function StatusScript(statusFld)
   return PlayerDataScript("Status: " .. statusFld, function(pd) return pd.statuses[statusFld] end)

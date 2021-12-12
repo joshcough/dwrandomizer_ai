@@ -342,7 +342,7 @@ function Chests:chestAt(location)
     -- TODO: i wanted to have an error here, but, it kept happening in front of the king
     -- my theory is that we were dying on top of a chest, and still trying to open it after death.
     -- but i haven't been able to verify that yet.
-    -- error(msg, location)
+    -- log.err(msg, location)
   end
   return f
 end

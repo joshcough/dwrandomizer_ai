@@ -406,7 +406,7 @@ function StaticMap:__tostring (printStrat)
     local row = ""
     for x = 0,self.width-1 do
       local t = tileSet[self.rows[y][x]]
-      row = row .. " | " .. (printTile(t))
+      row = row .. " | " .. printTile(t)
     end
     res = res .. row .. " |\n"
   end

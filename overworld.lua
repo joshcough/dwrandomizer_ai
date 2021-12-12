@@ -123,13 +123,17 @@ function readOverworldFromROM (memory)
   for i = 0,119 do
     rows[i] = getOverworldTileRow(pointers[i])
   end
-  return rows
+  return OverWorld(rows)
 end
 
 OverWorld = class(function(a,rows)
   a.overworldRows = rows
   a.knownWorld = {}
   a.nrTilesSeen = 0
+  a.minXDiscovered = Nothing
+  a.maxXDiscovered = Nothing
+  a.minYDiscovered = Nothing
+  a.maxYDiscovered = Nothing
 end)
 
 function OverWorld:percentageOfWorldSeen()
@@ -152,6 +156,21 @@ function OverWorld:updateKnownWorld(x, y, tileId, game)
       self.knownWorld[y][x] = tileId
       self.nrTilesSeen=self.nrTilesSeen+1
       game:discoverOverworldTile(x, y)
+      if x < self.minXDiscovered:fromMaybe(120) then self.minXDiscovered = Just(x) end
+      if x > self.maxXDiscovered:fromMaybe(-1)  then self.maxXDiscovered = Just(x) end
+      if y < self.minYDiscovered:fromMaybe(120) then self.minYDiscovered = Just(y) end
+      if y < self.maxYDiscovered:fromMaybe(-1)  then self.maxYDiscovered = Just(y) end
+  end
+end
+
+-- Gets the biggest visible square for the overworld based on what we have discovered so far
+-- if we haven't ever been to the overworld yet (eg, if we are still in the throne room), returns Nothing.
+-- @returns :: Maybe Square
+function OverWorld:getSquare()
+  if self.minXDiscovered == Nothing then return Nothing
+  else
+    return Square(Point(OverWorldId, minXDiscovered, minYDiscovered),
+                  Point(OverWorldId, maxXDiscovered, maxYDiscovered))
   end
 end
 
@@ -180,48 +199,6 @@ end
 function OverWorld:getKnownWorldTileAt(x,y)
   if self.knownWorld[y] == nil then return nil end
   return self.knownWorld[y][x]
-end
-
--- TODO: we need to either change this function or create a new function
--- which returns us the "border + 1" ... that is... all the unseen tiles that surround this border
--- because we need to pick one of THOSE to walk to. not one of the ones that we've already seen.
--- returns all the walkable tiles on the border of the known world
-function OverWorld:knownWorldBorder()
-  local res = {}
-  for y,row in pairs(self.knownWorld) do
-    for x,tile in pairs(row) do
-      local overworldTile = OVERWORLD_TILES[self.overworldRows[y][x]]
-      if overworldTile.walkable then
-        local nbrs = self:neighbors(x,y)
-        -- TODO: potentially adding this more than once if more than one neighbor is nil
-        for i = 1, #(nbrs) do
-          local p = nbrs[i]
-          -- this is saying: if one of your neighbors is nil
-          -- then YOU are on the border. you are a border tile.
-          -- because you bump up against the unknown, basically.
-          if self:getKnownWorldTileAt(p.x,p.y) == nil then
-            table.insert(res, Point(OverWorldId, x, y))
-          end
-        end
-      end
-    end
-  end
-  return res
-end
-
--- returns a graph for all the tiles in the known world.
-function OverWorld:knownWorldGraph()
-  local res = {}
-  for y,row in pairs(self.knownWorld) do
-    for x,tile in pairs(row) do
-      local overworldTile = OVERWORLD_TILES[self.overworldRows[y][x]]
-      if overworldTile.walkable then
-        if res[y] == nil then res[y] = {} end
-        res[y][x] = self:neighbors(x,y)
-      end
-    end
-  end
-  return res
 end
 
 -- returns the tile id for the given (x,y) for the overworld

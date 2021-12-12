@@ -350,9 +350,9 @@ end
 -- .alias CharDirection    $602F   ;Player's facing direction, 0-up, 1-right, 2-down, 3-left.
 function Memory:readPlayerDirection()
   local dir = self:readRAM(0x602F)
-  if     dir == 0 then return UP
-  elseif dir == 1 then return RIGHT
-  elseif dir == 2 then return DOWN
-  else                 return LEFT
+  if     dir == 0 then return Heading.UP
+  elseif dir == 1 then return Heading.RIGHT
+  elseif dir == 2 then return Heading.DOWN
+  else                 return Heading.LEFT
   end
 end

@@ -45,11 +45,23 @@ log = {}
 
 function log.debug(...)
   local args = { ... }
+	log.debugArgs(args)
+end
+
+function log.debugArgs(args)
 	for _, v in ipairs( args ) do
 		aiLogFile:write(tostring(v) .. "\t")
 	end
   aiLogFile:write("\n")
   aiLogFile:flush()
+end
+
+function log.err(msg, ...)
+  local args = { ... }
+  log.debug("ERROR: ", msg)
+  log.debug("args were:")
+	log.debugArgs(args)
+  error(msg)
 end
 
 function table.shallow_copy(t)
@@ -457,32 +469,6 @@ function Queue:isEmpty()
   return self:size() == 0
 end
 
---
--- function insertPoint3D(tbl, p, value)
---   if tbl[p.mapId] == nil then tbl[p.mapId] = {} end
---   if tbl[p.mapId][p.x] == nil then tbl[p.mapId][p.x] = {} end
---   tbl[p.mapId][p.x][p.y] = value
--- end
---
--- function readPoint3D(tbl, p, default)
---   if tbl[p.mapId] == nil then return default end
---   if tbl[p.mapId][p.x] == nil then return default end
---   if tbl[p.mapId][p.x][p.y] == nil then return default end
---   return tbl[p.mapId][p.x][p.y]
--- end
---
--- function print3dTable(tbl, name)
---   log.debug("====" .. name .. "====")
---   for i,v in pairs(tbl) do
---     for j,v2 in pairs(v) do
---       for k,v3 in pairs(v2) do
---         log.debug(i, j, k, v3)
---       end
---     end
---   end
---   log.debug("====end " .. name .. "====")
--- end
-
 function padded(x)
   local res = tostring(x)
   if     #res == 1 then return "  " .. res
@@ -516,7 +502,6 @@ end
 
 function Table3D:debug(name)
   log.debug("====" .. name .. "====")
-
   for i,v in pairs(self.body) do
     for j,v2 in pairs(v) do
       for k,v3 in pairs(v2) do
@@ -524,7 +509,6 @@ function Table3D:debug(name)
       end
     end
   end
-
 --   self:iterate(function(p, a) log.debug(p,a) end)
   log.debug("====end " .. name .. "====")
 end
@@ -553,12 +537,7 @@ end
 -- @returns Table3D a
 function Table3D:filter(f)
   local res = Table3D()
-  self:iterate(function(p, a)
-    if f(a) then
-      -- log.debug("filter was good for: ", p, a)
-      res:insert(p,a)
-    end
-  end)
+  self:iterate(function(p, a) if f(a) then res:insert(p,a) end end)
   return res
 end
 
@@ -581,6 +560,12 @@ end
 
 Maybe = class(function(a) end)
 
+function Maybe:map(f)            return maybe.map(self, f)            end
+function Maybe:bind(f)           return maybe.bind(self, f)           end
+function Maybe:maybe(default, f) return maybe.maybe(self, default, f) end
+function Maybe:foreach(f)        return maybe.foreach(self, f)        end
+function Maybe:fromMaybe(a)      return maybe.fromMaybe(self, a)      end
+
 Just = class(Maybe, function(a, value)
   Maybe.init(a)
   a.value = value
@@ -594,54 +579,75 @@ PrivateNothing = class(Maybe, function(a)
   Maybe.init(a)
 end)
 
+Nothing = PrivateNothing()
+
 function PrivateNothing:__tostring()
   return "<Nothing>"
 end
 
-Nothing = PrivateNothing()
+maybe = {}
 
-function toMaybe(a)
-  if a == nil then return Nothing
-  else return Just(a)
-  end
+-- @a :: a? (possibly nil value of type a)
+-- @returns :: Maybe a
+function maybe.toMaybe(a)
+  if a == nil then return Nothing else return Just(a) end
 end
 
-function maybe(m, default, f)
-  if m == Nothing then return default
-  else return f(m.value) -- must be a Just
-  end
+maybe.pure = maybe.toMaybe
+
+-- @m :: Maybe a
+-- @f :: a -> b
+-- @returns :: Maybe b
+function maybe.map(m, f)
+  return m == Nothing and Nothing or Just(f(m.value))
 end
 
+-- @m :: Maybe a
+-- @f :: a -> Maybe b
+-- @returns :: Maybe b
+function maybe.bind(m, f)
+  return m == Nothing and Nothing or f(m.value)
+end
+
+-- @m :: Maybe a
+-- @default :: b
+-- @f :: a -> b
+-- @returns :: b
+function maybe.maybe(m, default, f)
+  return m == Nothing and default or f(m.value)
+end
+
+-- @m :: Maybe a
+-- @f :: a -> z
+-- @returns :: nil
+function maybe.foreach(m, f) maybe.maybe(m, nil, f) end
+
+-- @m :: Maybe a
+-- @default :: a
+-- @returns :: a
+function maybe.fromMaybe(m, default)
+  return maybe.maybe(m, default, function(v) return v end)
+end
+
+-- @listOfMaybes :: [Maybe a]
+-- @returns :: [a]
 function list.catMaybes(listOfMaybes)
   local res = {}
   list.foreach(listOfMaybes, function(m)
-    maybe(m, nil, function(v) table.insert(res, v) end)
+    maybe.maybe(m, nil, function(v) table.insert(res, v) end)
   end)
   return res
 end
 
---[[
-catMaybes :: [Maybe a] -> [a]
-catMaybes = mapMaybe id -- use mapMaybe to allow fusion (#18574)
+-- @l :: [a]
+-- @returns :: Maybe a
+function list.toMaybe(l)
+  return maybe.toMaybe(l[1])
+end
 
-mapMaybe          :: (a -> Maybe b) -> [a] -> [b]
-mapMaybe _ []     = []
-mapMaybe f (x:xs) =
- let rs = mapMaybe f xs in
- case f x of
-  Nothing -> rs
-  Just r  -> r:rs
- ]]
-
-
--- List = class(function(a)
---   a.body = {}
--- end)
---
--- function List:map(f)
---   return List(list.map(self.body, f))
--- end
---
--- function List:filter(f)
---   return List(list.filter(self.body, f))
--- end
+Heading = enum.new("Direction player is heading", {
+  "LEFT",
+  "RIGHT",
+  "UP",
+  "DOWN"
+})

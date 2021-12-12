@@ -36,9 +36,7 @@ end
 
 Square = class(function(a, topLeft, bottomRight)
   if topLeft.mapId ~= bottomRight.mapId then
-    local msg = "Arguments to Square did not have the same mapId"
-    log.debug(msg, topLeft, bottomRight)
-    error(msg, topLeft, bottomRight)
+    log.err("Arguments to Square did not have the same mapId", topLeft, bottomRight)
   end
   -- TODO: could also check here that tl.x <= br.x, tl.y <= br.y
   -- or could figure out which one really is the top left and just swap them if needed.

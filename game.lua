@@ -47,7 +47,7 @@ function newGame(memory)
   local warps = table.concat(WARPS, list.map(WARPS, swapSrcAndDest))
   local staticMaps = readAllStaticMaps(memory, warps)
   local graph = Graph(staticMaps)
-  local overworld = OverWorld(readOverworldFromROM(memory))
+  local overworld = readOverworldFromROM(memory)
   return Game(memory, warps, graph, overworld, staticMaps)
 end
 
@@ -98,7 +98,6 @@ GotoExitValues = enum.new("Follow Path Exit Values", {
   "REPEL_TIMER",
   "DEAD",
   "MAP_CHANGED",
-  "NO_PATH",
   "BUG"
  })
 
@@ -112,12 +111,7 @@ function Game:goTo(dest)
   -- log.debug("in goto, shortestPath: ", src, dest, path)
 
   if path == nil or #path == 0 then
-    local errMsg = "ERROR: Could not create path from: " .. tostring(src) .. " to: " .. tostring(dest)
-    log.debug(errMsg)
-    error(errMsg)
-    -- something went wrong, we can't get a path there, and we aren't at the destination
-    -- so return false indicating that we didn't make it.
-    return GotoExitValues.NO_PATH
+    log.err("ERROR: Could not create path from: " .. tostring(src) .. " to: " .. tostring(dest))
   else
     local res = self:followPath(path)
     -- log.debug("res from followPath is", res)
@@ -138,7 +132,7 @@ function Game:goTo(dest)
         self:dealWithMapChange()
         self:goTo(dest)
     else
-      return res -- TODO: can we even do anything with the others? NO_PATH, BUG? AT_LOCATION?
+      return res
     end
   end
 end
@@ -149,33 +143,32 @@ end
 function Game:followPath(path)
   local commands = self:convertPathToCommands(path, self.staticMaps)
   if commands == nil or #commands == 0 then
-    return GotoExitValues.NO_PATH
+    return log.err("path is empty in followPath")
   end
 
   -- log.debug(commands)
 
+  -- TODO: this dest variable is strange. the reason it's here is because we only have a list
+  -- instead of an object that contains the src, dest and commands.
   local dest = nil
   for i,c in pairs(commands) do
+    dest = c.to
     -- if we are in battle or the repel window opened, then abort
     if self.inBattle then return GotoExitValues.IN_BATTLE
     elseif self.repelTimerWindowOpen then return GotoExitValues.REPEL_TIMER
-    elseif c.direction == "Door" then self:interpretScript(self.scripts.OpenDoor(c.to))
-    elseif c.direction == "Stairs" then self:interpretScript(self.scripts.TakeStairs)
     else
-      local startingLoc = self:getLocation()
-      holdButtonUntil(c.direction, "we are at " .. tostring(c.to), function ()
-        dest = c.to
-        local loc = self:getLocation()
-        if loc.mapId == 1 and not loc:equals(startingLoc) then
-          self.overworld:getVisibleOverworldGrid(self:getX(), self:getY(), self)
-          local currentPercentageSeen = round(self:percentageOfWorldSeen())
-          if self.lastPrintedPercentage < currentPercentageSeen then
-            log.debug("percentageOfWorldSeen: " .. currentPercentageSeen)
-            self.lastPrintedPercentage = currentPercentageSeen
-          end
-        end
-        return loc:equals(c.to) or self.inBattle or self.repelTimerWindowOpen or self.dead -- or self.mapChanged
-      end)
+      if     c.direction == MovementCommandDir.DOOR   then self:interpretScript(self.scripts.OpenDoor(c.to))
+      elseif c.direction == MovementCommandDir.STAIRS then self:interpretScript(self.scripts.TakeStairs)
+      else
+        local startingLoc = self:getLocation()
+        -- this must be a Just because of the two cases above
+        -- this would be nicer if we had pattern matching, but, we dont.
+        local button = movementCommandDirToButton(c.direction).value
+        holdButtonUntil(button, "we are at " .. tostring(c.to), function ()
+          self:updateOverworld(startingLoc)
+          return self:shouldStopTakingPath(c.to)
+        end)
+      end
     end
   end
 
@@ -186,13 +179,44 @@ function Game:followPath(path)
   -- but, do a last second double check just in case.
   elseif self:getLocation():equals(dest) then return GotoExitValues.AT_LOCATION
   -- we should be at the location, but somehow we werent. this must be a bug.
-  else return GotoExitValues.BUG
+  else
+    log.debug("Potential Error: we should be at the location, but somehow we weren't", self:getLocation(), dest)
+    return GotoExitValues.BUG
   end
 end
 
--- TODO: what should this function return?
+-- When following a path, if we are on the overworld, we need to update it when we see new tiles
+-- We also print the percentage of the world seen here, just because fun to know.
+-- @self :: Game
+-- @startingLoc :: Location
+-- @returns :: Unit
+function Game:updateOverworld(startingLoc)
+  local loc = self:getLocation()
+  if loc.mapId == 1 and not loc:equals(startingLoc) then
+    self.overworld:getVisibleOverworldGrid(loc.x, loc.y, self)
+    local currentPercentageSeen = round(self:percentageOfWorldSeen())
+    if self.lastPrintedPercentage < currentPercentageSeen then
+      log.debug("percentageOfWorldSeen: " .. currentPercentageSeen)
+      self.lastPrintedPercentage = currentPercentageSeen
+    end
+  end
+end
+
+-- Returns true if we are at the given destination, or if we are in battle, dead or the repel timer window opened
+-- in each of these cases, we need to abort walking on the current path to deal with those things.
+-- @self :: Game
+-- @pathDestination :: Location
+-- @returns :: Bool
+function Game:shouldStopTakingPath(pathDestination)
+  local loc = self:getLocation()
+  return loc:equals(pathDestination) or self.inBattle or self.repelTimerWindowOpen or self.dead -- or self.mapChanged
+end
+
+-- @self :: Game
+-- @s :: Script
+-- @returns :: TODO what should this function return?
 function Game:interpretScript(s)
-  -- log.debug("Script: " .. tostring(s))
+ --  log.debug("Script: " .. tostring(s))
   -- TODO: im not sure if these first two cases are really needed, but they dont hurt.
   if     self.inBattle then self:executeBattle()
   -- TODO: consider casting repel right here instead of just closing window
@@ -230,9 +254,9 @@ function Game:interpretScript(s)
         return self:interpretScript(branch)
     elseif s:is_a(Consecutive)
       then for i,branch in pairs(s.scripts) do self:interpretScript(branch) end
-    elseif s:is_a(PressButtonScript) then pressButton(s.button.name, s.waitFrames)
-    elseif s:is_a(HoldButtonScript) then holdButton(s.button.name, s.duration)
-    elseif s:is_a(HoldButtonUntilScript) then holdButtonUntil(s.button.name, tostring(s.condition), function ()
+    elseif s:is_a(PressButtonScript) then pressButton(s.button, s.waitFrames)
+    elseif s:is_a(HoldButtonScript) then holdButton(s.button, s.duration)
+    elseif s:is_a(HoldButtonUntilScript) then holdButtonUntil(s.button, tostring(s.condition), function ()
       -- log.debug("HoldButtonUntilScript calling evaluateCondition with", s.condition)
       return self:evaluateCondition(s.condition)
     end)
@@ -386,6 +410,26 @@ function Game:saveUnlockedDoor(loc)
   table.insert(self.unlockedDoors, loc)
 end
 
+MovementCommandDir = enum.new("MovementCommand Direction", {
+  "LEFT",
+  "RIGHT",
+  "UP",
+  "DOWN",
+  "STAIRS",
+  "DOOR",
+})
+
+-- @dir :: MovementCommandDir
+-- @returns :: Maybe Controller.Button (which is really just a String)
+function movementCommandDirToButton(dir)
+  if     dir == MovementCommandDir.LEFT  then return Just(Button.LEFT)
+  elseif dir == MovementCommandDir.RIGHT then return Just(Button.RIGHT)
+  elseif dir == MovementCommandDir.UP    then return Just(Button.UP)
+  elseif dir == MovementCommandDir.DOWN  then return Just(Button.DOWN)
+  else return Nothing
+  end
+end
+
 MovementCommand = class(function(a,direction,from,to)
   a.direction = direction
   a.from = from
@@ -403,14 +447,13 @@ function Game:convertPathToCommands(pathIn, maps)
     local res = {}
 
     function move(next)
-      if     p2.dir == NeighborDir.STAIRS then return MovementCommand("Stairs", p1, next)
-      elseif p2.dir == NeighborDir.LEFT   then return MovementCommand(LEFT, p1, next)
-      elseif p2.dir == NeighborDir.RIGHT  then return MovementCommand(RIGHT, p1, next)
-      elseif p2.dir == NeighborDir.UP     then return MovementCommand(UP, p1, next)
-      elseif p2.dir == NeighborDir.DOWN   then return MovementCommand(DOWN, p1, next)
+      if     p2.dir == NeighborDir.STAIRS then return MovementCommand(MovementCommandDir.STAIRS, p1, next)
+      elseif p2.dir == NeighborDir.LEFT   then return MovementCommand(MovementCommandDir.LEFT, p1, next)
+      elseif p2.dir == NeighborDir.RIGHT  then return MovementCommand(MovementCommandDir.RIGHT, p1, next)
+      elseif p2.dir == NeighborDir.UP     then return MovementCommand(MovementCommandDir.UP, p1, next)
+      elseif p2.dir == NeighborDir.DOWN   then return MovementCommand(MovementCommandDir.DOWN, p1, next)
       else
-        log.debug("i have no idea what is going on with the neighbor type", p1, p2, next)
-        error("i have no idea what is going on with the neighbor type", p1, p2, next)
+        log.err("i have no idea what is going on with the neighbor type", p1, p2, next)
       end
     end
 
@@ -421,8 +464,9 @@ function Game:convertPathToCommands(pathIn, maps)
     end
 
     if nextTileIsDoor() then
+      -- TODO: this p1 here is so confusing. it does seem to work, but wtf...
       table.insert(res,move(p1))
-      table.insert(res, MovementCommand("Door", p2, p2))
+      table.insert(res, MovementCommand(MovementCommandDir.DOOR, p2, p2))
       table.insert(res,move(p2))
     else
       table.insert(res,move(p2))
@@ -440,13 +484,18 @@ function Game:convertPathToCommands(pathIn, maps)
   local commands = list.join(list.zipWith(directionFromP1ToP2, path, list.drop(1, path)))
 
   return list.foldLeft(commands, {}, function(acc, c)
-    if c.direction == "Stairs" then table.insert(acc, c)
+    if c.direction == MovementCommandDir.STAIRS then table.insert(acc, c)
     elseif #(acc) > 0 and acc[#(acc)]:sameDirection(c) then acc[#(acc)].to = c.to
     else table.insert(acc, c)
     end
     return acc
   end)
 end
+
+-- in grindOrExplore, current location is:	<Point mapId:23, x:10, y:9>
+-- not on the overworld, jumping to self:exploreStaticMap()
+-- Waiting until: on static map for up to 240 frames.
+-- Waited until: on static map waited exactly 0 frames, and condition is: true
 
 function Game:stateMachine()
   -- log.debug(".")
@@ -492,16 +541,12 @@ function Game:dealWithAnyImportantLocations()
   for _,v in pairs(achievableGoals) do log.debug(v) end
   log.debug("=== end achievableGoals ===")
 
-  -- TODO: if there are multiple new locations, we should pick the closest one.
-  local seeSomethingNew = #achievableGoals > 0
-
-  if seeSomethingNew then
-    log.debug(achievableGoals[1])
-    local newImportantLoc = achievableGoals[1].v.location
+  return list.toMaybe(achievableGoals):map(function(goal)
+    log.debug("goal", goal)
+    local newImportantLoc = goal.v.location
     log.debug("Headed towards new important location for achievable goal : ", newImportantLoc)
     return newImportantLoc
-  else return nil
-  end
+  end)
 end
 
 function Game:grindOrExplore()
@@ -519,8 +564,8 @@ function Game:grindOrExplore()
     log.debug("no exploreDest, on the overworld.")
     local newImportantLoc = self:dealWithAnyImportantLocations()
     log.debug("newImportantLoc", newImportantLoc)
-    if newImportantLoc ~= nil then
-      self:chooseNewDestinationDirectly(newImportantLoc)
+    if newImportantLoc ~= Nothing then
+      self:chooseNewDestinationDirectly(newImportantLoc.value)
     else
       local pd = self:readPlayerData()
       local grind = getGrindInfo(pd, self)
@@ -575,11 +620,19 @@ end
 
 function Game:exploreStaticMap()
   waitUntil(function() return self:onStaticMap() end, 240, "on static map")
-  if self.mapChanged then self:dealWithMapChange() end
+  -- zzz this thing is causing problems i tihnk
+  if self.mapChanged then
+    log.debug("---- going to deal with map change ----")
+    self:dealWithMapChange()
+  end
   local loc = self:getLocation()
   local script = self.scripts.MapScripts[loc.mapId]
 
-  if script ~= nil then self:interpretScript(script)
+  log.debug("in exploreStaticMap, loc is", loc)
+
+  if script ~= nil then
+    log.debug("script is not nil, so interpreting it")
+    self:interpretScript(script)
   else
     if (emu.framecount() % 60 == 0) then
       log.debug("i don't yet know how to explore this map: " .. tostring(loc), ", "
@@ -614,8 +667,7 @@ function Game:chooseNewDestination(tileSelectionStrat)
   local nrBorderTiles = #borderOfKnownWorld
   -- TODO: this is an error case that i might need to deal with somehow.
   if nrBorderTiles == 0 then
-    log.debug("NO BORDER TILES!")
-    error("NO BORDER TILES!")
+    log.err("NO BORDER TILES!")
     return
   end
 
@@ -1094,7 +1146,7 @@ end
 -- @returns (Maybe HealingLocationWithPath)
 function Game:closestHealingLocation()
   local res = self:getPathsForTable3D(self:getLocation(), self:healingLocations())[1]
-  return toMaybe(res)
+  return maybe.toMaybe(res)
 end
 
 function Game:importantLocationAt(p)

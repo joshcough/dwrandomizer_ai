@@ -1,11 +1,41 @@
-A = "A"
-B = "B"
-START = "start"
+enum = require("enum")
+require "helpers"
+
+Button = enum.new("Buttons", {
+  "UP",
+  "DOWN",
+  "LEFT",
+  "RIGHT",
+  "A",
+  "B",
+  "SELECT",
+  "START",
+})
+
+A      = "A"
+B      = "B"
+START  = "start"
 SELECT = "select"
-UP = "up"
-DOWN = "down"
-LEFT = "left"
-RIGHT = "right"
+UP     = "up"
+DOWN   = "down"
+LEFT   = "left"
+RIGHT  = "right"
+
+-- Converts a Button to the actual String value needed by fceux engine
+-- @button :: Button
+-- @returns :: String
+function convertButton(button)
+  if     button == Button.UP     then return UP
+  elseif button == Button.DOWN   then return DOWN
+  elseif button == Button.LEFT   then return LEFT
+  elseif button == Button.RIGHT  then return RIGHT
+  elseif button == Button.A      then return A
+  elseif button == Button.B      then return B
+  elseif button == Button.SELECT then return SELECT
+  elseif button == Button.START  then return START
+  else log.err("Argument was not a button!", tostring(button))
+  end
+end
 
 emptyInputs = {
   [START] = nil,
@@ -41,9 +71,9 @@ function clearController()
 end
 
 function pressButton (button, wait)
-  -- log.debug("Pressing " .. button .. " and waiting .. " .. tostring(wait))
+  -- log.debug("Pressing " .. tostring(button) .. " and waiting .. " .. tostring(wait))
   e = table.shallow_copy(emptyInputs)
-  e[button] = true
+  e[convertButton(button)] = true
   joypad.write(1, e)
   waitFrames(wait)
   clearController()
@@ -59,14 +89,14 @@ function holdButton (button, frames)
 end
 
 function holdButtonUntil(button, msg, conditionFunction)
-  -- log.debug("Holding " .. button .. " until " .. msg)
+  -- log.debug("Holding " .. tostring(button) .. " until " .. msg)
   e = table.shallow_copy(emptyInputs)
-  e[button] = true
+  e[convertButton(button)] = true
   while not conditionFunction() do
     joypad.write(1, e)
     emu.frameadvance()
   end
-  -- log.debug("Done holding " .. button .. " until " .. msg)
+  -- log.debug("Done holding " .. tostring(button) .. " until " .. msg)
   clearController()
   emu.frameadvance()
 end
@@ -82,28 +112,28 @@ function holdButtonUntilOrMaxFrames(button, msg, conditionFunction, maxFrames)
   end
 end
 
-function pressStart (wait) pressButton(START, wait) end
-function pressSelect (wait) pressButton(SELECT, wait) end
-function pressA (wait) pressButton(A, wait) end
-function pressB (wait) pressButton(B, wait) end
-function pressLeft (wait) pressButton(LEFT, wait) end
-function pressRight (wait) pressButton(RIGHT, wait) end
-function pressUp (wait) pressButton(UP, wait) end
-function pressDown (wait) pressButton(DOWN, wait) end
+function pressStart (wait) pressButton(Button.START, wait) end
+function pressSelect (wait) pressButton(Button.SELECT, wait) end
+function pressA (wait) pressButton(Button.A, wait) end
+function pressB (wait) pressButton(Button.B, wait) end
+function pressLeft (wait) pressButton(Button.LEFT, wait) end
+function pressRight (wait) pressButton(Button.RIGHT, wait) end
+function pressUp (wait) pressButton(Button.UP, wait) end
+function pressDown (wait) pressButton(Button.DOWN, wait) end
 
-function holdStart (frames) holdButton(START, frames) end
-function holdStartUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(START, msg, f, maxFrames) end
-function holdSelect (frames) holdButton(SELECT, frames) end
-function holdSelectUntil (f, maxFrames) holdButtonUntilOrMaxFrames(SELECT, msg, f, maxFrames) end
-function holdA (frames) holdButton(A, frames) end
-function holdAUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(A, msg, f, maxFrames) end
-function holdB (frames) holdButton(B, frames) end
-function holdBUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(B, msg, f, maxFrames) end
-function holdLeft (frames) holdButton(LEFT, frames) end
-function holdLeftUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(LEFT, msg, f, maxFrames) end
-function holdRight (frames) holdButton(RIGHT, frames) end
-function holdRightUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(RIGHT, msg, f, maxFrames) end
-function holdUp (frames) holdButton(UP, frames) end
-function holdUpUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(UP, msg, f, maxFrames) end
-function holdDown (frames) holdButton(DOWN, frames) end
-function holdDownUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(DOWN, msg, f, maxFrames) end
+function holdStart (frames) holdButton(Button.START, frames) end
+function holdStartUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(Button.START, msg, f, maxFrames) end
+function holdSelect (frames) holdButton(Button.SELECT, frames) end
+function holdSelectUntil (f, maxFrames) holdButtonUntilOrMaxFrames(Button.SELECT, msg, f, maxFrames) end
+function holdA (frames) holdButton(Button.A, frames) end
+function holdAUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(Button.A, msg, f, maxFrames) end
+function holdB (frames) holdButton(Button.B, frames) end
+function holdBUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(Button.B, msg, f, maxFrames) end
+function holdLeft (frames) holdButton(Button.LEFT, frames) end
+function holdLeftUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(Button.LEFT, msg, f, maxFrames) end
+function holdRight (frames) holdButton(Button.RIGHT, frames) end
+function holdRightUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(Button.RIGHT, msg, f, maxFrames) end
+function holdUp (frames) holdButton(Button.UP, frames) end
+function holdUpUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(Button.UP, msg, f, maxFrames) end
+function holdDown (frames) holdButton(Button.DOWN, frames) end
+function holdDownUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(Button.DOWN, msg, f, maxFrames) end
