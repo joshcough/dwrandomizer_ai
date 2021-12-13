@@ -142,6 +142,38 @@ ImportantLocationType = enum.new("ImportantLocationType", {
   "BASEMENT"
 })
 
+-- TODO: Here we have a goal that we can't just walk to. similar to how we can't just walk to Charlock
+-- in this particular case, we need to walk to the static map and then probably interpret that script
+-- or maybe the goal itself has a script! one of the best ideas ever really.
+
+-- Goals we can't just walk to:
+-- * staff of rain blocked by old man
+-- * rainbow drop blocked by jerk
+-- * charlock blocked by rainbow drop
+
+-- additionally: this Goal has prerequisites!
+-- here we are in the Northern Shrine (mapId:13) where we must trade the silver harp for the staff of rain
+-- so the Silver Harp goal must be a prerequisite for the Staff of Rain goal
+
+-- All goals with prerequisites:
+-- * staff of rain requires silver harp
+-- * jerk cave requires all three key items (staff, stones, token) to get rainbow drop
+-- * charlock requires rainbow drop
+-- * coordinates requires either talking to old man or Gwaelin's Love
+-- * Gwaelin's Love requires the princess
+-- * we could also make it so that each chest has a prerequisite of finding the map that its in,
+--   but im not sure that makes sense - we dont have ImportantLocation_Town, ImportantLocation_Dungeon.
+--   instead, we can keep using the seenByPlayer stuff probably.
+
+-- goal	<ObjectWithPath v: <ImportantLocation location:<Point mapId:13, x:3, y:4>,
+-- type:<ImportantLocationType.CHEST: 5>, seenByPlayer:true, completed:false>,
+-- path:<Path  src: <Point mapId:1, x:58, y:106>, dest:<Point mapId:13, x:3, y:4>, weight:17,
+-- path: {<Point mapId:1, x:58, y:106>,
+-- <Neighbor mapId:1, x:59, y:106, dir: RIGHT>,
+--- ...
+-- <Neighbor mapId:13, x:4, y:4, dir: LEFT>,
+-- <Neighbor mapId:13, x:3, y:4, dir: LEFT>}>>
+
 ImportantLocation = class(function(a, location, type)
   a.location = location
   a.type = type
@@ -166,7 +198,7 @@ ImportantLocation_Chest = class(ImportantLocation, function(a, chest)
   a.chest = chest
 end)
 
--- TODO: these three seem like they dont' really add anything...could possibly just use the ImportantLocation constructor
+-- TODO: these three seem like they don't really add anything...could possibly just use the ImportantLocation constructor
 -- swamp cave spike, hauksness spike, charlock spike
 ImportantLocation_Spike = class(ImportantLocation, function(a, mapId, x, y)
   ImportantLocation.init(a, Point(mapId, x, y), ImportantLocationType.SPIKE)

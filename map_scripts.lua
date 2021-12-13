@@ -577,11 +577,11 @@ Scripts = class(function(a,entrances)
           OpenChestAt(Garinham, 8, 5),
           OpenChestAt(Garinham, 9, 5),
           Goto(Garinham, 19, 0),
-          TakeStairs
+          TakeStairs,
+          -- TODO: might need something like "explore static map" here.
         }),
-        DoNothing
-      ),
-      GotoOverworld(Garinham)
+        GotoOverworld(Garinham)
+      )
     })
 
   leaveTantegalOnFoot =
