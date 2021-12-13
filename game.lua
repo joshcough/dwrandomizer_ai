@@ -163,7 +163,7 @@ function Game:followPath(path)
         -- this must be a Just because of the two cases above
         -- this would be nicer if we had pattern matching, but, we dont.
         local button = movementCommandDirToButton(c.direction).value
-        holdButtonUntil(button, "we are at " .. tostring(c.to), function ()
+        controller.holdButtonUntil(button, "we are at " .. tostring(c.to), function ()
           self:updateOverworld(startingLoc)
           return self:shouldStopTakingPath(c.to)
         end)
@@ -253,16 +253,16 @@ function Game:interpretScript(s)
         return self:interpretScript(branch)
     elseif s:is_a(Consecutive)
       then for i,branch in pairs(s.scripts) do self:interpretScript(branch) end
-    elseif s:is_a(PressButtonScript) then pressButton(s.button, s.waitFrames)
-    elseif s:is_a(HoldButtonScript) then holdButton(s.button, s.duration)
-    elseif s:is_a(HoldButtonUntilScript) then holdButtonUntil(s.button, tostring(s.condition), function ()
+    elseif s:is_a(PressButtonScript) then controller.pressButton(s.button, s.waitFrames)
+    elseif s:is_a(HoldButtonScript) then controller.holdButton(s.button, s.duration)
+    elseif s:is_a(HoldButtonUntilScript) then controller.holdButtonUntil(s.button, tostring(s.condition), function ()
       -- log.debug("HoldButtonUntilScript calling evaluateCondition with", s.condition)
       return self:evaluateCondition(s.condition)
     end)
-    elseif s:is_a(WaitFrames) then waitFrames(s.duration)
+    elseif s:is_a(WaitFrames) then controller.waitFrames(s.duration)
     elseif s:is_a(WaitUntil) then
       -- log.debug("WaitUntil calling evaluateCondition with", s.condition)
-      waitUntil(function() return self:evaluateCondition(s.condition) end, s.duration, s.msg)
+      controller.waitUntil(function() return self:evaluateCondition(s.condition) end, s.duration, s.msg)
     elseif s:is_a(DebugScript) then log.debug(s.name)
     elseif s:is_a(NTimes) then
       local n = self:interpretScript(s.n)
@@ -324,8 +324,8 @@ end
 -- TODO: could move some of this into map_scripts
 function Game:closeRepelTimerWindow()
   if self.repelTimerWindowOpen then
-    waitFrames(30)
-    pressB(2)
+    controller.waitFrames(30)
+    controller.pressB(2)
     self.repelTimerWindowOpen = false
   end
 end
@@ -643,7 +643,7 @@ function Game:explore()
 end
 
 function Game:exploreStaticMap()
-  waitUntil(function() return self:onStaticMap() end, 240, "on static map")
+  controller.waitUntil(function() return self:onStaticMap() end, 240, "on static map")
   -- zzz this thing is causing problems i tihnk
   if self.mapChanged then
     log.debug("---- going to deal with map change ----")
@@ -743,7 +743,7 @@ function Game:executeBattle()
   self.enemy:executeBattle(self)
 
   if self.leveledUp then
-    holdA(180)
+    controller.holdA(180)
     self.leveledUp = false
   end
 
@@ -792,10 +792,10 @@ end
 -- TODO: this is broken
 function Game:executeDragonLordBattle()
 --   function battleEnded () return not self.inBattle end
---   waitUntil(battleEnded, 120)
---   holdAUntil(battleEnded, 240)
---   waitUntil(battleEnded, 60)
---   pressA(10)
+--   controller.waitUntil(battleEnded, 120)
+--   controller.holdAUntil(battleEnded, 240)
+--   controller.waitUntil(battleEnded, 60)
+--   controller.pressA(10)
 --   self.inBattle = false
 end
 
@@ -827,8 +827,8 @@ function Game:onMapChange()
 end
 
 function Game:dealWithDeath()
-  waitFrames(120)
-  holdAUntil(function () return self:getMapId() == 5 end, "map is throne room", 240)
+  controller.waitFrames(120)
+  controller.holdAUntil(function () return self:getMapId() == 5 end, "map is throne room", 240)
   self.dead = false
 end
 
@@ -941,12 +941,12 @@ function Game:useItem(item)
   else
     self:interpretScript(self.scripts.OpenItemMenu)
     -- TODO: if it is faster to press UP, we should do that
-    for i = 1, itemIndex-1 do pressDown(2) end
+    for i = 1, itemIndex-1 do controller.pressDown(2) end
     -- wait 2 seconds for the item to be done being used.
     -- TODO: do all items take the same length to use?
     -- or is it possible to get out sooner than 2 seconds?
-    pressA(120)
-    pressB(2)
+    controller.pressA(120)
+    controller.pressB(2)
   end
 end
 
@@ -964,12 +964,12 @@ function Game:cast(spell)
   else
     self:interpretScript(self.scripts.OpenSpellMenu)
     -- TODO: if it is faster to press UP, we should do that
-    for i = 1, spellIndex-1 do pressDown(2) end
+    for i = 1, spellIndex-1 do controller.pressDown(2) end
     -- wait 2 seconds for the spell to be done casting.
     -- TODO: do all spells take the same length to cast?
     -- or is it possible to get out sooner than 2 seconds?
-    pressA(120)
-    pressB(2)
+    controller.pressA(120)
+    controller.pressB(2)
   end
 end
 
@@ -1029,8 +1029,8 @@ function Game:talkToShopKeeper()
 
   if upgrades:isEmpty() then
     log.debug("No upgrades here.")
-    pressB(20)
-    pressB(2)
+    controller.pressB(20)
+    controller.pressB(2)
   else
     self:buyUpgrades(shop)
   end
@@ -1052,7 +1052,7 @@ function Game:buyUpgrades(shop)
   if(bestArmorToBuy ~= nil) then
     if(bestWeaponToBuy ~= nil) then
       -- log.debug("i bought a weapon, and am trying to say to buy armor")
-      pressA(60) -- we already bought something, and we want to buy more
+      controller.pressA(60) -- we already bought something, and we want to buy more
     end
     log.debug("buying armor: ", tostring(bestArmorToBuy))
     self:buyItem(shop, bestArmorToBuy.id, pd.equipment.armor ~= nil)
@@ -1062,7 +1062,7 @@ function Game:buyUpgrades(shop)
   if(bestShieldToBuy ~= nil) then
     if(bestWeaponToBuy ~= nil or bestArmorToBuy ~= nil) then
       -- log.debug("i bought a weapon or armor, and am trying to say to buy a shield")
-      pressA(60) -- we already bought something, and we want to buy more
+      controller.pressA(60) -- we already bought something, and we want to buy more
     end
     log.debug("buying shield: ", tostring(bestShieldToBuy))
     self:buyItem(shop, bestShieldToBuy.id, pd.equipment.shield ~= nil)
@@ -1070,9 +1070,9 @@ function Game:buyUpgrades(shop)
 
   -- we bought something, but finally we want to say no to buying anything else
   if (bestWeaponToBuy ~= nil or bestArmorToBuy ~= nil or bestShieldToBuy ~= nil) then
-    pressDown(30)
-    pressA(30)
-    pressB(2)
+    controller.pressDown(30)
+    controller.pressA(30)
+    controller.pressB(2)
   end
 
 end
@@ -1087,15 +1087,15 @@ function Game:buyItem(shop, itemId, sellExisting)
   -- it will need to take a boolean argument `sellExisting`
   -- and we will need to deal with it being like
   -- just a regular boolean or a `Value(bool)` or soemthing like that
-  for i = 1, itemIndex-1 do pressDown(10) end
-  pressA(30)
+  for i = 1, itemIndex-1 do controller.pressDown(10) end
+  controller.pressA(30)
 
   if sellExisting then
-    pressA(30)
-    pressA(30)
+    controller.pressA(30)
+    controller.pressA(30)
   end
 
-  pressA(60)
+  controller.pressA(60)
 end
 
 -- discover a tile on the overworld
@@ -1206,7 +1206,7 @@ function Game:completeImportantLocationHere(wait)
   local importantLocHere = self:importantLocationAt(loc)
   if importantLocHere ~= nil
   then
-    if wait then waitFrames(60) end
+    if wait then controller.waitFrames(60) end
     importantLocHere.completed = true
     log.debug("setting completed to true", importantLocHere)
     return true

@@ -201,7 +201,7 @@ function Enemy:executeBattle(game)
       or   not game.inBattle -- the enemy ran
   end
 
-  waitUntil(battleStarted, 120, "battle has started")
+  controller.waitUntil(battleStarted, 120, "battle has started")
 
   local enemyCanBeDefeated =
     self:canBeDefeatedByPlayer(game:readPlayerData()) or self.id == MetalSlimeId
@@ -209,13 +209,13 @@ function Enemy:executeBattle(game)
   log.debug("canBeDefeatedByPlayer", enemyCanBeDefeated, "oneRoundDamageRange", self:oneRoundDamageRange(game:readPlayerData()))
 
   if enemyCanBeDefeated then
-    holdAUntil(battleEnded, "battle has ended")
-    waitFrames(180)
-    pressA(10)
+    controller.holdAUntil(battleEnded, "battle has ended")
+    controller.waitFrames(180)
+    controller.pressA(10)
   else
     while not game.runSuccess and not game.dead do
-      pressDown(2)
-      pressA(60)
+      controller.pressDown(2)
+      controller.pressA(60)
     end
   end
 

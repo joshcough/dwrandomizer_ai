@@ -1,7 +1,7 @@
 enum = require("enum")
 require "helpers"
 
-Button = enum.new("Buttons", {
+Button = enum.new("Button", {
   "UP",
   "DOWN",
   "LEFT",
@@ -47,12 +47,14 @@ emptyInputs = {
   [RIGHT] = nil,
 }
 
-function waitFrames (n)
+controller = {}
+
+function controller.waitFrames (n)
   for i = 1,n do emu.frameadvance() end
 end
 
 -- waits either maxFrames, or until f yields true
-function waitUntil (f, maxFrames, msg)
+function controller.waitUntil (f, maxFrames, msg)
   -- log.debug("Waiting until: " .. msg .. " for up to " .. maxFrames .. " frames.")
   local nrFramesWaited = 0
   for i = 1,maxFrames do
@@ -70,25 +72,25 @@ function clearController()
   joypad.write(1, emptyInputs)
 end
 
-function pressButton (button, wait)
+function controller.pressButton (button, wait)
   -- log.debug("Pressing " .. tostring(button) .. " and waiting .. " .. tostring(wait))
   e = table.shallow_copy(emptyInputs)
   e[convertButton(button)] = true
   joypad.write(1, e)
-  waitFrames(wait)
+  controller.waitFrames(wait)
   clearController()
-  waitFrames(1)
+  controller.waitFrames(1)
 end
 
-function holdButton (button, frames)
+function controller.holdButton (button, frames)
   local nrFrames = 0
-  holdButtonUntil(button, "frame count is: " .. frames, function()
+  controller.holdButtonUntil(button, "frame count is: " .. frames, function()
     nrFrames = nrFrames + 1
     return nrFrames >= frames
   end)
 end
 
-function holdButtonUntil(button, msg, conditionFunction)
+function controller.holdButtonUntil(button, msg, conditionFunction)
   -- log.debug("Holding " .. tostring(button) .. " until " .. msg)
   e = table.shallow_copy(emptyInputs)
   e[convertButton(button)] = true
@@ -101,39 +103,39 @@ function holdButtonUntil(button, msg, conditionFunction)
   emu.frameadvance()
 end
 
-function holdButtonUntilOrMaxFrames(button, msg, conditionFunction, maxFrames)
-  if maxFrames == nil then return holdButtonUntil(button, msg, conditionFunction)
+function controller.holdButtonUntilOrMaxFrames(button, msg, conditionFunction, maxFrames)
+  if maxFrames == nil then return controller.holdButtonUntil(button, msg, conditionFunction)
   else
     local nrFrames = 0
-    holdButtonUntil(button, msg .. " or frame count is: " .. maxFrames, function()
+    controller.holdButtonUntil(button, msg .. " or frame count is: " .. maxFrames, function()
       nrFrames = nrFrames + 1
       return (nrFrames >= maxFrames) or conditionFunction()
     end)
   end
 end
 
-function pressStart (wait) pressButton(Button.START, wait) end
-function pressSelect (wait) pressButton(Button.SELECT, wait) end
-function pressA (wait) pressButton(Button.A, wait) end
-function pressB (wait) pressButton(Button.B, wait) end
-function pressLeft (wait) pressButton(Button.LEFT, wait) end
-function pressRight (wait) pressButton(Button.RIGHT, wait) end
-function pressUp (wait) pressButton(Button.UP, wait) end
-function pressDown (wait) pressButton(Button.DOWN, wait) end
+function controller.pressStart (wait) controller.pressButton(Button.START, wait) end
+function controller.pressSelect (wait) controller.pressButton(Button.SELECT, wait) end
+function controller.pressA (wait) controller.pressButton(Button.A, wait) end
+function controller.pressB (wait) controller.pressButton(Button.B, wait) end
+function controller.pressLeft (wait) controller.pressButton(Button.LEFT, wait) end
+function controller.pressRight (wait) controller.pressButton(Button.RIGHT, wait) end
+function controller.pressUp (wait) controller.pressButton(Button.UP, wait) end
+function controller.pressDown (wait) controller.pressButton(Button.DOWN, wait) end
 
-function holdStart (frames) holdButton(Button.START, frames) end
-function holdStartUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(Button.START, msg, f, maxFrames) end
-function holdSelect (frames) holdButton(Button.SELECT, frames) end
-function holdSelectUntil (f, maxFrames) holdButtonUntilOrMaxFrames(Button.SELECT, msg, f, maxFrames) end
-function holdA (frames) holdButton(Button.A, frames) end
-function holdAUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(Button.A, msg, f, maxFrames) end
-function holdB (frames) holdButton(Button.B, frames) end
-function holdBUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(Button.B, msg, f, maxFrames) end
-function holdLeft (frames) holdButton(Button.LEFT, frames) end
-function holdLeftUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(Button.LEFT, msg, f, maxFrames) end
-function holdRight (frames) holdButton(Button.RIGHT, frames) end
-function holdRightUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(Button.RIGHT, msg, f, maxFrames) end
-function holdUp (frames) holdButton(Button.UP, frames) end
-function holdUpUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(Button.UP, msg, f, maxFrames) end
-function holdDown (frames) holdButton(Button.DOWN, frames) end
-function holdDownUntil (f, msg, maxFrames) holdButtonUntilOrMaxFrames(Button.DOWN, msg, f, maxFrames) end
+function controller.holdStart (frames) controller.holdButton(Button.START, frames) end
+function controller.holdStartUntil (f, msg, maxFrames) controller.holdButtonUntilOrMaxFrames(Button.START, msg, f, maxFrames) end
+function controller.holdSelect (frames) controller.holdButton(Button.SELECT, frames) end
+function controller.holdSelectUntil (f, maxFrames) controller.holdButtonUntilOrMaxFrames(Button.SELECT, msg, f, maxFrames) end
+function controller.holdA (frames) controller.holdButton(Button.A, frames) end
+function controller.holdAUntil (f, msg, maxFrames) controller.holdButtonUntilOrMaxFrames(Button.A, msg, f, maxFrames) end
+function controller.holdB (frames) controller.holdButton(Button.B, frames) end
+function controller.holdBUntil (f, msg, maxFrames) controller.holdButtonUntilOrMaxFrames(Button.B, msg, f, maxFrames) end
+function controller.holdLeft (frames) controller.holdButton(Button.LEFT, frames) end
+function controller.holdLeftUntil (f, msg, maxFrames) controller.holdButtonUntilOrMaxFrames(Button.LEFT, msg, f, maxFrames) end
+function controller.holdRight (frames) controller.holdButton(Button.RIGHT, frames) end
+function controller.holdRightUntil (f, msg, maxFrames) controller.holdButtonUntilOrMaxFrames(Button.RIGHT, msg, f, maxFrames) end
+function controller.holdUp (frames) controller.holdButton(Button.UP, frames) end
+function controller.holdUpUntil (f, msg, maxFrames) controller.holdButtonUntilOrMaxFrames(Button.UP, msg, f, maxFrames) end
+function controller.holdDown (frames) controller.holdButton(Button.DOWN, frames) end
+function controller.holdDownUntil (f, msg, maxFrames) controller.holdButtonUntilOrMaxFrames(Button.DOWN, msg, f, maxFrames) end
