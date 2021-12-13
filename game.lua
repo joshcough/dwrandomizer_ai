@@ -19,7 +19,7 @@ Game = class(function(a, memory, warps, graph, overworld, staticMaps)
   a.overworld = overworld
   a.staticMaps = staticMaps
   local chests = memory:readChests()
-  a.importantLocations = buildAllImportantLocations(staticMaps, chests)
+  a.goals = buildAllGoals(staticMaps, chests)
 
   -- events/signals that happen in game
   a.inBattle = false
@@ -351,7 +351,7 @@ end
 
 function Game:markChestOpened ()
   self.chests:openChestAt(self:getLocation())
-  self:completeImportantLocationHere(false)
+  self:completeGoalHere(false)
 end
 
 function Game:searchGroundScript ()
@@ -555,13 +555,13 @@ function Game:atExploreDest()
   return self:getExploreDest():equals(self:getLocation())
 end
 
-function Game:dealWithAnyImportantLocations()
-  log.debug("in dealWithAnyImportantLocations")
+function Game:dealWithAnyGoals()
+  log.debug("in dealWithAnyGoals")
 
-  self.importantLocations:debug("all goals")
+  self.goals:debug("all goals")
 
   log.debug("=== achievableGoals ===")
-  local achievableGoals = self:seenButNotCompletedImportantLocations(self:getLocation())
+  local achievableGoals = self:seenButNotCompletedGoals(self:getLocation())
   for _,v in pairs(achievableGoals) do log.debug(v) end
   log.debug("=== end achievableGoals ===")
 
@@ -586,7 +586,7 @@ function Game:grindOrExplore()
     then self:reachedDestination()
   elseif self:getMapId() == OverWorldId then
     log.debug("no exploreDest, on the overworld.")
-    local newImportantLoc = self:dealWithAnyImportantLocations()
+    local newImportantLoc = self:dealWithAnyGoals()
     log.debug("newImportantLoc", newImportantLoc)
     if newImportantLoc ~= Nothing then
       self:chooseNewDestinationDirectly(newImportantLoc.value)
@@ -624,7 +624,7 @@ end
 
 function Game:reachedDestination()
   log.debug("We have reached our destination:" .. tostring(loc))
-  self:completeImportantLocationHere(true)
+  self:completeGoalHere(true)
   self:setExploreDest(nil)
 end
 
@@ -923,8 +923,8 @@ end
 --       but...sometimes we might just want to go to the important location, no?
 function Game:markMapsSeen(newMapId)
   if newMapId > OverWorldId then
-    local impLocs = self.staticMaps[newMapId]:childImportantLocations(self.importantLocations, self.staticMaps)
-    list.foreach(impLocs, function(impLoc) impLoc.seenByPlayer = true end)
+    local goals = self.staticMaps[newMapId]:childGoals(self.goals, self.staticMaps)
+    list.foreach(goals, function(goal) goal.seenByPlayer = true end)
   end
 end
 
@@ -1115,15 +1115,15 @@ function Game:discoverOverworldTile(x,y)
 
   -- then when exploring, we check for important locations that are seen by the player, but not completed
   -- if there are any, pick the closest one and go to it. finally when there, mark it as completed.
-  local newImportantLoc = self:importantLocationAt(Point(OverWorldId, x, y))
+  local newImportantLoc = self:goalAt(Point(OverWorldId, x, y))
   if newImportantLoc ~= nil then
     log.debug("Discovered " .. tostring(newImportantLoc.type) .. " at " .. tostring(newImportantLoc.location))
     newImportantLoc.seenByPlayer = true
 
-    if newImportantLoc.type == ImportantLocationType.TANTEGEL then
+    if newImportantLoc.type == GoalType.TANTEGEL then
       log.debug("I see Tantegel.")
       newImportantLoc.completed = true
-    elseif newImportantLoc.type == ImportantLocationType.CHARLOCK then
+    elseif newImportantLoc.type == GoalType.CHARLOCK then
       log.debug("I see Charlock!")
       -- TODO: JC 12/5/21 this is really weird now...
       -- i feel like we should have a function for dealing with important locs
@@ -1177,8 +1177,8 @@ function Game:closestHealingLocation()
   return list.toMaybe(self:getPathsForTable3D(self:getLocation(), self:healingLocations()))
 end
 
-function Game:importantLocationAt(p)
-  return self.importantLocations:lookup(p)
+function Game:goalAt(p)
+  return self.goals:lookup(p)
 end
 
 ObjectWithPath = class(function (a, v, path)
@@ -1190,20 +1190,20 @@ function ObjectWithPath:__tostring()
   return "<ObjectWithPath v: " .. tostring(self.v) .. ", path:" .. tostring(self.path) .. ">"
 end
 
--- Returns the ImportantLocations that we can reach, ordered by the shortest path to them
--- also returns the Path to get to the ImportantLocation.
+-- Returns the Goals that we can reach, ordered by the shortest path to them
+-- also returns the Path to get to the Goal.
 -- @currentLoc the current location of the player
 -- @returns [ObjectWithPath] ordered by distance (from currentLoc) ASC
-function Game:seenButNotCompletedImportantLocations(currentLoc)
-  -- @loc :: ImportantLocation
+function Game:seenButNotCompletedGoals(currentLoc)
+  -- @goal :: Goal
   -- @returns :: Bool
-  function goodLoc(loc) return loc.seenByPlayer and not loc.completed end
-  return self:getPathsForTable3D(currentLoc, self.importantLocations:filter(goodLoc))
+  function goodGoal(goal) return goal.seenByPlayer and not goal.completed end
+  return self:getPathsForTable3D(currentLoc, self.goals:filter(goodGoal))
 end
 
-function Game:completeImportantLocationHere(wait)
+function Game:completeGoalHere(wait)
   local loc = self:getLocation()
-  local importantLocHere = self:importantLocationAt(loc)
+  local importantLocHere = self:goalAt(loc)
   if importantLocHere ~= nil
   then
     if wait then controller.waitFrames(60) end
@@ -1219,7 +1219,7 @@ end
 -- @returns [ObjectWithPath a] ordered by distance (from currentLoc) ASC
 function Game:getPathsForTable3D(currentLoc, table3d)
 
-  -- @table3dAsList :: [ImportantLocation]
+  -- @table3dAsList :: [Goal]
   local table3dAsList = table3d:toList()
 
   -- @locs [Point]

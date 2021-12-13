@@ -131,7 +131,7 @@ end
 -- and the chests inside rimuldar and charlock
 -- but i think chests will just sorta get added automatically. or they should...
 
-ImportantLocationType = enum.new("ImportantLocationType", {
+GoalType = enum.new("GoalType", {
   "CHARLOCK",
   "TANTEGEL",
   "TOWN",
@@ -162,11 +162,11 @@ ImportantLocationType = enum.new("ImportantLocationType", {
 -- * coordinates requires either talking to old man or Gwaelin's Love
 -- * Gwaelin's Love requires the princess
 -- * we could also make it so that each chest has a prerequisite of finding the map that its in,
---   but im not sure that makes sense - we dont have ImportantLocation_Town, ImportantLocation_Dungeon.
+--   but im not sure that makes sense - we dont have Goal_Town, Goal_Dungeon.
 --   instead, we can keep using the seenByPlayer stuff probably.
 
--- goal	<ObjectWithPath v: <ImportantLocation location:<Point mapId:13, x:3, y:4>,
--- type:<ImportantLocationType.CHEST: 5>, seenByPlayer:true, completed:false>,
+-- goal	<ObjectWithPath v: <Goal location:<Point mapId:13, x:3, y:4>,
+-- type:<GoalType.CHEST: 5>, seenByPlayer:true, completed:false>,
 -- path:<Path  src: <Point mapId:1, x:58, y:106>, dest:<Point mapId:13, x:3, y:4>, weight:17,
 -- path: {<Point mapId:1, x:58, y:106>,
 -- <Neighbor mapId:1, x:59, y:106, dir: RIGHT>,
@@ -174,43 +174,43 @@ ImportantLocationType = enum.new("ImportantLocationType", {
 -- <Neighbor mapId:13, x:4, y:4, dir: LEFT>,
 -- <Neighbor mapId:13, x:3, y:4, dir: LEFT>}>>
 
-ImportantLocation = class(function(a, location, type)
+Goal = class(function(a, location, type)
   a.location = location
   a.type = type
   a.seenByPlayer = false
   a.completed = false
 end)
 
-function ImportantLocation:__tostring()
-  return "<ImportantLocation location:" .. tostring(self.location)
+function Goal:__tostring()
+  return "<Goal location:" .. tostring(self.location)
           .. ", type:" .. tostring(self.type)
           .. ", seenByPlayer:" .. tostring(self.seenByPlayer)
           .. ", completed:" .. tostring(self.completed) .. ">"
 end
 
-ImportantLocation_Overworld = class(ImportantLocation, function(a, entrance)
-  ImportantLocation.init(a, entrance.from, entrance.entranceType)
+Goal_Overworld = class(Goal, function(a, entrance)
+  Goal.init(a, entrance.from, entrance.entranceType)
   a.entrance = entrance
 end)
 
-ImportantLocation_Chest = class(ImportantLocation, function(a, chest)
-  ImportantLocation.init(a, chest.location, ImportantLocationType.CHEST)
+Goal_Chest = class(Goal, function(a, chest)
+  Goal.init(a, chest.location, GoalType.CHEST)
   a.chest = chest
 end)
 
--- TODO: these three seem like they don't really add anything...could possibly just use the ImportantLocation constructor
+-- TODO: these three seem like they don't really add anything...could possibly just use the Goal constructor
 -- swamp cave spike, hauksness spike, charlock spike
-ImportantLocation_Spike = class(ImportantLocation, function(a, mapId, x, y)
-  ImportantLocation.init(a, Point(mapId, x, y), ImportantLocationType.SPIKE)
+Goal_Spike = class(Goal, function(a, mapId, x, y)
+  Goal.init(a, Point(mapId, x, y), GoalType.SPIKE)
 end)
 
 -- the search spot / coordinates / token location or whatever tf.
-ImportantLocation_Coordinates = class(ImportantLocation, function(a, loc)
-  ImportantLocation.init(a, loc, ImportantLocationType.COORDINATES)
+Goal_Coordinates = class(Goal, function(a, loc)
+  Goal.init(a, loc, GoalType.COORDINATES)
 end)
 
-ImportantLocation_Basement = class(ImportantLocation, function(a, entrance)
-  ImportantLocation.init(a, entrance.from, ImportantLocationType.BASEMENT)
+Goal_Basement = class(Goal, function(a, entrance)
+  Goal.init(a, entrance.from, GoalType.BASEMENT)
   a.entrance = entrance
 end)
 
@@ -233,7 +233,7 @@ end)
 ]]
 
 -- TODO: this just builds the overworld locs, not the chests and others.
-function buildAllImportantLocations(staticMaps, chests)
+function buildAllGoals(staticMaps, chests)
   local res = Table3D()
 
   function addLocsFromEntrances()
@@ -242,14 +242,14 @@ function buildAllImportantLocations(staticMaps, chests)
         for _, entrance in pairs(m.entrances) do
           -- log.debug(mapId, entrance)
           -- TODO: why is this only on the overworld?
-          -- yes we have a ImportantLocation_Basement, but, is it actually needed?
-          -- why can't we just use something like ImportantLocation_Entrance
+          -- yes we have a Goal_Basement, but, is it actually needed?
+          -- why can't we just use something like Goal_Entrance
           if entrance.from.mapId == OverWorldId then
-            local loc = ImportantLocation_Overworld(entrance)
+            local loc = Goal_Overworld(entrance)
             log.debug("adding important overworld location: ", loc)
             res:insert(loc.location, loc)
           else
-            local loc = ImportantLocation_Basement(entrance)
+            local loc = Goal_Basement(entrance)
             log.debug("adding important basement location: ", loc)
             res:insert(loc.location, loc)
           end
@@ -260,7 +260,7 @@ function buildAllImportantLocations(staticMaps, chests)
 
   function addLocsFromChests()
     for i = 1, #chests.chests do
-      local loc = ImportantLocation_Chest(chests.chests[i])
+      local loc = Goal_Chest(chests.chests[i])
       log.debug("adding important location from chest: ", loc)
       res:insert(loc.location, loc)
     end

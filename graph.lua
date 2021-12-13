@@ -419,22 +419,22 @@ function mkStaticMapGraph (staticMap, haveKeys)
   return res
 end
 
-function NewGraph:printMap(mapId, game, printImportantLocations)
+function NewGraph:printMap(mapId, game, printGoals)
   local bottomRight = nil
   if mapId == OverWorldId
     then bottomRight = Point(mapId, 119, 119)
     else bottomRight = Point(mapId, game.staticMaps[mapId].width - 1, game.staticMaps[mapId].height - 1)
   end
 
-  return self:printSquare(Square(Point(mapId, 0, 0), bottomRight), game, printImportantLocations)
+  return self:printSquare(Square(Point(mapId, 0, 0), bottomRight), game, printGoals)
 end
 
 -- bounds :: Square
 -- game   :: Game
 -- TODO: i feel like this needs to be redone using the Neighbors direction
 -- instead of all this stuff: findNeighbor(x-1,y), ..., findNeighbor(x,y+1)
-function NewGraph:printSquare(square, game, printImportantLocations)
-  -- log.debug("printSquare", square, printImportantLocations)
+function NewGraph:printSquare(square, game, printGoals)
+  -- log.debug("printSquare", square, printGoals)
   local mapId = square.topLeft.mapId
 
   function printTile(x,y,neighbors)
@@ -458,7 +458,7 @@ function NewGraph:printSquare(square, game, printImportantLocations)
 
     if l ~= nil then res = res .. "←" else res = res .. " " end
     local tile = self:getTileAtPoint(Point(mapId, x, y), game)
-    if mapId == OverWorldId and printImportantLocations and tile.id >= 8 and tile.id <= 10 then
+    if mapId == OverWorldId and printGoals and tile.id >= 8 and tile.id <= 10 then
       -- log.debug("x", x, "y", y, "tileId", tile.id)
       if tile.id == 8  then res = res .. "T"  end -- town
       if tile.id == 9  then res = res .. "@"  end -- cave

@@ -368,7 +368,7 @@ function Chests:closeAll()
 end
 
 -- TODO: this currently isn't used and we are doing similar stuff with
--- the new ImportantLocations. so maybe this should just die?
+-- the new Goals. so maybe this should just die?
 -- but im going to keep it around for now... i have this feeling like it might be useful
 -- if im wrong then later we just kill it, nbd.
 -- -- get all the chests that we have seen
