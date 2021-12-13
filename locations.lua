@@ -232,11 +232,10 @@ end)
       a priority.
 ]]
 
--- TODO: this just builds the overworld locs, not the chests and others.
 function buildAllGoals(staticMaps, chests)
   local res = Table3D()
 
-  function addLocsFromEntrances()
+  function addGoalsFromEntrances()
     for mapId, m in pairs(staticMaps) do
       if m.entrances ~= nil then
         for _, entrance in pairs(m.entrances) do
@@ -245,29 +244,29 @@ function buildAllGoals(staticMaps, chests)
           -- yes we have a Goal_Basement, but, is it actually needed?
           -- why can't we just use something like Goal_Entrance
           if entrance.from.mapId == OverWorldId then
-            local loc = Goal_Overworld(entrance)
-            log.debug("adding important overworld location: ", loc)
+            local goal = Goal_Overworld(entrance)
+            log.debug("adding important overworld goal: ", goal)
             res:insert(loc.location, loc)
           else
-            local loc = Goal_Basement(entrance)
-            log.debug("adding important basement location: ", loc)
-            res:insert(loc.location, loc)
+            local goal = Goal_Basement(entrance)
+            log.debug("adding important basement goal: ", goal)
+            res:insert(goal.location, goal)
           end
         end
       end
     end
   end
 
-  function addLocsFromChests()
+  function addGoalsFromChests()
     for i = 1, #chests.chests do
-      local loc = Goal_Chest(chests.chests[i])
-      log.debug("adding important location from chest: ", loc)
-      res:insert(loc.location, loc)
+      local goal = Goal_Chest(chests.chests[i])
+      log.debug("adding goal from chest: ", goal)
+      res:insert(goal.location, goal)
     end
   end
 
-  addLocsFromEntrances()
-  addLocsFromChests()
+  addGoalsFromEntrances()
+  addGoalsFromChests()
 
   return res
 end
