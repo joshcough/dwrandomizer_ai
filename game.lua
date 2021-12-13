@@ -110,7 +110,7 @@ function Game:goTo(dest)
   local path = self:shortestPath(src, dest)
   -- log.debug("in goto, shortestPath: ", src, dest, path)
 
-  if path == nil or #path == 0 then
+  if path == Nothing then
     log.err("ERROR: Could not create path from: " .. tostring(src) .. " to: " .. tostring(dest))
   else
     local res = self:followPath(path)
@@ -141,18 +141,17 @@ end
 -- if we discover a new location while walking to a path
 -- we immediately want to abandon this path, and walk to the new path.
 function Game:followPath(path)
-  local commands = self:convertPathToCommands(path, self.staticMaps)
-  if commands == nil or #commands == 0 then
+  if path == Nothing then log.err("follow path was given an empty path (Nothing)") end
+
+  local commands = self:convertPathToCommands(path.value, self.staticMaps)
+
+  if commands.commands == nil or #(commands.commands) == 0 then
     return log.err("path is empty in followPath")
   end
 
   -- log.debug(commands)
 
-  -- TODO: this dest variable is strange. the reason it's here is because we only have a list
-  -- instead of an object that contains the src, dest and commands.
-  local dest = nil
-  for i,c in pairs(commands) do
-    dest = c.to
+  for i,c in pairs(commands.commands) do
     -- if we are in battle or the repel window opened, then abort
     if self.inBattle then return GotoExitValues.IN_BATTLE
     elseif self.repelTimerWindowOpen then return GotoExitValues.REPEL_TIMER
@@ -177,7 +176,7 @@ function Game:followPath(path)
   elseif self.mapChanged then return GotoExitValues.MAP_CHANGED
   -- we think we have completed the path, and this should always be the case
   -- but, do a last second double check just in case.
-  elseif self:getLocation():equals(dest) then return GotoExitValues.AT_LOCATION
+  elseif self:getLocation():equals(commands.dest) then return GotoExitValues.AT_LOCATION
   -- we should be at the location, but somehow we werent. this must be a bug.
   else
     log.debug("Potential Error: we should be at the location, but somehow we weren't", self:getLocation(), dest)
@@ -188,11 +187,11 @@ end
 -- When following a path, if we are on the overworld, we need to update it when we see new tiles
 -- We also print the percentage of the world seen here, just because fun to know.
 -- @self :: Game
--- @startingLoc :: Location
+-- @startingLoc :: Point
 -- @returns :: Unit
 function Game:updateOverworld(startingLoc)
   local loc = self:getLocation()
-  if loc.mapId == 1 and not loc:equals(startingLoc) then
+  if loc.mapId == OverWorldId and not loc:equals(startingLoc) then
     self.overworld:getVisibleOverworldGrid(loc.x, loc.y, self)
     local currentPercentageSeen = round(self:percentageOfWorldSeen())
     if self.lastPrintedPercentage < currentPercentageSeen then
@@ -205,7 +204,7 @@ end
 -- Returns true if we are at the given destination, or if we are in battle, dead or the repel timer window opened
 -- in each of these cases, we need to abort walking on the current path to deal with those things.
 -- @self :: Game
--- @pathDestination :: Location
+-- @pathDestination :: Point
 -- @returns :: Bool
 function Game:shouldStopTakingPath(pathDestination)
   local loc = self:getLocation()
@@ -216,7 +215,7 @@ end
 -- @s :: Script
 -- @returns :: TODO what should this function return?
 function Game:interpretScript(s)
- --  log.debug("Script: " .. tostring(s))
+  -- log.debug("Script: " .. tostring(s))
   -- TODO: im not sure if these first two cases are really needed, but they dont hurt.
   if     self.inBattle then self:executeBattle()
   -- TODO: consider casting repel right here instead of just closing window
@@ -381,12 +380,18 @@ function containsPoint(tbl, p)
   return tbl[p.mapId][p.x][p.y] ~= nil
 end
 
-function Game:shortestPath(startNode, endNode)
-  return self.graph:shortestPath(startNode, endNode, self:haveKeys(), self)
+-- @src :: Point
+-- @destination :: Point
+-- @returns Maybe Path
+function Game:shortestPath(src, destination)
+  return self.graph:shortestPath(src, destination, self:haveKeys(), self)
 end
 
-function Game:shortestPaths(startNode, endNodes)
-  return self.graph:shortestPaths(startNode, endNodes, self:haveKeys(), self)
+-- @src :: Point
+-- @destination :: [Point]
+-- @returns Maybe Path
+function Game:shortestPaths(src, destinations)
+  return self.graph:shortestPaths(src, destinations, self:haveKeys(), self)
 end
 
 function swapSrcAndDest(w) return w:swap() end
@@ -420,7 +425,7 @@ MovementCommandDir = enum.new("MovementCommand Direction", {
 })
 
 -- @dir :: MovementCommandDir
--- @returns :: Maybe Controller.Button (which is really just a String)
+-- @returns :: Maybe Controller.Button
 function movementCommandDirToButton(dir)
   if     dir == MovementCommandDir.LEFT  then return Just(Button.LEFT)
   elseif dir == MovementCommandDir.RIGHT then return Just(Button.RIGHT)
@@ -436,24 +441,46 @@ MovementCommand = class(function(a,direction,from,to)
   a.to = to
 end)
 
+function MovementCommand:__tostring()
+  return "<MovementCommand" ..
+         " from: "       .. tostring(self.from) ..
+         ", to: "        .. tostring(self.to) ..
+         ", direction: " .. tostring(self.direction) ..
+         ">"
+end
+
 function MovementCommand:sameDirection (other)
   return self.direction == other.direction
+end
+
+CommandsList = class(function (a, src, dest, commands)
+  a.src      = src
+  a.dest     = dest
+  a.commands = commands
+end)
+
+function CommandsList:__tostring()
+  return "<CommandsList"  ..
+         " src: "         .. tostring(self.src) ..
+         ", dest:"        .. tostring(self.dest) ..
+         ", commands: {"  .. list.intercalateS(", ", self.commands) .. "}" ..
+         ">"
 end
 
 -- TODO: this shit seems to work... but im not sure i understand it. lol
 -- there is definitely a way to do this that is more intuitive.
 function Game:convertPathToCommands(pathIn, maps)
+  -- log.debug("pathIn", pathIn)
   function directionFromP1ToP2(p1, p2)
     local res = {}
 
     function move(next)
       if     p2.dir == NeighborDir.STAIRS then return MovementCommand(MovementCommandDir.STAIRS, p1, next)
-      elseif p2.dir == NeighborDir.LEFT   then return MovementCommand(MovementCommandDir.LEFT, p1, next)
-      elseif p2.dir == NeighborDir.RIGHT  then return MovementCommand(MovementCommandDir.RIGHT, p1, next)
-      elseif p2.dir == NeighborDir.UP     then return MovementCommand(MovementCommandDir.UP, p1, next)
-      elseif p2.dir == NeighborDir.DOWN   then return MovementCommand(MovementCommandDir.DOWN, p1, next)
-      else
-        log.err("i have no idea what is going on with the neighbor type", p1, p2, next)
+      elseif p2.dir == NeighborDir.LEFT   then return MovementCommand(MovementCommandDir.LEFT,   p1, next)
+      elseif p2.dir == NeighborDir.RIGHT  then return MovementCommand(MovementCommandDir.RIGHT,  p1, next)
+      elseif p2.dir == NeighborDir.UP     then return MovementCommand(MovementCommandDir.UP,     p1, next)
+      elseif p2.dir == NeighborDir.DOWN   then return MovementCommand(MovementCommandDir.DOWN,   p1, next)
+      else log.err("i have no idea what is going on with the neighbor type", p1, p2, next)
       end
     end
 
@@ -475,21 +502,18 @@ function Game:convertPathToCommands(pathIn, maps)
     return res
   end
 
-  local path = table.copy(pathIn)
+  local zippedPath = list.zipWith(directionFromP1ToP2, pathIn.path, list.drop(1, pathIn.path))
+  local joinedZippedPath = list.join(zippedPath)
 
-  -- TODO: consider if we should just throw an error here.
-  -- an empty path would be really weird
-  if(#(path) == 0) then return {} end
-
-  local commands = list.join(list.zipWith(directionFromP1ToP2, path, list.drop(1, path)))
-
-  return list.foldLeft(commands, {}, function(acc, c)
+  local res = list.foldLeft(joinedZippedPath, {}, function(acc, c)
     if c.direction == MovementCommandDir.STAIRS then table.insert(acc, c)
     elseif #(acc) > 0 and acc[#(acc)]:sameDirection(c) then acc[#(acc)].to = c.to
     else table.insert(acc, c)
     end
     return acc
   end)
+
+  return CommandsList(pathIn.src, pathIn.dest, res)
 end
 
 -- in grindOrExplore, current location is:	<Point mapId:23, x:10, y:9>
@@ -685,7 +709,9 @@ function Game:exploreMove()
   -- here... if we cant find a path to the destination, then we want to just choose a new destination
   local path = self:shortestPath(self:getLocation(), self:getExploreDest())
 
-  if path == nil or #(path) == 0 then
+  -- TODO: we should really deal with this todo above ^ ^ ^
+  -- because all we do here is check if there is a path...
+  if path == Nothing then
     log.debug("couldn't find a path from player location: ", self:getLocation(), " to ", self:getExploreDest())
     self:chooseNewDestination(function (k) return self:chooseRandomBorderTile(k) end)
   else
@@ -831,7 +857,7 @@ function Game:dealWithMapChange()
     if b then self.graph:unlockThroneRoomDoor() end
   end
 
-  if newMapId < 1 then
+  if newMapId < OverWorldId then
     -- log.debug("The map changed, but dood, we are on map 0, so must be the menu or something...")
     return
   end
@@ -843,7 +869,7 @@ function Game:dealWithMapChange()
     -- we can see a bunch of new land now (potentially on another continent)
     -- we have to call this so that the knownWorld gets updated properly to see the new land.
     self.overworld:getVisibleOverworldGrid(newLoc.x, newLoc.y, self)
-  elseif newMapId > 1 and newMapId <= 29 then
+  elseif newMapId > OverWorldId and newMapId <= 29 then
     if not self.staticMaps[newMapId].seenByPlayer then
       self.staticMaps[newMapId]:markSeenByPlayer(self.staticMaps)
     end
@@ -884,19 +910,22 @@ function Game:dealWithMapChange()
     log.debug("nothing to do in dealWithMapChange")
   end
 
-  -- TODO: factor this out into a function or something.
-  -- here, we have to mark any children important locations to be seenByPlayer
-  -- for example all the chests in a dungeon/town or the basement locations
-  -- so that we can actually go to the basement when we have keys
-  -- TODO: when we go to a town, we instantly execute the town script
-  --       but...sometimes we might just want to go to the important location, no?
-  if newMapId > 1 then
-    local impLocs = self.staticMaps[newMapId]:childImportantLocations(self.importantLocations, self.staticMaps)
-    list.foreach(impLocs, function(impLoc) impLoc.seenByPlayer = true end)
-  end
+  self:markMapsSeen(newMapId)
 
   self.currentMapId = newMapId
   self.mapChanged = false
+end
+
+-- here, we have to mark any children important locations to be seenByPlayer
+-- for example all the chests in a dungeon/town or the basement locations
+-- so that we can actually go to the basement when we have keys
+-- TODO: when we go to a town, we instantly execute the town script
+--       but...sometimes we might just want to go to the important location, no?
+function Game:markMapsSeen(newMapId)
+  if newMapId > OverWorldId then
+    local impLocs = self.staticMaps[newMapId]:childImportantLocations(self.importantLocations, self.staticMaps)
+    list.foreach(impLocs, function(impLoc) impLoc.seenByPlayer = true end)
+  end
 end
 
 -- TODO: does this work in battle as well as on the overworld?
@@ -1145,8 +1174,7 @@ end
 
 -- @returns (Maybe HealingLocationWithPath)
 function Game:closestHealingLocation()
-  local res = self:getPathsForTable3D(self:getLocation(), self:healingLocations())[1]
-  return maybe.toMaybe(res)
+  return list.toMaybe(self:getPathsForTable3D(self:getLocation(), self:healingLocations()))
 end
 
 function Game:importantLocationAt(p)
@@ -1186,7 +1214,7 @@ function Game:completeImportantLocationHere(wait)
   end
 end
 
--- @currentLoc :: Location
+-- @currentLoc :: Point
 -- @table3d :: (Table3D a) (where is is something that has a .location field)
 -- @returns [ObjectWithPath a] ordered by distance (from currentLoc) ASC
 function Game:getPathsForTable3D(currentLoc, table3d)
@@ -1194,7 +1222,7 @@ function Game:getPathsForTable3D(currentLoc, table3d)
   -- @table3dAsList :: [ImportantLocation]
   local table3dAsList = table3d:toList()
 
-  -- @locs [Location]
+  -- @locs [Point]
   local locs = list.map(table3dAsList, function(loc) return loc.location end)
 
   -- @paths :: [Path] (sorted by weight, ASC)

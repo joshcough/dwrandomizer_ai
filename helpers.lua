@@ -422,6 +422,11 @@ function list.span(t, pred)
 end
 
 function list.debug(l) list.foreach(l, log.debug) end
+function list.debugWithMsg(l, msg)
+  log.debug("---" .. msg .. "---")
+  list.debug(l)
+  log.debug("--- end " .. msg .. "---")
+end
 function list.print(l) list.foreach(l, print) end
 
 function table.log(arr, indentLevel)

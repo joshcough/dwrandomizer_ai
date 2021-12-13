@@ -23,19 +23,23 @@ Graph = class(function (a, staticMaps)
   a.graphWithoutKeys = NewGraph(createStaticMapGraphs(staticMaps, false), false)
 end)
 
--- TODO: make this call shortestPaths?
-function Graph:shortestPath(startNode, endNode, haveKeys, game)
-  local res = nil
-  res = haveKeys and self.graphWithKeys:shortestPath(startNode, endNode, game)
-                 or  self.graphWithoutKeys:shortestPath(startNode, endNode, game)
-  -- log.debug("in shortestPath", res)
-  return res.path
+-- @src :: Point
+-- @destination :: Point
+-- @game :: Game
+-- @returns Maybe Path
+function Graph:shortestPath(src, destination, haveKeys, game)
+  return list.toMaybe(self:shortestPaths(src, {destination}, haveKeys, game))
 end
 
-function Graph:shortestPaths(startNode, endNodes, haveKeys, game)
+-- @src :: Point
+-- @destinations :: [Point]
+-- haveKeys :: Bool - if the player has keys or not
+-- @game :: Game
+-- @returns [Path] (sorted by weight, ASC)
+function Graph:shortestPaths(src, destinations, haveKeys, game)
   local res = nil
-  res = haveKeys and self.graphWithKeys:shortestPaths(startNode, endNodes, game)
-                 or  self.graphWithoutKeys:shortestPaths(startNode, endNodes, game)
+  res = haveKeys and self.graphWithKeys:shortestPaths(src, destinations, game)
+                 or  self.graphWithoutKeys:shortestPaths(src, destinations, game)
   -- log.debug("in shortestPath", res)
   return res
 end
@@ -181,11 +185,18 @@ function NewGraph:discover(x, y, overworld)
   list.foreach(discoveredNeighborsOfXY, addNeighbor)
 end
 
+-- @src :: Point
+-- @destination :: Point
+-- @game :: Game
+-- @returns Maybe Path
 function NewGraph:shortestPath(src, destination, game)
-  local res = self:dijkstra(src, {destination}, game)
-  if #res == 0 then return {} else return res[1] end
+  return list.toMaybe(self:dijkstra(src, {destination}, game))
 end
 
+-- @src :: Point
+-- @destinations :: [Point]
+-- @game :: Game
+-- @returns [Path] (sorted by weight, ASC)
 function NewGraph:shortestPaths(src, destinations, game)
   return self:dijkstra(src, destinations, game)
 end
@@ -198,10 +209,11 @@ Path = class(function (a, src, dest, weight, path)
 end)
 
 function Path:__tostring()
-  return "<Path src: " .. tostring(self.src) ..
+  return "<Path " ..
+         " src: "      .. tostring(self.src) ..
          ", dest:"     .. tostring(self.dest) ..
          ", weight:"   .. tostring(self.weight) ..
-         ", path:"     .. list.intercalateS(", ", self.path) ..
+         ", path: {"   .. list.intercalateS(", ", self.path) .. "}" ..
          ">"
 end
 
