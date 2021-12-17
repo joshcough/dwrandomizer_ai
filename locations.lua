@@ -278,7 +278,7 @@ function buildAllGoals(allStaticMaps, allChests, searchSpots)
 end
 
 -- TODO:
--- we need to have important locations for tantegel basement and garinham basement.
+-- we need to have goals for tantegel basement and garinham basement.
 -- we need one for the princess too, probably
 -- we might need one for the old man in cantlin, because its behind a locked door
 -- so in that case i think we also need one for the shop in cantlin behind a locked door
@@ -320,7 +320,7 @@ end
   * flag that they are inaccessible until we talk to the old man
   things are accessible if we have been to the parent map (and have keys, if they are behind a door)
   * swamp cave: spike tile and princess?
-    * also if they go in swamp north... we should add swamp south as an important location, and vice versa.
+    * also if they go in swamp north... we should add swamp south as an goal, and vice versa.
       in my opinion anyway, its worth trying. it opens up a huge section of the world, so we might want to make it
       a priority.
 ]]

@@ -394,12 +394,12 @@ function StaticMap:markSeenByPlayer(allStaticMaps)
   end
 end
 
--- @importantLocs :: Table3D Goal
+-- @goals :: Table3D Goal
 -- @allStaticMaps :: [StaticMap]
 -- @returns :: [Goal]
-function StaticMap:childGoals(importantLocs, allStaticMaps)
-  local myLoc = importantLocs:allEntriesForMap(self.mapId)
-  local childLocs = list.bind(self:childrenIds(), function(cId) return importantLocs:allEntriesForMap(cId) end)
+function StaticMap:childGoals(goals, allStaticMaps)
+  local myLoc = goals:allEntriesForMap(self.mapId)
+  local childLocs = list.bind(self:childrenIds(), function(cId) return goals:allEntriesForMap(cId) end)
   return table.concat(myLoc, childLocs)
 end
 

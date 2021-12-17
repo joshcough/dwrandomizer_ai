@@ -567,9 +567,9 @@ function Game:dealWithAnyGoals()
 
   return list.toMaybe(achievableGoals):map(function(goal)
     log.debug("goal", goal)
-    local newImportantLoc = goal.v.location
-    log.debug("Headed towards new important location for achievable goal : ", newImportantLoc)
-    return newImportantLoc
+    local newGoal = goal.v.location
+    log.debug("Headed towards new location for achievable goal", newGoal)
+    return newGoal
   end)
 end
 
@@ -586,10 +586,10 @@ function Game:grindOrExplore()
     then self:reachedDestination()
   elseif self:getMapId() == OverWorldId then
     log.debug("no exploreDest, on the overworld.")
-    local newImportantLoc = self:dealWithAnyGoals()
-    log.debug("newImportantLoc", newImportantLoc)
-    if newImportantLoc ~= Nothing then
-      self:chooseNewDestinationDirectly(newImportantLoc.value)
+    local newGoal = self:dealWithAnyGoals()
+    log.debug("newGoal", newGoal)
+    if newGoal ~= Nothing then
+      self:chooseNewDestinationDirectly(newGoal.value)
     else
       local pd = self:readPlayerData()
       local grind = getGrindInfo(pd, self)
@@ -599,7 +599,7 @@ function Game:grindOrExplore()
         self:grind(grind, pd.stats.level)
       -- if haven't seen anything worth fighting... then i guess just explore...
       else
-        log.debug("important loc and grind were both nil, so picking a random border tile")
+        log.debug("goal and grind were both nil, so picking a random border tile")
         self:chooseNewDestination(function (k) return self:chooseRandomBorderTile(k) end)
       end
     end
@@ -916,11 +916,11 @@ function Game:dealWithMapChange()
   self.mapChanged = false
 end
 
--- here, we have to mark any children important locations to be seenByPlayer
+-- here, we have to mark any children goals to be seenByPlayer
 -- for example all the chests in a dungeon/town or the basement locations
 -- so that we can actually go to the basement when we have keys
 -- TODO: when we go to a town, we instantly execute the town script
---       but...sometimes we might just want to go to the important location, no?
+--       but...sometimes we might just want to go to the goal, no?
 function Game:markMapsSeen(newMapId)
   if newMapId > OverWorldId then
     local goals = self.staticMaps[newMapId]:childGoals(self.goals, self.staticMaps)
@@ -1113,23 +1113,23 @@ function Game:discoverOverworldTile(x,y)
   -- when we spot a location on the overworld, we mark it as seenByPlayer
   -- and when we actually enter/open/search, we will mark it as completed.
 
-  -- then when exploring, we check for important locations that are seen by the player, but not completed
+  -- then when exploring, we check for goals that are seen by the player, but not completed
   -- if there are any, pick the closest one and go to it. finally when there, mark it as completed.
-  local newImportantLoc = self:goalAt(Point(OverWorldId, x, y))
-  if newImportantLoc ~= nil then
-    log.debug("Discovered " .. tostring(newImportantLoc.type) .. " at " .. tostring(newImportantLoc.location))
-    newImportantLoc.seenByPlayer = true
+  local newGoal = self:goalAt(Point(OverWorldId, x, y))
+  if newGoal ~= nil then
+    log.debug("Discovered " .. tostring(newGoal.type) .. " at " .. tostring(newGoal.location))
+    newGoal.seenByPlayer = true
 
-    if newImportantLoc.type == GoalType.TANTEGEL then
+    if newGoal.type == GoalType.TANTEGEL then
       log.debug("I see Tantegel.")
-      newImportantLoc.completed = true
-    elseif newImportantLoc.type == GoalType.CHARLOCK then
+      newGoal.completed = true
+    elseif newGoal.type == GoalType.CHARLOCK then
       log.debug("I see Charlock!")
       -- TODO: JC 12/5/21 this is really weird now...
-      -- i feel like we should have a function for dealing with important locs
+      -- i feel like we should have a function for dealing with goals
       -- like an interpreter, and this next line should be in there.
       -- self:interpretScript(self.scripts.EnterCharlock)
-      -- newImportantLoc.completed = true
+      -- newGoal.completed = true
     end
   end
 end
@@ -1203,12 +1203,12 @@ end
 
 function Game:completeGoalHere(wait)
   local loc = self:getLocation()
-  local importantLocHere = self:goalAt(loc)
-  if importantLocHere ~= nil
+  local goalHere = self:goalAt(loc)
+  if goalHere ~= nil
   then
     if wait then controller.waitFrames(60) end
-    importantLocHere.completed = true
-    log.debug("setting completed to true", importantLocHere)
+    goalHere.completed = true
+    log.debug("setting completed to true", goalHere)
     return true
   else return false
   end
@@ -1227,7 +1227,7 @@ function Game:getPathsForTable3D(currentLoc, table3d)
 
   -- @paths :: [Path] (sorted by weight, ASC)
   -- paths will only contain paths to locations that we can actually reach
-  -- so there might be some important locations that we have seen that aren't in there
+  -- so there might be some goals that we have seen that aren't in there
   -- because we can't reach them because they are on an island or we dont have keys or whatever.
   local paths = self:shortestPaths(currentLoc, locs)
 

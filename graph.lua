@@ -67,7 +67,7 @@ function Graph:unlockRimuldar()
   self.graphWithoutKeys.rows[Rimuldar] = self.graphWithKeys.rows[Rimuldar]
 end
 
---when we see an important location (town/cave/castle)
+--when we see an goal (town/cave/castle)
 -- we can add the neighbors normally to the neighbors4.
 -- but when we actually go into it, then we replace those neighbors
 -- with instead of the overworld location, the actual warp location
