@@ -451,7 +451,7 @@ function NewGraph:printSquare(square, game, printGoals)
         return res
       end)
       if i ~= nil then list.delete(neighborsCopy, i.index) end
-      return i
+      return i.value
     end
 
     local l,r,t,b = findNeighbor(x-1,y), findNeighbor(x+1,y), findNeighbor(x,y-1), findNeighbor(x,y+1)

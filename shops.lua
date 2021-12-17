@@ -1,4 +1,5 @@
 require 'Class'
+require 'helpers'
 require 'player_data'
 
 BambooPoleShopId     = 0
@@ -293,50 +294,50 @@ function Chest:__tostring()
     .. " (opened ever: " .. tostring(self.everOpened) .. ")"
 end
 
--- @chests :: [Chest]
--- @returns (Map MapId [Chest])
-function getChestsByMapId(chests)
-  local res = {}
-  for i = 2, 29 do res[i] = {} end
-  for i = 1,31 do
-    table.insert(res[chests[i].location.mapId], c)
-  end
-  return res
+function Chest:equals(c)
+  if c == nil then return false end
+  return self.location:equals(c.location) and self.item == c.item
 end
 
+-- @chests :: Table3D Chest
 Chests = class(function(a,chests)
-  -- chests :: [Chest]
   a.chests = chests
-  -- chestsByMapId :: Map MapId [Chest]
-  a.chestsByMapId = getChestsByMapId(chests)
 end)
 
 -- @self :: Chests
 -- @returns :: [Chest]
-function Chests:chestsForMap(mapId)
-  return self.chestsByMapId[mapId]
-end
+function Chests:chestsForMap(mapId) return self.chests:allEntriesForMap(mapId) end
 
-function Chests:foreach(f)
-  for i = 1,31 do f(self.chests[i]) end
-end
+-- @self :: Chests
+-- @f :: Chest -> ()
+-- @returns :: ()
+function Chests:foreach(f) self.chests:iterate(f) end
 
+-- @self :: Chests
+-- @returns :: String
 function Chests:__tostring()
   local res = "=== Chests ===\n"
-  self.chests:foreach(function (c)
+  self.chests:foreach(function (_, c)
     res = res .. "  " .. tostring(c) .. "\n"
   end)
   return res
 end
 
+-- @self :: Chests
+-- @location :: Point
+-- @returns :: Bool
 function Chests:isChestOpen(location)
   log.debug("isChestOpen", location)
   return self:chestAt(location).currentlyOpen
 end
 
+-- Finds the chest at the given location or explodes if one doesn't exist.
+-- @self :: Chests
+-- @location :: Point
+-- @returns :: Chest
 function Chests:chestAt(location)
-  local f = list.find(self.chests, function (c) return c.location:equals(location) end)
-  if f == nil then
+  local f = self.chests:lookup(location, Nothing)
+  if f == Nothing then
     local msg = "No chest at location"
     log.debug(msg, location)
     -- TODO: i wanted to have an error here, but, it kept happening in front of the king
@@ -347,21 +348,36 @@ function Chests:chestAt(location)
   return f
 end
 
+-- Finds the chest containing the given item
+-- @item :: Item
+-- @returns :: Maybe Chest
+function Chests:chestContaining(item)
+  return self.chests:find(function (c) return c == item end)
+end
+
+-- @self :: Chests
+-- @location :: Point
+-- @returns :: Bool
 function Chests:hasChestEverBeenOpened(location)
   log.debug("hasChestEverBeenOpened", location)
   return self:chestAt(location).everOpened
 end
 
+-- @self :: Chests
+-- @location :: Point
+-- @returns :: ()
 function Chests:openChestAt(location)
   log.debug("openChestAt", location)
   local c = self:chestAt(location)
   -- TODO: ick... this just keeps happening. i really need to solve it.
-  if c ~= nil then
+--   if c ~= nil then
     c.currentlyOpen = true
     c.everOpened = true
-  end
+--   end
 end
 
+-- @self :: Chests
+-- @returns :: ()
 function Chests:closeAll()
   -- log.debug("Closing all chests!")
   self:foreach(function (c) c.currentlyOpen = false end)
@@ -418,12 +434,20 @@ function SearchSpots:__tostring()
 end
 
 -- TODO: we have to check if we are on the coordinates here!
+-- TODO: constants in this function
+-- move these constants to staticMaps
 function SearchSpots:searchAt(loc)
-  if loc:equals(Point(Kol, 9, 6)) -- TODO: constants
-    then self.kol.seenByPlayer = true
-  elseif loc:equals(Point(Hauksness, 18, 12)) -- TODO: constants
-    then self.hauksness.seenByPlayer = true
+  if loc:equals(Point(Kol, 9, 6)) then self.kol.seenByPlayer = true
+  elseif loc:equals(Point(Hauksness, 18, 12)) then self.hauksness.seenByPlayer = true
   else return
+  end
+end
+
+function SearchSpots:searchSpotContaining(item)
+  if     self.coordinates.item == item then return Just(self.coordinates)
+  elseif self.kol.item         == item then return Just(self.kol)
+  elseif self.hauksness.item   == item then return Just(self.hauksness)
+  else return Nothing
   end
 end
 

@@ -215,7 +215,7 @@ end
 function table.reverse(tbl)
   local t = {}
   for i=1, #tbl do
-     table.insert(t, tbl[#tbl + 1 - i])
+    table.insert(t, tbl[#tbl + 1 - i])
   end
   return t
 end
@@ -223,8 +223,8 @@ end
 -- TODO: this should be list.concat right?
 function table.concat(tbl1, tbl2)
   local res = table.copy(tbl1)
-  for _,v in ipairs(tbl2) do
-      table.insert(res, v)
+  for _,v in pairs(tbl2) do
+    table.insert(res, v)
   end
   return res
 end
@@ -265,19 +265,20 @@ end
 
 function list.foldLeft(t, initialValue, op)
   local res = initialValue
-  for i = 1, #(t) do res = op(res, t[i]) end
+  for _,v in pairs(t) do res = op(res, v) end
   return res
 end
 
 function list.map(t, f)
   local res = {}
-  for i = 1, #(t) do table.insert(res, f(t[i])) end
+  for _,v in pairs(t) do table.insert(res, f(v)) end
   return res
 end
 
 function list.foreach(t, f)
-  if t == nil then return nil end
-  for i = 1, #(t) do f(t[i]) end
+  if t == nil then error("t is nil in list.foreach") end
+  if f == nil then error("f is nil in list.foreach") end
+  for _,v in pairs(t) do f(v) end
 end
 
 -- join :: [[a]] -> [a]
@@ -331,18 +332,21 @@ function list.indexOf(t, v, eqOp)
   return nil
 end
 
+-- @l :: [a]
+-- @predicate :: a -> Bool
+-- @returns :: Maybe a
 function list.find(t, predicate)
-  for i = 1, #t do
-    if predicate(t[i]) then return t[i] end
-  end
-  return nil
+  return list.findWithIndex(t, predicate):map(function (v) return v.value end)
 end
 
-function list.findWithIndex(t, predicate)
-  for i = 1, #t do
-    if predicate(t[i]) then return { index=i, value=t[i] } end
+-- @l :: [a]
+-- @predicate :: a -> Bool
+-- @returns :: Maybe {index :: Int, value :: a}
+function list.findWithIndex(l, predicate)
+  for i,a in pairs(l) do
+    if predicate(a) then return Just({ index=i, value=a }) end
   end
-  return nil
+  return Nothing
 end
 
 function list.exists(t, v, eqOp)
@@ -423,9 +427,9 @@ end
 
 function list.debug(l) list.foreach(l, log.debug) end
 function list.debugWithMsg(l, msg)
-  log.debug("---" .. msg .. "---")
+  log.debug("---" .. msg .. "------")
   list.debug(l)
-  log.debug("--- end " .. msg .. "---")
+  log.debug("---end " .. msg .. "---")
 end
 function list.print(l) list.foreach(l, print) end
 
@@ -484,14 +488,30 @@ end
 
 Table3D = class(function(a)
   a.body = {}
+  a.size = 0
 end)
 
+-- @self :: Table3D a
+-- @returns :: Bool
+function Table3D:isEmpty()
+  return self.size == 0
+end
+
+-- @self :: Table3D a
+-- @p :: Point
+-- @value :: a
+-- @returns :: ()
 function Table3D:insert(p, value)
   if self.body[p.mapId] == nil then self.body[p.mapId] = {} end
   if self.body[p.mapId][p.x] == nil then self.body[p.mapId][p.x] = {} end
   self.body[p.mapId][p.x][p.y] = value
+  self.size = self.size + 1
 end
 
+-- @self :: Table3D a
+-- @p :: Point
+-- @default :: a
+-- @returns :: a
 function Table3D:lookup(p, default)
   if self.body[p.mapId] == nil then return default end
   if self.body[p.mapId][p.x] == nil then return default end
@@ -499,6 +519,9 @@ function Table3D:lookup(p, default)
   return self.body[p.mapId][p.x][p.y]
 end
 
+-- @self :: Table3D a
+-- @p :: Point
+-- @returns :: Bool
 function Table3D:contains(p)
   if self.body[p.mapId] == nil then return false end
   if self.body[p.mapId][p.x] == nil then return false end
@@ -507,17 +530,13 @@ end
 
 function Table3D:debug(name)
   log.debug("====" .. name .. "====")
-  for i,v in pairs(self.body) do
-    for j,v2 in pairs(v) do
-      for k,v3 in pairs(v2) do
-        log.debug(Point(i, j, k), v3)
-      end
-    end
-  end
---   self:iterate(function(p, a) log.debug(p,a) end)
+  self:iterate(function(p, a) log.debug(p,a) end)
   log.debug("====end " .. name .. "====")
 end
 
+-- @self :: Table3D a
+-- @f :: (Point, a) -> ()
+-- @returns :: ()
 function Table3D:iterate(f)
   for i,v in pairs(self.body) do
     for j,v2 in pairs(v) do
@@ -530,7 +549,7 @@ end
 
 -- @self :: Table3D a
 -- @f :: a -> b
--- @returns Table3D b
+-- @returns :: Table3D b
 function Table3D:map(f)
   local res = Table3D()
   self:iterate(function (p, a) res:insert(p,a) end)
@@ -539,7 +558,7 @@ end
 
 -- @self :: Table3D a
 -- @f :: a -> Bool
--- @returns Table3D a
+-- @returns :: Table3D a
 function Table3D:filter(f)
   local res = Table3D()
   self:iterate(function(p, a) if f(a) then res:insert(p,a) end end)
@@ -547,7 +566,21 @@ function Table3D:filter(f)
 end
 
 -- @self :: Table3D a
--- @returns [a]
+-- @f :: a -> Bool
+-- @returns :: Maybe a
+function Table3D:find(f)
+  for i,v in pairs(self.body) do
+    for j,v2 in pairs(v) do
+      for k,v3 in pairs(v2) do
+        if f(v3) then return Just(v3) end
+      end
+    end
+  end
+  return Nothing
+end
+
+-- @self :: Table3D a
+-- @returns :: [a]
 function Table3D:toList()
   local res = {}
   self:iterate(function (_, a) table.insert(res, a) end)
@@ -556,10 +589,22 @@ end
 
 -- @self :: Table3D a
 -- @mapId :: Int / MapId (dont' think MapId actually exists, but it would be nice if it did IMO)
--- @returns [a]
+-- @returns :: [a]
 function Table3D:allEntriesForMap(mapId)
   local res = {}
   self:iterate(function (p, a) if p.mapId == mapId then table.insert(res, a) end end)
+  return res
+end
+
+table3D = {}
+
+-- @table3Ds :: [Table3D a]
+-- @returns :: Table3D a
+function table3D.concatAll(table3Ds)
+  local res = Table3D()
+  list.foreach(table3Ds, function(table3D)
+    table3D:iterate(function(p, a) res:insert(p,a) end)
+  end)
   return res
 end
 

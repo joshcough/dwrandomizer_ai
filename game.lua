@@ -18,8 +18,6 @@ Game = class(function(a, memory, warps, graph, overworld, staticMaps)
   a.graph = graph
   a.overworld = overworld
   a.staticMaps = staticMaps
-  local chests = memory:readChests()
-  a.goals = buildAllGoals(staticMaps, chests)
 
   -- events/signals that happen in game
   a.inBattle = false
@@ -35,10 +33,12 @@ Game = class(function(a, memory, warps, graph, overworld, staticMaps)
   a.unlockedDoors = {}
   a.weaponAndArmorShops = memory:readWeaponAndArmorShops()
   a.searchSpots = memory:readSearchSpots()
-  a.chests = chests
+  a.chests = memory:readChests()
   a.lastPrintedPercentage = 0
   -- we start on the menu screen, so on no map at all.
   a.currentMapId = 0
+
+  a.goals = buildAllGoals(a.staticMaps, a.chests, a.searchSpots)
 
   a.file_descriptor = io.open("/Users/joshcough/work/dwrandomizer_ai/ai.out", "w")
 end)

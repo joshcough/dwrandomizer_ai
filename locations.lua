@@ -155,16 +155,6 @@ GoalType = enum.new("GoalType", {
 -- here we are in the Northern Shrine (mapId:13) where we must trade the silver harp for the staff of rain
 -- so the Silver Harp goal must be a prerequisite for the Staff of Rain goal
 
--- All goals with prerequisites:
--- * staff of rain requires silver harp
--- * jerk cave requires all three key items (staff, stones, token) to get rainbow drop
--- * charlock requires rainbow drop
--- * coordinates requires either talking to old man or Gwaelin's Love
--- * Gwaelin's Love requires the princess
--- * we could also make it so that each chest has a prerequisite of finding the map that its in,
---   but im not sure that makes sense - we dont have Goal_Town, Goal_Dungeon.
---   instead, we can keep using the seenByPlayer stuff probably.
-
 -- goal	<ObjectWithPath v: <Goal location:<Point mapId:13, x:3, y:4>,
 -- type:<GoalType.CHEST: 5>, seenByPlayer:true, completed:false>,
 -- path:<Path  src: <Point mapId:1, x:58, y:106>, dest:<Point mapId:13, x:3, y:4>, weight:17,
@@ -174,43 +164,54 @@ GoalType = enum.new("GoalType", {
 -- <Neighbor mapId:13, x:4, y:4, dir: LEFT>,
 -- <Neighbor mapId:13, x:3, y:4, dir: LEFT>}>>
 
-Goal = class(function(a, location, type)
+-- @location :: Point
+-- @type :: GoalType
+-- @children :: Table3D Goal
+-- @script :: Script
+Goal = class(function(a, location, type, children, script)
   a.location = location
   a.type = type
+  a.children = children
+  a.script = script
   a.seenByPlayer = false
   a.completed = false
 end)
 
+-- TODO: would be sick to add padding to all these, though unnecessary.
 function Goal:__tostring()
+  -- TODO: maybe we want to print script or loc here, but... those are long.
   return "<Goal location:" .. tostring(self.location)
           .. ", type:" .. tostring(self.type)
           .. ", seenByPlayer:" .. tostring(self.seenByPlayer)
-          .. ", completed:" .. tostring(self.completed) .. ">"
+          .. ", completed:" .. tostring(self.completed)
+          .. ", children: {"  .. list.intercalateS(", ", self.children:toList()) .. "}"
+          .. ">"
 end
 
-Goal_Overworld = class(Goal, function(a, entrance)
-  Goal.init(a, entrance.from, entrance.entranceType)
+Goal_Overworld = class(Goal, function(a, staticMap, entrance, children)
+  Goal.init(a, entrance.from, entrance.entranceType, children)
+  a.staticMap = staticMap
   a.entrance = entrance
 end)
 
 Goal_Chest = class(Goal, function(a, chest)
-  Goal.init(a, chest.location, GoalType.CHEST)
+  Goal.init(a, chest.location, GoalType.CHEST, Table3D())
   a.chest = chest
 end)
 
 -- TODO: these three seem like they don't really add anything...could possibly just use the Goal constructor
 -- swamp cave spike, hauksness spike, charlock spike
 Goal_Spike = class(Goal, function(a, mapId, x, y)
-  Goal.init(a, Point(mapId, x, y), GoalType.SPIKE)
+  Goal.init(a, Point(mapId, x, y), GoalType.SPIKE, Table3D())
 end)
 
 -- the search spot / coordinates / token location or whatever tf.
 Goal_Coordinates = class(Goal, function(a, loc)
-  Goal.init(a, loc, GoalType.COORDINATES)
+  Goal.init(a, loc, GoalType.COORDINATES, Table3D())
 end)
 
-Goal_Basement = class(Goal, function(a, entrance)
-  Goal.init(a, entrance.from, GoalType.BASEMENT)
+Goal_Basement = class(Goal, function(a, entrance, children)
+  Goal.init(a, entrance.from, GoalType.BASEMENT, children, Nothing)
   a.entrance = entrance
 end)
 
@@ -232,41 +233,126 @@ end)
       a priority.
 ]]
 
-function buildAllGoals(staticMaps, chests)
-  local res = Table3D()
 
-  function addGoalsFromEntrances()
-    for mapId, m in pairs(staticMaps) do
-      if m.entrances ~= nil then
-        for _, entrance in pairs(m.entrances) do
-          -- log.debug(mapId, entrance)
-          -- TODO: why is this only on the overworld?
-          -- yes we have a Goal_Basement, but, is it actually needed?
-          -- why can't we just use something like Goal_Entrance
-          if entrance.from.mapId == OverWorldId then
-            local goal = Goal_Overworld(entrance)
-            log.debug("adding important overworld goal: ", goal)
-            res:insert(loc.location, loc)
-          else
-            local goal = Goal_Basement(entrance)
-            log.debug("adding important basement goal: ", goal)
-            res:insert(goal.location, goal)
-          end
+-- All goals with prerequisites:
+-- * staff of rain requires silver harp
+-- * jerk cave requires all three key items (staff, stones, token) to get rainbow drop
+-- * charlock requires rainbow drop
+-- * coordinates requires either talking to old man or Gwaelin's Love
+-- * Gwaelin's Love requires the princess
+-- * we could also make it so that each chest has a prerequisite of finding the map that its in,
+--   but im not sure that makes sense - we dont have Goal_Town, Goal_Dungeon.
+--   instead, we can keep using the seenByPlayer stuff probably.
+
+-- NorthernShrine     = 13
+-- SouthernShrine     = 14  --- TODO: there IS NO GOAL for SouthernShrine! that's because the chest isn't real.
+--                                    so we probably need to specially add one.
+
+-- TODO: question: does it even matter what type of goal it is, if every goal has a script? probably not. maybe delete.
+
+
+--[[
+TODO:
+what if we start with the overworld, and unfold...
+and instead of adding prerequisites, we add children
+the overworld has many children, and those are the root nodes of the tree
+(since each node must have a location, and the overworld itself does not have a single location)
+for each of those children, they might have chests which will be their children
+and they will have sublevels (potentially), which would lead to more children.
+not sure the sublevels are really needed, we can just immediately make available all
+the chests in the dungeon/town when we enter the top level of it.
+
+right away we automatically find tantegel, and its completed
+and the throneroom, and it is completed.
+and we find all the chests for both. they are seen, but not completed until we open them
+and we find the basement. it is seen, but not completed.
+when we go into the basement, it becomes completed, and any children it has would become available.
+
+we could maintain the tree of prereqs, but also a list of available prereqs.
+as we discover them, they go into the list.
+]]
+
+-- TODO: import these. but in order to do that, we will have go create a Goal module.
+Tantegel           = 4
+Garinham           = 9
+
+-- ok so how do we write this function?
+-- we have to get the basements, if they have any
+-- we have to get all the chests, again, if they have any
+-- and we can add any other map specific things here too with a simple if statement.
+
+-- TODO: maybe we should make a StaticMaps, and then maybe even a Maps (which includes the overworld)
+-- @staticMaps :: [StaticMap]
+-- @chests :: Chests
+-- @searchSpots :: SearchSpots
+function buildAllGoals(allStaticMaps, allChests, searchSpots)
+
+  local allEntrances = list.bind(allStaticMaps, function(m) return m.entrances end)
+  local harpGoal = nil
+  local northernShrineGoal = nil
+
+  -- @staticMap :: StaticMap
+  function childGoalsOfStaticMap(staticMap)
+    log.debug("staticMap", staticMap.mapName)
+    local res = Table3D()
+
+    local mapId = staticMap.mapId
+    log.debug("mapId", mapId)
+
+    -- @returns :: ()
+    function addBasementGoal()
+      local entrance = list.find(allEntrances, function(e) return e.from.mapId == mapId end).value
+      local basementChildren = childGoalsOfStaticMap(allStaticMaps[entrance.to.mapId], allStaticMaps, allChests, allEntrances)
+      local goal = Goal_Basement(entrance, basementChildren)
+      log.debug("adding goal for basement: ", entrance.from, goal)
+      res:insert(entrance.from, goal)
+    end
+
+    if mapId == Tantegel then addBasementGoal() end
+    if mapId == Garinham then addBasementGoal() end
+
+    -- ok now for all the children of this map, add all the chests in it
+
+    local childIds = staticMap:childrenIds()
+    local mapIds = table.concat({mapId}, childIds)
+    local chestsForMap = list.bind(mapIds, function(childId) return allChests:chestsForMap(childId) end)
+
+    list.foreach(chestsForMap, function(chest)
+      local goal = Goal_Chest(chest)
+      if chest.item == SilverHarp then harpGoal = goal end
+      -- we dont add the northernShrineGoal to res here
+      -- we need to add it to the children of the harp goal
+      if chest.location.mapId == NorthernShrine then
+        log.debug("not adding goal for NorthernShrine chest: ", goal)
+        northernShrineGoal = goal
+      else
+        log.debug("adding goal for chest: ", goal)
+        res:insert(goal.location, goal)
+      end
+    end)
+
+    return res
+  end
+
+  log.debug("SEARCH SPOTS", searchSpots)
+
+  local res = Table3D()
+  -- for all the static maps that have entrances, we do stuff
+  for mapId, staticMap in pairs(allStaticMaps) do
+    if staticMap.entrances ~= nil then
+      for _, entrance in pairs(staticMap.entrances) do
+        if entrance.from.mapId == OverWorldId then
+          local goalChildren = childGoalsOfStaticMap(staticMap)
+          local goal = Goal_Overworld(staticMap, entrance, goalChildren)
+          log.debug("adding goal for overworld: ", goal, entrance)
+          res:insert(entrance.from, goal)
         end
       end
     end
   end
 
-  function addGoalsFromChests()
-    for i = 1, #chests.chests do
-      local goal = Goal_Chest(chests.chests[i])
-      log.debug("adding goal from chest: ", goal)
-      res:insert(goal.location, goal)
-    end
-  end
+  harpGoal.children:insert(northernShrineGoal.location, northernShrineGoal)
 
-  addGoalsFromEntrances()
-  addGoalsFromChests()
-
+  res:debug("ALL GOALS")
   return res
 end

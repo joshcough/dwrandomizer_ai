@@ -325,11 +325,6 @@ IMMOBILE_NPCS = {
   [ErdricksCaveLv2]    = {},
 }
 
-function getImmobileNPCsForMap(mapId)
-  if IMMOBILE_NPCS[mapId] == nil then return {} end
-  return list.map(IMMOBILE_NPCS[mapId], function(xy) return Point(mapId, xy[1], xy[2]) end)
-end
-
 StaticMap = class(function(a, mapId, mapName, mapType, entrances, width, height, rows, allWarps)
   a.mapId = mapId
   a.mapName = mapName
@@ -339,7 +334,7 @@ StaticMap = class(function(a, mapId, mapName, mapType, entrances, width, height,
   a.height = height
   a.rows = rows
   a.warps = getWarpsForMap(mapId, allWarps)
-  a.immobileScps = getImmobileNPCsForMap(mapId)
+  a.immobileScps = list.map(IMMOBILE_NPCS[mapId], function(xy) return Point(mapId, xy[1], xy[2]) end)
   a.seenByPlayer = false
 end)
 
@@ -359,6 +354,8 @@ function StaticMap:setTileAt(x, y, newTileId)
   self.rows[y][x] = newTileId
 end
 
+-- @self :: StaticMap
+-- @returns :: [MapId] (aka [Int])
 function StaticMap:childrenIds()
   if     self.mapId ==  2 then return {6,15,16,17,18,19,20}
   elseif self.mapId ==  4 then return {5}
@@ -367,6 +364,24 @@ function StaticMap:childrenIds()
   elseif self.mapId == 24 then return {25,26,27}
   elseif self.mapId == 28 then return {29}
   else return {}
+  end
+end
+
+-- @returns [MapId] aka [Int]
+function StaticMap:parentIds()
+  if     self.mapId == TantegelThroneRoom then return {Tantegel}
+  elseif self.mapId == CharlockThroneRoom then return {Charlock}
+  elseif self.mapId == MountainCaveLv2    then return {MountainCaveLv1}
+  elseif self.mapId == ErdricksCaveLv2    then return {ErdricksCaveLv1}
+  elseif self.mapId == TantegelBasement   then return {self.entrances[1].from.mapId}
+  elseif self.mapId == NorthernShrine     then return {self.entrances[1].from.mapId}
+  elseif self.mapId == SouthernShrine     then return {self.entrances[1].from.mapId}
+  elseif self.mapId == SwampCave          then return list.map(self.entrances, function(e) return e.from.mapId end)
+  elseif self.mapId == ErdricksCaveLv2    then return {self.entrances[1].from.mapId}
+  elseif self.mapId == ErdricksCaveLv2    then return {self.entrances[1].from.mapId}
+  elseif self.mapId >= CharlockCaveLv1 and self.mapId <= CharlockCaveLv6 then return {Charlock}
+  elseif self.mapId >= GarinsGraveLv2  and self.mapId <= GarinsGraveLv4  then return {GarinsGraveLv1}
+  else return {1} -- TODO: constant... use OverWorldId
   end
 end
 

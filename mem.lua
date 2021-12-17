@@ -250,7 +250,7 @@ function Memory:readSearchSpots()
 end
 
 function Memory:readChests()
-  local chests = {}
+  local chests = Table3D()
   -- 5DDD - 5E58  | Chest Data  | Four bytes long: Map,X,Y,Contents
   local firstChestAddr = 0x5ddd
   for i = 0,30 do
@@ -259,9 +259,10 @@ function Memory:readChests()
     local x = self:readROM(addr + 1)
     local y = self:readROM(addr + 2)
     local contents = self:readROM(addr + 3)
-    local chest = Chest(Point(mapId, x, y), CHEST_CONTENT[contents])
+    local p = Point(mapId, x, y)
+    local chest = Chest(p, CHEST_CONTENT[contents])
     -- log.debug("chest", chest)
-    table.insert(chests, chest)
+    chests:insert(p, chest)
   end
   return Chests(chests)
 end
