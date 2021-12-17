@@ -394,7 +394,7 @@ function StaticMap:markSeenByPlayer(allStaticMaps)
   end
 end
 
--- @goals :: Table3D Goal
+-- @goals :: Goals
 -- @allStaticMaps :: [StaticMap]
 -- @returns :: [Goal]
 function StaticMap:childGoals(goals, allStaticMaps)

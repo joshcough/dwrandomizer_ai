@@ -558,12 +558,9 @@ end
 function Game:dealWithAnyGoals()
   log.debug("in dealWithAnyGoals")
 
-  self.goals:debug("all goals")
+  self.goals:debug(self)
 
-  log.debug("=== achievableGoals ===")
-  local achievableGoals = self:seenButNotCompletedGoals(self:getLocation())
-  for _,v in pairs(achievableGoals) do log.debug(v) end
-  log.debug("=== end achievableGoals ===")
+  local achievableGoals = self.goals:seenButNotCompletedGoals(self)
 
   return list.toMaybe(achievableGoals):map(function(goal)
     log.debug("goal", goal)
@@ -1177,9 +1174,9 @@ function Game:closestHealingLocation()
   return list.toMaybe(self:getPathsForTable3D(self:getLocation(), self:healingLocations()))
 end
 
-function Game:goalAt(p)
-  return self.goals:lookup(p)
-end
+-- @p :: Point
+-- @returns :: Maybe Goal
+function Game:goalAt(p) return self.goals:goalAt(p) end
 
 ObjectWithPath = class(function (a, v, path)
   a.v    = v
@@ -1188,17 +1185,6 @@ end)
 
 function ObjectWithPath:__tostring()
   return "<ObjectWithPath v: " .. tostring(self.v) .. ", path:" .. tostring(self.path) .. ">"
-end
-
--- Returns the Goals that we can reach, ordered by the shortest path to them
--- also returns the Path to get to the Goal.
--- @currentLoc the current location of the player
--- @returns [ObjectWithPath] ordered by distance (from currentLoc) ASC
-function Game:seenButNotCompletedGoals(currentLoc)
-  -- @goal :: Goal
-  -- @returns :: Bool
-  function goodGoal(goal) return goal.seenByPlayer and not goal.completed end
-  return self:getPathsForTable3D(currentLoc, self.goals:filter(goodGoal))
 end
 
 function Game:completeGoalHere(wait)
@@ -1219,16 +1205,12 @@ end
 -- @returns [ObjectWithPath a] ordered by distance (from currentLoc) ASC
 function Game:getPathsForTable3D(currentLoc, table3d)
 
-  -- @table3dAsList :: [Goal]
-  local table3dAsList = table3d:toList()
-
-  -- @locs [Point]
-  local locs = list.map(table3dAsList, function(loc) return loc.location end)
+  -- @locs :: [Point]
+  local locs = list.map(table3d:toList(), function(loc) return loc.location end)
 
   -- @paths :: [Path] (sorted by weight, ASC)
-  -- paths will only contain paths to locations that we can actually reach
-  -- so there might be some goals that we have seen that aren't in there
-  -- because we can't reach them because they are on an island or we dont have keys or whatever.
+  -- paths will only contain paths to locations that we can actually reach. we exclude
+  -- things we can't reach them because they are on an island or we dont have keys or whatever.
   local paths = self:shortestPaths(currentLoc, locs)
 
   local res = list.map(paths, function(path)

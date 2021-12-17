@@ -183,6 +183,40 @@ Goal_Basement = class(Goal, function(a, entrance, children)
   a.entrance = entrance
 end)
 
+Goals = class(function(a, goals)
+  a.goals = goals
+end)
+
+-- @game :: Game
+-- @returns :: ()
+function Goals:debug(game)
+  self.goals:debug("all goals")
+  list.debugWithMsg(self:seenButNotCompletedGoals(game), "achievableGoals")
+end
+
+-- Returns the Goals that we can reach, ordered by the shortest path to them
+-- also returns the Path to get to the Goal.
+-- @game :: Game
+-- @returns [ObjectWithPath] ordered by distance (from the players current loc) ASC
+function Goals:seenButNotCompletedGoals(game)
+  -- @goal :: Goal
+  -- @returns :: Bool
+  function goodGoal(goal) return goal.seenByPlayer and not goal.completed end
+  return game:getPathsForTable3D(game:getLocation(), self.goals:filter(goodGoal))
+end
+
+-- @mapId :: MapId (aka Int)
+-- @returns :: [Goal]
+function Goals:allEntriesForMap(mapId)
+  return self.goals:allEntriesForMap(mapId)
+end
+
+-- @p :: Point
+-- @returns :: Maybe Goal
+function Goals:goalAt(p)
+  return self.goals:lookup(p)
+end
+
 -- TODO: is this actually needed?
 -- -- swamp cave spike, hauksness spike, charlock spike
 -- Goal_Spike = class(Goal, function(a, mapId, x, y)
@@ -193,6 +227,7 @@ end)
 -- @staticMaps :: [StaticMap]
 -- @chests :: Chests
 -- @searchSpots :: SearchSpots
+-- @returns :: Goals
 function buildAllGoals(allStaticMaps, allChests, searchSpots)
 
   local allEntrances = list.bind(allStaticMaps, function(m) return m.entrances end)
@@ -274,7 +309,7 @@ function buildAllGoals(allStaticMaps, allChests, searchSpots)
   harpGoal.children:insert(northernShrineGoal.location, northernShrineGoal)
 
   res:debug("ALL GOALS")
-  return res
+  return Goals(res)
 end
 
 -- TODO:
