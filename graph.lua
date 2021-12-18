@@ -226,7 +226,7 @@ function NewGraph:dijkstra (src, dests, game)
   -- log.debug("entering dijkstra", src, list.intercalateS(", ", dests))
 
   local distanceTo, trail = Table3D(), Table3D()
-  function getDistanceTo(p) return distanceTo:lookup(p, math.huge) end
+  function getDistanceTo(p) return distanceTo:lookup(p):getOrElse(math.huge) end
 
   local pq = PriorityQueue()
   pq:enqueue(src, 0)
@@ -250,25 +250,30 @@ function NewGraph:dijkstra (src, dests, game)
   -- @returns :: Maybe Path
   function followTrailToDest (dest)
     -- log.debug("followTrailTo", dest, "trail:lookup(dest)", trail:lookup(dest))
-    local path, prev = {}, trail:lookup(dest)
+    local path, prevMaybe = {}, trail:lookup(dest)
 
     -- if prev is nil it means there was no path to the destination.
     -- for example, it could be on a little island or something that we cant get to.
-    if prev == nil then
-      -- log.debug("in followTrailToDest, prev is nil!! src", src, "dest", dest)
+    if prevMaybe == Nothing then
+      -- log.debug("in followTrailToDest, prev is Nothing!! src", src, "dest", dest)
       return Nothing
     else
-      table.insert(path, Neighbor(dest.mapId, dest.x, dest.y, prev.dir))
+      table.insert(path, Neighbor(dest.mapId, dest.x, dest.y, prevMaybe.value.dir))
     end
 
-    while prev do
+    while prevMaybe:isDefined() do
+      local prev = prevMaybe.value
       if src:equalsPoint(prev) then
         table.insert(path, Point(prev.mapId, prev.x, prev.y))
       else
         local prev2 = trail:lookup(prev)
-        table.insert(path, Neighbor(prev.mapId, prev.x, prev.y, prev2.dir))
+        if prev2 == Nothing then
+          log.err("prev2 was Nothing!", prev)
+        else
+          table.insert(path, Neighbor(prev.mapId, prev.x, prev.y, prev2.value.dir))
+        end
       end
-      prev = trail:lookup(prev)
+      prevMaybe = trail:lookup(prev)
     end
     local res = Path(src, dest, getDistanceTo(dest), table.reverse(path))
     -- log.debug("res inside", res)

@@ -336,7 +336,7 @@ end
 -- @location :: Point
 -- @returns :: Chest
 function Chests:chestAt(location)
-  local f = self.chests:lookup(location, Nothing)
+  local f = self.chests:lookup(location)
   if f == Nothing then
     local msg = "No chest at location"
     log.debug(msg, location)
@@ -345,7 +345,7 @@ function Chests:chestAt(location)
     -- but i haven't been able to verify that yet.
     -- log.err(msg, location)
   end
-  return f
+  return f.value
 end
 
 -- Finds the chest containing the given item

@@ -510,13 +510,12 @@ end
 
 -- @self :: Table3D a
 -- @p :: Point
--- @default :: a
--- @returns :: a
-function Table3D:lookup(p, default)
-  if self.body[p.mapId] == nil then return default end
-  if self.body[p.mapId][p.x] == nil then return default end
-  if self.body[p.mapId][p.x][p.y] == nil then return default end
-  return self.body[p.mapId][p.x][p.y]
+-- @returns :: Maybe a
+function Table3D:lookup(p)
+  if self.body[p.mapId] == nil then return Nothing end
+  if self.body[p.mapId][p.x] == nil then return Nothing end
+  if self.body[p.mapId][p.x][p.y] == nil then return Nothing end
+  return Just(self.body[p.mapId][p.x][p.y])
 end
 
 -- @self :: Table3D a
@@ -615,6 +614,8 @@ function Maybe:bind(f)           return maybe.bind(self, f)           end
 function Maybe:maybe(default, f) return maybe.maybe(self, default, f) end
 function Maybe:foreach(f)        return maybe.foreach(self, f)        end
 function Maybe:fromMaybe(a)      return maybe.fromMaybe(self, a)      end
+function Maybe:isDefined()       return maybe.isDefined(self)         end
+function Maybe:getOrElse(a)      return maybe.getOrElse(self, a)      end
 
 Just = class(Maybe, function(a, value)
   Maybe.init(a)
@@ -664,12 +665,12 @@ end
 -- @f :: a -> b
 -- @returns :: b
 function maybe.maybe(m, default, f)
-  return m == Nothing and default or f(m.value)
+  if maybe.isDefined(m) then return f(m.value) else return default end
 end
 
 -- @m :: Maybe a
--- @f :: a -> z
--- @returns :: nil
+-- @f :: a -> ()
+-- @returns :: ()
 function maybe.foreach(m, f) maybe.maybe(m, nil, f) end
 
 -- @m :: Maybe a
@@ -677,6 +678,19 @@ function maybe.foreach(m, f) maybe.maybe(m, nil, f) end
 -- @returns :: a
 function maybe.fromMaybe(m, default)
   return maybe.maybe(m, default, function(v) return v end)
+end
+
+-- @m :: Maybe a
+-- @returns :: Bool
+function maybe.isDefined(m)
+  if m == Nothing then return false else return true end
+end
+
+-- @m :: Maybe a
+-- @a :: a
+-- @returns :: a
+function maybe.getOrElse(m, a)
+  if m == Nothing then return a else return m.value end
 end
 
 -- @listOfMaybes :: [Maybe a]

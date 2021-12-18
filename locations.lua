@@ -214,7 +214,15 @@ end
 -- @p :: Point
 -- @returns :: Maybe Goal
 function Goals:goalAt(p)
-  return self.goals:lookup(p)
+  return self.goals:lookup(p, Nothing)
+end
+
+-- @p :: Point
+-- @returns :: Bool - true if there was a Goal at the given location, false otherwise
+function Goals:completeGoalAt(p)
+  local g = self:goalAt(p)
+  g:foreach(function(goal) goal.completed = true end)
+  return g:isDefined()
 end
 
 -- TODO: is this actually needed?

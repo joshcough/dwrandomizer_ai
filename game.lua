@@ -351,7 +351,7 @@ end
 
 function Game:markChestOpened ()
   self.chests:openChestAt(self:getLocation())
-  self:completeGoalHere(false)
+  self:completeGoalHere()
 end
 
 function Game:searchGroundScript ()
@@ -585,7 +585,7 @@ function Game:grindOrExplore()
     log.debug("no exploreDest, on the overworld.")
     local newGoal = self:dealWithAnyGoals()
     log.debug("newGoal", newGoal)
-    if newGoal ~= Nothing then
+    if newGoal:isDefined() then
       self:chooseNewDestinationDirectly(newGoal.value)
     else
       local pd = self:readPlayerData()
@@ -621,7 +621,11 @@ end
 
 function Game:reachedDestination()
   log.debug("We have reached our destination:" .. tostring(loc))
-  self:completeGoalHere(true)
+  local b = self:completeGoalHere()
+  -- if there was a goal here, we need to wait.
+  -- this is because if our destination was a goal, then we have changed maps (pretty sure)
+  -- and so we wait 60 frames for the map to really change
+  if b then controller.waitFrames(60) end
   self:setExploreDest(nil)
 end
 
@@ -641,7 +645,7 @@ end
 
 function Game:exploreStaticMap()
   controller.waitUntil(function() return self:onStaticMap() end, 240, "on static map")
-  -- zzz this thing is causing problems i tihnk
+  -- TODO: this thing is causing problems i think
   if self.mapChanged then
     log.debug("---- going to deal with map change ----")
     self:dealWithMapChange()
@@ -779,7 +783,7 @@ function Game:healIfNecessary()
     -- if we need mp, we should go the the closest healing location
     local healingLoc = self:closestHealingLocation()
     log.debug("closest healing location:", healingLoc)
-    if healingLoc ~= Nothing then
+    if healingLoc:isDefined() then
       self:interpretScript(self.scripts.InnScripts[healingLoc.mapId])
     end
   end
@@ -1112,8 +1116,8 @@ function Game:discoverOverworldTile(x,y)
 
   -- then when exploring, we check for goals that are seen by the player, but not completed
   -- if there are any, pick the closest one and go to it. finally when there, mark it as completed.
-  local newGoal = self:goalAt(Point(OverWorldId, x, y))
-  if newGoal ~= nil then
+  local newGoalMaybe = self:goalAt(Point(OverWorldId, x, y))
+  newGoalMaybe:foreach(function(newGoal)
     log.debug("Discovered " .. tostring(newGoal.type) .. " at " .. tostring(newGoal.location))
     newGoal.seenByPlayer = true
 
@@ -1128,7 +1132,7 @@ function Game:discoverOverworldTile(x,y)
       -- self:interpretScript(self.scripts.EnterCharlock)
       -- newGoal.completed = true
     end
-  end
+  end)
 end
 
 -- TODO: i feel like all this shit should get moved to locations.lua
@@ -1187,17 +1191,9 @@ function ObjectWithPath:__tostring()
   return "<ObjectWithPath v: " .. tostring(self.v) .. ", path:" .. tostring(self.path) .. ">"
 end
 
-function Game:completeGoalHere(wait)
-  local loc = self:getLocation()
-  local goalHere = self:goalAt(loc)
-  if goalHere ~= nil
-  then
-    if wait then controller.waitFrames(60) end
-    goalHere.completed = true
-    log.debug("setting completed to true", goalHere)
-    return true
-  else return false
-  end
+-- @returns :: Bool (if there was a goal here)
+function Game:completeGoalHere()
+  return self.goals:completeGoalAt(self:getLocation())
 end
 
 -- @currentLoc :: Point
@@ -1214,7 +1210,7 @@ function Game:getPathsForTable3D(currentLoc, table3d)
   local paths = self:shortestPaths(currentLoc, locs)
 
   local res = list.map(paths, function(path)
-    return ObjectWithPath(table3d:lookup(path.dest), path)
+    return ObjectWithPath(table3d:lookup(path.dest).value, path)
   end)
 
   return res
