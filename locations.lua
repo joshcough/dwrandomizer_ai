@@ -206,18 +206,25 @@ end)
 function Goals:debug(game)
   self.goals:debug("all goals")
   self.flatGoals:debug("flat goals")
-  list.debugWithMsg(self:seenButNotCompletedGoals(game), "achievableGoals")
+  list.debugWithMsg(self:reachableSeenButNotCompletedGoals(game), "achievableGoals")
 end
 
 -- Returns the Goals that we can reach, ordered by the shortest path to them
 -- also returns the Path to get to the Goal.
 -- @game :: Game
--- @returns [ObjectWithPath] ordered by distance (from the players current loc) ASC
-function Goals:seenButNotCompletedGoals(game)
+-- @returns [ObjectWithPath Goal] ordered by distance (from the players current loc) ASC
+function Goals:reachableSeenButNotCompletedGoals(game)
+  return game:getPathsForTable3D(game:getLocation(), self:allSeenButNotCompletedGoals(game))
+end
+
+-- Returns all the Goals that we have seen but not completed can reach, even if we can't reach them.
+-- @game :: Game
+-- @returns Table3D Goal
+function Goals:allSeenButNotCompletedGoals(game)
   -- @goal :: Goal
   -- @returns :: Bool
   function goodGoal(goal) return goal.seenByPlayer and not goal.completed end
-  return game:getPathsForTable3D(game:getLocation(), self.flatGoals:filter(goodGoal))
+  return self.flatGoals:filter(goodGoal)
 end
 
 -- @mapId :: MapId (aka Int)

@@ -555,19 +555,40 @@ function Game:atExploreDest()
   return self:getExploreDest():equals(self:getLocation())
 end
 
+-- if we have seen Rimuldar, returns the location of its entrance
+-- if not, returns Nothing
+-- @returns :: Maybe Point
+function Game:rimuldarEntrance()
+  if self.staticMaps[Rimuldar].seenByPlayer then
+    return Just(self.staticMaps[Rimuldar].entrances[1].to)
+  else return Nothing
+  end
+end
+
+-- Nothing - means there are no goals at all that we see that we haven't completed,
+--           OR
+--           there is a goal we can see, but we have no keys and we haven't seen Rimuldar so we can't get any.
+--   if there is every any meaningful distinction between those two cases, we can change this type easily.
+-- Just . Left  - means there is a goal that we see, but there is no path to it,
+--                but we have seen Rimuldar, so return its location
+-- Just . Right - means there is a goal that we see and there is a path to it, so return that.
+-- @returns :: Maybe (Either Point (ObjectWithPath Goal))
 function Game:dealWithAnyGoals()
   log.debug("in dealWithAnyGoals")
-
   self.goals:debug(self)
 
-  local achievableGoals = self.goals:seenButNotCompletedGoals(self)
-
-  return list.toMaybe(achievableGoals):map(function(goal)
-    log.debug("goal", goal)
-    local newGoal = goal.v.location
-    log.debug("Headed towards new location for achievable goal", newGoal)
-    return newGoal
-  end)
+  local maybeAchievableGoal = list.toMaybe(self.goals:reachableSeenButNotCompletedGoals(self))
+  if maybeAchievableGoal:isDefined() then
+    log.debug("Headed towards achievable goal", maybeAchievableGoal.value)
+    return Just(Right(maybeAchievableGoal.value))
+  else
+    -- if this is non-empty, it means there must be something either behind a locked door
+    -- or i guess possibly on an island or something... but lets assume its a door for now
+    local goalsWithNoPaths = self.goals:allSeenButNotCompletedGoals(self)
+    if goalsWithNoPaths:isEmpty() then return Nothing
+    else return self:rimuldarEntrance():map(function(e) return Left(e) end)
+    end
+  end
 end
 
 function Game:grindOrExplore()
@@ -586,7 +607,18 @@ function Game:grindOrExplore()
     local newGoal = self:dealWithAnyGoals()
     log.debug("newGoal", newGoal)
     if newGoal:isDefined() then
-      self:chooseNewDestinationDirectly(newGoal.value)
+      newGoal.value:bifor(
+        function(rimuldarEntrance)
+          log.debug("heading to rimuldar to get keys hopefully")
+          self:chooseNewDestinationDirectly(rimuldarEntrance)
+        end,
+        function(goal)
+          -- first value is Maybe, second is Either, third is ObjectWithPath, location is from Goal.
+          -- TODO: we have the path here! so we could use it
+          -- maybe our `exploreDest` should be more than just a Point
+          self:chooseNewDestinationDirectly(newGoal.value.value.value.location)
+        end
+      )
     else
       local pd = self:readPlayerData()
       local grind = getGrindInfo(pd, self)
@@ -699,6 +731,8 @@ function Game:chooseNewDestination(tileSelectionStrat)
   self:chooseNewDestinationDirectly(tileSelectionStrat(borderOfKnownWorld))
 end
 
+-- @newDestination :: Point
+-- @returns :: ()
 function Game:chooseNewDestinationDirectly(newDestination)
   log.debug("new destination", newDestination)
   self:setExploreDest(newDestination)
@@ -1183,12 +1217,12 @@ end
 function Game:goalAt(p) return self.goals:goalAt(p) end
 
 ObjectWithPath = class(function (a, v, path)
-  a.v    = v
-  a.path = path
+  a.value = v
+  a.path  = path
 end)
 
 function ObjectWithPath:__tostring()
-  return "<ObjectWithPath v: " .. tostring(self.v) .. ", path:" .. tostring(self.path) .. ">"
+  return "<ObjectWithPath value: " .. tostring(self.value) .. ", path:" .. tostring(self.path) .. ">"
 end
 
 -- @returns :: Bool (if there was a goal here)

@@ -717,6 +717,54 @@ function list.toMaybe(l)
   return maybe.toMaybe(l[1])
 end
 
+EitherType = enum.new("EitherType", {"LEFT", "RIGHT"})
+
+Either = class(function(a, type, value)
+  a.type = type
+  a.value = value
+end)
+
+function Either:__tostring()
+  return "<" .. self.type.name .. " " .. tostring(self.value) .. ">"
+end
+
+-- @self :: Either a b
+-- @returns :: Bool
+function Either:isLeft() return self.type == EitherType.LEFT end
+
+-- @self :: Either a b
+-- @returns :: Bool
+function Either:isRight() return self.type == EitherType.RIGHT end
+
+-- @self :: Either a c
+-- @f :: a -> b
+-- @g :: c -> d
+-- @returns :: Either b d
+function Either:bimap(f, g)
+  if self:isLeft() then return Left(f(self.value)) else return Right(g(self.value)) end
+end
+
+-- @self :: Either a c
+-- @f :: a -> ()
+-- @g :: c -> ()
+-- @returns :: ()
+function Either:bifor(f, g)
+  if self:isLeft() then f(self.value) else return g(self.value) end
+end
+
+-- @value :: a
+-- @returns :: Either a b
+Left = class(Either, function(a, value)
+  Either.init(a, EitherType.LEFT, value)
+end)
+
+-- @value :: b
+-- @returns :: Either a b
+Right = class(Either, function(a, value)
+  Either.init(a, EitherType.RIGHT, value)
+end)
+
+-- TODO: we need a better place for this...
 Heading = enum.new("Direction player is heading", {
   "LEFT",
   "RIGHT",
