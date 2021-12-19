@@ -1193,7 +1193,10 @@ end
 
 -- @returns :: Bool (if there was a goal here)
 function Game:completeGoalHere()
-  return self.goals:completeGoalAt(self:getLocation())
+  local loc = self:getLocation()
+  local res = self.goals:completeGoalAt(self:getLocation())
+  log.debug("completing goal at: ", loc, "res", res)
+  return res
 end
 
 -- @currentLoc :: Point

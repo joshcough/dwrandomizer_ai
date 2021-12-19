@@ -161,6 +161,16 @@ function Goal:__tostring()
           .. ">"
 end
 
+-- recursively descends into the children of the Goal, putting all the Goal itself,
+-- its children (and sub-children) into the top level of the returned Table3D
+-- @returns :: Table3D Goal
+function Goal:flatten()
+  local res = Table3D()
+  self.children:iterate(function(_, g) res:insertAll(g:flatten()) end)
+  res:insert(self.location, self)
+  return res
+end
+
 Goal_Overworld = class(Goal, function(a, staticMap, entrance, children)
   Goal.init(a, entrance.from, entrance.entranceType, children)
   a.staticMap = staticMap
@@ -185,12 +195,17 @@ end)
 
 Goals = class(function(a, goals)
   a.goals = goals
+  a.flatGoals = Table3D()
+  goals:iterate(function(_, g)
+    g:flatten():iterate(function(p, g2) a.flatGoals:insert(p, g2) end)
+  end)
 end)
 
 -- @game :: Game
 -- @returns :: ()
 function Goals:debug(game)
   self.goals:debug("all goals")
+  self.flatGoals:debug("flat goals")
   list.debugWithMsg(self:seenButNotCompletedGoals(game), "achievableGoals")
 end
 
@@ -202,19 +217,19 @@ function Goals:seenButNotCompletedGoals(game)
   -- @goal :: Goal
   -- @returns :: Bool
   function goodGoal(goal) return goal.seenByPlayer and not goal.completed end
-  return game:getPathsForTable3D(game:getLocation(), self.goals:filter(goodGoal))
+  return game:getPathsForTable3D(game:getLocation(), self.flatGoals:filter(goodGoal))
 end
 
 -- @mapId :: MapId (aka Int)
 -- @returns :: [Goal]
 function Goals:allEntriesForMap(mapId)
-  return self.goals:allEntriesForMap(mapId)
+  return self.flatGoals:allEntriesForMap(mapId)
 end
 
 -- @p :: Point
 -- @returns :: Maybe Goal
 function Goals:goalAt(p)
-  return self.goals:lookup(p, Nothing)
+  return self.flatGoals:lookup(p, Nothing)
 end
 
 -- @p :: Point

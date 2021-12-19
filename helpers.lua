@@ -51,6 +51,7 @@ end
 function log.debugArgs(args)
 	for _, v in ipairs( args ) do
 		aiLogFile:write(tostring(v) .. "\t")
+    aiLogFile:flush()
 	end
   aiLogFile:write("\n")
   aiLogFile:flush()
@@ -593,6 +594,13 @@ function Table3D:allEntriesForMap(mapId)
   local res = {}
   self:iterate(function (p, a) if p.mapId == mapId then table.insert(res, a) end end)
   return res
+end
+
+-- @self :: Table3D a
+-- @otherTable3D :: Table3D a
+-- @returns :: ()
+function Table3D:insertAll(otherTable3D)
+  otherTable3D:iterate(function(p, a) self:insert(p, a) end)
 end
 
 table3D = {}

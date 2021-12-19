@@ -370,10 +370,10 @@ function Chests:openChestAt(location)
   log.debug("openChestAt", location)
   local c = self:chestAt(location)
   -- TODO: ick... this just keeps happening. i really need to solve it.
---   if c ~= nil then
+  if c ~= nil then
     c.currentlyOpen = true
     c.everOpened = true
---   end
+  end
 end
 
 -- @self :: Chests
