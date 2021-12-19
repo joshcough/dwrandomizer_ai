@@ -609,14 +609,14 @@ function Game:grindOrExplore()
     if newGoal:isDefined() then
       newGoal.value:bifor(
         function(rimuldarEntrance)
-          log.debug("heading to rimuldar to get keys hopefully")
+          log.debug("heading to rimuldar to get keys hopefully.")
           self:chooseNewDestinationDirectly(rimuldarEntrance)
         end,
-        function(goal)
-          -- first value is Maybe, second is Either, third is ObjectWithPath, location is from Goal.
-          -- TODO: we have the path here! so we could use it
+        function(goalWithPath)
+          log.debug("we have a goal and a path, heading towards the goal.")
+          -- TODO: we have the path here! so we could use it, but we are just grabbing the Goal (via .value)
           -- maybe our `exploreDest` should be more than just a Point
-          self:chooseNewDestinationDirectly(newGoal.value.value.value.location)
+          self:chooseNewDestinationDirectly(goalWithPath.value.location)
         end
       )
     else
