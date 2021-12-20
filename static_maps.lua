@@ -367,7 +367,7 @@ function StaticMap:childrenIds()
   end
 end
 
--- @returns [MapId] aka [Int]
+-- @returns :: [MapId] aka [Int]
 function StaticMap:parentIds()
   if     self.mapId == TantegelThroneRoom then return {Tantegel}
   elseif self.mapId == CharlockThroneRoom then return {Charlock}
@@ -382,6 +382,23 @@ function StaticMap:parentIds()
   elseif self.mapId >= CharlockCaveLv1 and self.mapId <= CharlockCaveLv6 then return {Charlock}
   elseif self.mapId >= GarinsGraveLv2  and self.mapId <= GarinsGraveLv4  then return {GarinsGraveLv1}
   else return {1} -- TODO: constant... use OverWorldId
+  end
+end
+
+-- Get the point that you warp to when you enter this map from the overworld (or tantegel/garinham)
+-- if this map is a child (like say, CharlockCaveLv6), then itll return
+-- the point of the parent (Charlock, in this example)
+-- returns a list because Swamp Cave can have multiple entrances
+-- @allStaticMaps :: [StaticMap]
+-- @returns :: [Point]
+function StaticMap:getFirstStep(allStaticMaps)
+  if self.entrances ~= nil then
+    return list.map(self.entrances, function(e) return e.to end)
+  else
+    -- TODO: constant... use OverWorldId
+    return list.bind(list.filter(self:parentIds(), function(pid) return pid ~= 1 end) , function(pid)
+      return allStaticMaps[pid]:getFirstStep(allStaticMaps)
+    end)
   end
 end
 

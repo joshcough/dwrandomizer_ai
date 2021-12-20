@@ -411,6 +411,7 @@ Scripts = class(function(a,entrances)
 
   function GotoOverworld(fromMap)
     local p = entrances[fromMap][1].from
+    if p.mapId ~= OverWorldId then p = entrances[p.mapId][1].from end
     return Goto(p.mapId, p.x, p.y)
   end
 

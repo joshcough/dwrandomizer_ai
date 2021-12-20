@@ -127,6 +127,11 @@ math.randomseed(os.time()); math.random()
 main()
 
 -- oldish stuff that i need to evaluate if i really want to keep
+
+-- 12/20/21
+--   log.debug(game.scripts.MapScripts[Garinham])
+--   list.debugWithMsg(game.entrances, "entrances")
+
 -- game:cast(Repel)
 --     local spells = game.memory:readPlayerData().spells
 --     log.debug(spells:spellIndex(Healmore))

@@ -208,6 +208,8 @@ Path = class(function (a, src, dest, weight, path)
   a.path   = path
 end)
 
+function Path:isEmpty() return #(self.path) == 0 end
+
 function Path:__tostring()
   return "<Path " ..
          " src: "      .. tostring(self.src) ..

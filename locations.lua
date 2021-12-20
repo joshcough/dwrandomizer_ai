@@ -145,6 +145,8 @@ Goal = class(function(a, location, type, children, script)
   a.location = location
   a.type = type
   a.children = children
+  a.parents = Table3D()
+  children:iterate(function(_, c) c.parents:insert(location, self) end)
   a.script = script
   a.seenByPlayer = false
   a.completed = false
@@ -159,6 +161,32 @@ function Goal:__tostring()
           .. ", completed:" .. tostring(self.completed)
           .. ", children: {"  .. list.intercalateS(", ", self.children:toList()) .. "}"
           .. ">"
+end
+
+-- @self :: Goal
+-- @returns :: String
+function Goal:parentsString()
+  return list.intercalateS(", ", self.parents:toList())
+end
+
+-- @self :: Goal
+-- @child :: Goal
+-- @returns :: ()
+function Goal:addChild(child)
+  self.children:insert(child.location, child)
+  child.parents:insert(self.location, self)
+end
+
+-- @self :: Goal
+-- @returns Bool
+function Goal:allParentsCompleted()
+  return self.parents:all(function(_, g) return g.completed end)
+end
+
+-- @self :: Goal
+-- @returns :: Bool
+function Goal:ready()
+  return self.seenByPlayer and not self.completed and self:allParentsCompleted()
 end
 
 -- recursively descends into the children of the Goal, putting all the Goal itself,
@@ -206,25 +234,22 @@ end)
 function Goals:debug(game)
   self.goals:debug("all goals")
   self.flatGoals:debug("flat goals")
-  list.debugWithMsg(self:reachableSeenButNotCompletedGoals(game), "achievableGoals")
+  list.debugWithMsg(self:reachableReadyGoals(game), "achievableGoals")
 end
 
--- Returns the Goals that we can reach, ordered by the shortest path to them
+-- Returns the Goals that are ready AND we can reach, ordered by the shortest path to them
 -- also returns the Path to get to the Goal.
 -- @game :: Game
 -- @returns [ObjectWithPath Goal] ordered by distance (from the players current loc) ASC
-function Goals:reachableSeenButNotCompletedGoals(game)
-  return game:getPathsForTable3D(game:getLocation(), self:allSeenButNotCompletedGoals(game))
+function Goals:reachableReadyGoals(game)
+  return game:getPathsForTable3D(game:getLocation(), self:readyGoals(game))
 end
 
--- Returns all the Goals that we have seen but not completed can reach, even if we can't reach them.
+-- Returns all the Goals that are ready to be completed, even if we can't reach them.
 -- @game :: Game
 -- @returns Table3D Goal
-function Goals:allSeenButNotCompletedGoals(game)
-  -- @goal :: Goal
-  -- @returns :: Bool
-  function goodGoal(goal) return goal.seenByPlayer and not goal.completed end
-  return self.flatGoals:filter(goodGoal)
+function Goals:readyGoals(game)
+  return self.flatGoals:filter(function(g) return g:ready() end)
 end
 
 -- @mapId :: MapId (aka Int)
@@ -336,7 +361,7 @@ function buildAllGoals(allStaticMaps, allChests, searchSpots)
   local res = Table3D()
   addGoalsForAllMaps(res)
   addGoalsForAllSearchSpots(res)
-  harpGoal.children:insert(northernShrineGoal.location, northernShrineGoal)
+  harpGoal:addChild(northernShrineGoal)
 
   res:debug("ALL GOALS")
   return Goals(res)

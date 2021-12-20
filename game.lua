@@ -92,7 +92,7 @@ function Game:printVisibleGrid()
 end
 
 -- these are reasons that we have exited the followPath function
-GotoExitValues = enum.new("Follow Path Exit Values", {
+GotoExitValue = enum.new("Follow Path Exit Values", {
   "AT_LOCATION",
   "IN_BATTLE",
   "REPEL_TIMER",
@@ -101,36 +101,38 @@ GotoExitValues = enum.new("Follow Path Exit Values", {
   "BUG"
  })
 
+-- @dest :: Point
+-- @returns :: GotoExitValue
 function Game:goTo(dest)
   local src = self:getLocation()
   if src:equals(dest) then
     -- log.debug("I was asked to go to: " .. tostring(dest) .. ", but I am already there!")
-    return GotoExitValues.AT_LOCATION
+    return GotoExitValue.AT_LOCATION
   end
   local path = self:shortestPath(src, dest)
-  -- log.debug("in goto, shortestPath: ", src, dest, path)
+  log.debug("in goto, shortestPath: ", src, dest, path)
 
   if path == Nothing then
     log.err("ERROR: Could not create path from: " .. tostring(src) .. " to: " .. tostring(dest))
   else
-    local res = self:followPath(path)
-    -- log.debug("res from followPath is", res)
-    if res == GotoExitValues.REPEL_TIMER
+    local res = self:followPath(path.value)
+    log.debug("res from followPath is", res)
+    if res == GotoExitValue.REPEL_TIMER
       then
-        -- we got interruped by repel ending. after closing the window, continue going.
+        -- we got interrupted by repel ending. after closing the window, continue going.
         self:closeRepelTimerWindow()
-        self:goTo(dest)
-    elseif res == GotoExitValues.IN_BATTLE
+        return self:goTo(dest)
+    elseif res == GotoExitValue.IN_BATTLE
       then
-        -- we got interruped by a battle. after finishing the battle, continue going.
+        -- we got interrupted by a battle. after finishing the battle, continue going.
         self:executeBattle()
-        if self.dead then return GotoExitValues.DEAD
-        else self:goTo(dest)
+        if self.dead then return GotoExitValue.DEAD
+        else return self:goTo(dest)
         end
-    elseif res == GotoExitValues.MAP_CHANGED
+    elseif res == GotoExitValue.MAP_CHANGED
       then
         self:dealWithMapChange()
-        self:goTo(dest)
+        return self:goTo(dest)
     else
       return res
     end
@@ -140,21 +142,18 @@ end
 -- TODO: we need a way to interrupt this path taking.
 -- if we discover a new location while walking to a path
 -- we immediately want to abandon this path, and walk to the new path.
+-- @path :: Path
 function Game:followPath(path)
-  if path == Nothing then log.err("follow path was given an empty path (Nothing)") end
-
-  local commands = self:convertPathToCommands(path.value, self.staticMaps)
-
-  if commands.commands == nil or #(commands.commands) == 0 then
-    return log.err("path is empty in followPath")
-  end
-
-  -- log.debug(commands)
+  if path:isEmpty() then log.err("followPath was given an empty path!") end
+  log.debug("path in followPath", path)
+  local commands = self:convertPathToCommands(path)
+  if commands:isEmpty() then log.err("path is empty in followPath") end
+  log.debug(commands)
 
   for i,c in pairs(commands.commands) do
     -- if we are in battle or the repel window opened, then abort
-    if self.inBattle then return GotoExitValues.IN_BATTLE
-    elseif self.repelTimerWindowOpen then return GotoExitValues.REPEL_TIMER
+    if self.inBattle then return GotoExitValue.IN_BATTLE
+    elseif self.repelTimerWindowOpen then return GotoExitValue.REPEL_TIMER
     else
       if     c.direction == MovementCommandDir.DOOR   then self:interpretScript(self.scripts.OpenDoor(c.to))
       elseif c.direction == MovementCommandDir.STAIRS then self:interpretScript(self.scripts.TakeStairs)
@@ -163,7 +162,8 @@ function Game:followPath(path)
         -- this must be a Just because of the two cases above
         -- this would be nicer if we had pattern matching, but, we dont.
         local button = movementCommandDirToButton(c.direction).value
-        controller.holdButtonUntil(button, "we are at " .. tostring(c.to), function ()
+        local msg = "we are at " .. tostring(c.to) .. ", from " .. tostring(startingLoc)
+        controller.holdButtonUntil(button, msg, function ()
           self:updateOverworld(startingLoc)
           return self:shouldStopTakingPath(c.to)
         end)
@@ -171,16 +171,16 @@ function Game:followPath(path)
     end
   end
 
-  if self.inBattle then return GotoExitValues.IN_BATTLE
-  elseif self.repelTimerWindowOpen then return GotoExitValues.REPEL_TIMER
-  elseif self.mapChanged then return GotoExitValues.MAP_CHANGED
+  if self.inBattle then return GotoExitValue.IN_BATTLE
+  elseif self.repelTimerWindowOpen then return GotoExitValue.REPEL_TIMER
+  elseif self.mapChanged then return GotoExitValue.MAP_CHANGED
   -- we think we have completed the path, and this should always be the case
   -- but, do a last second double check just in case.
-  elseif self:getLocation():equals(commands.dest) then return GotoExitValues.AT_LOCATION
+  elseif self:getLocation():equals(commands.dest) then return GotoExitValue.AT_LOCATION
   -- we should be at the location, but somehow we werent. this must be a bug.
   else
     log.debug("Potential Error: we should be at the location, but somehow we weren't", self:getLocation(), dest)
-    return GotoExitValues.BUG
+    return GotoExitValue.BUG
   end
 end
 
@@ -215,7 +215,7 @@ end
 -- @s :: Script
 -- @returns :: TODO what should this function return?
 function Game:interpretScript(s)
-  -- log.debug("Script: " .. tostring(s))
+  log.debug("Script: " .. tostring(s))
   -- TODO: im not sure if these first two cases are really needed, but they dont hurt.
   if     self.inBattle then self:executeBattle()
   -- TODO: consider casting repel right here instead of just closing window
@@ -355,7 +355,9 @@ function Game:markChestOpened ()
 end
 
 function Game:searchGroundScript ()
-  self.searchSpots:searchAt(self:getLocation())
+  local loc = self:getLocation()
+  self.searchSpots:searchAt(loc)
+  self:completeGoalHere(loc)
 end
 
 function Game:addWarp(warp)
@@ -459,6 +461,8 @@ CommandsList = class(function (a, src, dest, commands)
   a.commands = commands
 end)
 
+function CommandsList:isEmpty() return #(self.commands) == 0 end
+
 function CommandsList:__tostring()
   return "<CommandsList"  ..
          " src: "         .. tostring(self.src) ..
@@ -469,8 +473,10 @@ end
 
 -- TODO: this shit seems to work... but im not sure i understand it. lol
 -- there is definitely a way to do this that is more intuitive.
-function Game:convertPathToCommands(pathIn, maps)
-  -- log.debug("pathIn", pathIn)
+-- @pathIn :: Path
+-- @returns :: CommandsList
+function Game:convertPathToCommands(pathIn)
+  log.debug("pathIn", pathIn)
   function directionFromP1ToP2(p1, p2)
     local res = {}
 
@@ -486,7 +492,7 @@ function Game:convertPathToCommands(pathIn, maps)
 
     function nextTileIsDoor()
       if p2.mapId == OverWorldId then return false
-      else return maps[p2.mapId]:getTileAt(p2.x, p2.y, self).name == "Door"
+      else return self.staticMaps[p2.mapId]:getTileAt(p2.x, p2.y, self).name == "Door"
       end
     end
 
@@ -547,6 +553,7 @@ end
 
 function Game:haveExploreDestButHaventReachedDestYet()
   if self:getExploreDest() == nil then return false end
+  log.debug("self:getExploreDest()", self:getExploreDest())
   return not self:getExploreDest():equals(self:getLocation())
 end
 
@@ -558,10 +565,25 @@ end
 -- if we have seen Rimuldar, returns the location of its entrance
 -- if not, returns Nothing
 -- @returns :: Maybe Point
-function Game:rimuldarEntrance()
-  if self.staticMaps[Rimuldar].seenByPlayer then
-    return Just(self.staticMaps[Rimuldar].entrances[1].to)
-  else return Nothing
+function Game:getRimuldarEntrance()
+  return self:getMapEntrance(Rimuldar)
+end
+
+-- TODO: this is really weird for swamp cave
+-- instead of marking maps as seenByPlayer, i think we actually need to mark entrances as seen
+-- we could get into a spot here where we see one entrance, but try to go to the other one
+-- even though we've never actually seen it, and wont be able to create a path to it.
+-- @mapId :: MapId (aka Int)
+-- @returns :: Maybe Point
+function Game:getMapEntrance(mapId)
+  log.debug("getMapEntrance", mapId, self.staticMaps[mapId].mapName, self.staticMaps[mapId].entrances)
+  if self.staticMaps[mapId].seenByPlayer then
+    local res = list.toMaybe(self.staticMaps[mapId]:getFirstStep(self.staticMaps))
+    log.debug("in getMapEntrance IF (map has been seen)", res)
+    return res
+  else
+    log.debug("in getMapEntrance ELSE (map has not been seen)")
+    return Nothing
   end
 end
 
@@ -577,16 +599,16 @@ function Game:dealWithAnyGoals()
   log.debug("in dealWithAnyGoals")
   self.goals:debug(self)
 
-  local maybeAchievableGoal = list.toMaybe(self.goals:reachableSeenButNotCompletedGoals(self))
+  local maybeAchievableGoal = list.toMaybe(self.goals:reachableReadyGoals(self))
   if maybeAchievableGoal:isDefined() then
     log.debug("Headed towards achievable goal", maybeAchievableGoal.value)
     return Just(Right(maybeAchievableGoal.value))
   else
     -- if this is non-empty, it means there must be something either behind a locked door
     -- or i guess possibly on an island or something... but lets assume its a door for now
-    local goalsWithNoPaths = self.goals:allSeenButNotCompletedGoals(self)
+    local goalsWithNoPaths = self.goals:readyGoals(self)
     if goalsWithNoPaths:isEmpty() then return Nothing
-    else return self:rimuldarEntrance():map(function(e) return Left(e) end)
+    else return self:getRimuldarEntrance():map(function(e) return Left(e) end)
     end
   end
 end
@@ -607,18 +629,7 @@ function Game:grindOrExplore()
     local newGoal = self:dealWithAnyGoals()
     log.debug("newGoal", newGoal)
     if newGoal:isDefined() then
-      newGoal.value:bifor(
-        function(rimuldarEntrance)
-          log.debug("heading to rimuldar to get keys hopefully.")
-          self:chooseNewDestinationDirectly(rimuldarEntrance)
-        end,
-        function(goalWithPath)
-          log.debug("we have a goal and a path, heading towards the goal.")
-          -- TODO: we have the path here! so we could use it, but we are just grabbing the Goal (via .value)
-          -- maybe our `exploreDest` should be more than just a Point
-          self:chooseNewDestinationDirectly(goalWithPath.value.location)
-        end
-      )
+      newGoal.value:bifor(function (e) self:goToRimuldar(e) end, function(g) self:goToGoal(g) end)
     else
       local pd = self:readPlayerData()
       local grind = getGrindInfo(pd, self)
@@ -629,7 +640,7 @@ function Game:grindOrExplore()
       -- if haven't seen anything worth fighting... then i guess just explore...
       else
         log.debug("goal and grind were both nil, so picking a random border tile")
-        self:chooseNewDestination(function (k) return self:chooseRandomBorderTile(k) end)
+        self:chooseNewDestination(function (k) return self:chooseClosestBorderTile(k) end)
       end
     end
   else
@@ -650,6 +661,36 @@ function Game:grind(grind, currentLevel)
     self:goTo(neighbor)
   end
 end
+
+function Game:goToRimuldar(rimuldarEntrance)
+  log.debug("heading to rimuldar to get keys hopefully.")
+  self:chooseNewDestinationDirectly(rimuldarEntrance)
+end
+
+function Game:goToGoal(goalWithPath)
+  function go(loc) self:chooseNewDestinationDirectly(loc) end
+  log.debug("we have a goal and a path, heading towards the goal.", goalWithPath)
+  -- TODO: we have the path here! so we could use it, but we are just grabbing the Goal (via .value)
+  -- maybe our `exploreDest` should be more than just a Point
+  -- TODO: for now, we just to go to the entrance of the map, and run the map script.
+  -- but eventually it might be better to have goal scripts.
+  -- if we have a search spot... depends
+  if     goalWithPath.value:is_a(Goal_Overworld)  then go(goalWithPath.value.location)
+  -- if we have a chest, we go to the entrance of the map
+  elseif goalWithPath.value:is_a(Goal_Chest)      then
+    go(self:getMapEntrance(goalWithPath.value.location.mapId).value)
+  -- if we have a basement... i think we just go to the map
+  elseif goalWithPath.value:is_a(Goal_Basement)   then
+    go(self:getMapEntrance(goalWithPath.value.location.mapId).value)
+  -- if we have an overworld spot, we go to that (the location on the overworld)
+  elseif goalWithPath.value:is_a(Goal_SearchSpot) then
+    if goalWithPath.value.location.mapId == OverWorldId then go(goalWithPath.value.location)
+    else go(self:getMapEntrance(goalWithPath.value.location.mapId).value)
+    end
+  else log.err("unknown goal type", goalWithPath)
+  end
+end
+
 
 function Game:reachedDestination()
   log.debug("We have reached our destination:" .. tostring(loc))
@@ -751,7 +792,7 @@ function Game:exploreMove()
     self:chooseNewDestination(function (k) return self:chooseRandomBorderTile(k) end)
   else
     self:castRepel()
-    local madeItThere = self:goTo(self:getExploreDest()) == GotoExitValues.AT_LOCATION
+    local madeItThere = self:goTo(self:getExploreDest()) == GotoExitValue.AT_LOCATION
     -- if we are there, we need to nil this out so we can pick up a new destination
     if madeItThere then
       self:reachedDestination()

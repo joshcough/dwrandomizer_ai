@@ -580,6 +580,24 @@ function Table3D:find(f)
 end
 
 -- @self :: Table3D a
+-- @f :: a -> Bool
+-- @returns :: Bool
+function Table3D:all(f)
+  local res = true
+  self:iterate(function(p, a) res = res and f(p, a) end)
+  return res
+end
+
+-- @self :: Table3D a
+-- @f :: a -> Bool
+-- @returns :: Bool
+function Table3D:any(f)
+  local res = false
+  self:iterate(function(p, a) res = res or f(p, a) end)
+  return res
+end
+
+-- @self :: Table3D a
 -- @returns :: [a]
 function Table3D:toList()
   local res = {}
