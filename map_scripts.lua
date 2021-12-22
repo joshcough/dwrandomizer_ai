@@ -112,6 +112,7 @@ SavePrincess   = ActionScript("RESCUE_PRINCESS")
 DragonLord     = ActionScript("DRAGONLORD")
 ShopKeeper     = ActionScript("TALK_TO_SHOP_KEEPER")
 DoBattle       = ActionScript("DO_BATTLE")
+CloseCmdMenu   = ActionScript("CLOSE_CMD_MENU")
 
 SaveUnlockedDoor = class(ActionScript, function(a, loc)
   ActionScript.init(a, "SAVE_UNLOCKED_DOOR: " .. tostring(loc))
@@ -291,11 +292,21 @@ Consecutive = class(Script, function(a, name, scripts)
   a.scripts = scripts
 end)
 
+-- repeat the given script `n` times.
 NTimes = class(Script, function(a, n, script)
   Script.init(a, "NTimes(" .. tostring(n) .. "," .. tostring(script) .. ")")
   a.n = n
   a.script = script
 end)
+
+-- TODO: this isn't used yet, but, I feel like it can be really useful
+-- repeat the given script until the given function returns true
+-- RepeatUntil = class(Script, function(a, f, script)
+--   Script.init(a, "NTimes(" .. tostring(n) .. "," .. tostring(script) .. ")")
+--   a.n = n
+--   a.script = script
+-- end)
+
 
 function Consecutive:__tostring()
   local res = self.name .. ":\n"
@@ -319,7 +330,7 @@ Scripts = class(function(a,entrances)
   OpenItemMenu = Consecutive("Open Item Menu", { OpenMenu, PressRight(2), PressDown(2), PressA(2), WaitFrames(30) })
   OpenSpellMenu = Consecutive("Open Spell Menu", { OpenMenu, PressRight(2), PressA(2), WaitFrames(30) })
   Talk = Consecutive("Talk", { HoldA(30), WaitFrames(10), PressA(2) })
-  TakeStairs = Consecutive("Take Stairs", { OpenMenu, PressDown(2), PressDown(2), PressA(60) })
+  TakeStairs = Consecutive("Take Stairs", { OpenMenu, PressDown(2), PressDown(2), PressA(60), CloseCmdMenu })
 
   function VisitShop(mapId, x, y, dir)
     return Consecutive("Visiting shop at: " .. tostring(Point(mapId, x, y)), {

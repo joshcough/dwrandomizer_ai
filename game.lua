@@ -37,6 +37,9 @@ Game = class(function(a, memory, warps, graph, overworld, staticMaps)
   a.lastPrintedPercentage = 0
   -- we start on the menu screen, so on no map at all.
   a.currentMapId = 0
+  a.cmdWindowOpen = false
+  a.windowX = -1
+  a.windowY = -1
 
   a.goals = buildAllGoals(a.staticMaps, a.chests, a.searchSpots)
 
@@ -163,6 +166,9 @@ function Game:followPath(path)
         -- this would be nicer if we had pattern matching, but, we dont.
         local button = movementCommandDirToButton(c.direction).value
         local msg = "we are at " .. tostring(c.to) .. ", from " .. tostring(startingLoc)
+
+        self:waitUntilCmdWindowIsClosed()
+
         controller.holdButtonUntil(button, msg, function ()
           self:updateOverworld(startingLoc)
           return self:shouldStopTakingPath(c.to)
@@ -233,6 +239,7 @@ function Game:interpretScript(s)
         elseif s == DragonLord   then self:fightDragonLord()
         elseif s == ShopKeeper   then self:talkToShopKeeper()
         elseif s == DoBattle     then self:executeBattle()
+        elseif s == CloseCmdMenu then self:closeCmdWindow()
         -- == doesn't work on these, so we need is_a
         elseif s:is_a(SaveUnlockedDoor) then self:saveUnlockedDoor(s.loc)
         elseif s:is_a(CastSpell)        then self:cast(s.spell)
@@ -1257,7 +1264,10 @@ end
 -- @returns :: Maybe Goal
 function Game:goalAt(p) return self.goals:goalAt(p) end
 
-ObjectWithPath = class(function (a, v, path)
+-- @value :: a
+-- @path :: Path
+-- @returns :: ObjectWithPath a
+ObjectWithPath = class(function (a, value, path)
   a.value = v
   a.path  = path
 end)
@@ -1294,4 +1304,34 @@ function Game:getPathsForTable3D(currentLoc, table3d)
   return res
 end
 
+-- @returns :: ()
+function Game:openCmdWindow()
+  log.debug("Opening Non-combat command window")
+  self.cmdWindowOpen = true
+end
 
+-- @returns :: ()
+function Game:closeCmdWindow()
+  log.debug("Closing Non-combat command window")
+  self.cmdWindowOpen = false
+end
+
+-- @returns :: ()
+function Game:waitUntilCmdWindowIsClosed()
+  if self.cmdWindowOpen then
+    controller.pressB(2)
+    controller.waitUntil(function() return self.cmdWindowOpen == false end, math.huge, "command window is closed")
+  end
+end
+
+-- @returns :: ()
+function Game:windowXCursor()
+  self.windowX = self.memory:readRAM(0xD8)
+  log.debug("Cursor X pos is now", self.windowX)
+end
+
+-- @returns :: ()
+function Game:windowYCursor()
+  self.windowY = self.memory:readRAM(0xD9)
+  log.debug("Cursor Y pos is now", self.windowY)
+end
