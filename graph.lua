@@ -27,6 +27,71 @@ Graph = class(function (a, staticMaps)
   a.graphWithoutKeys = NewGraph(createStaticMapGraphs(staticMaps, false), false)
 end)
 
+-- what if this function didn't take the haveKeys boolean
+-- and instead Path contained both the path without keys and the path with keys
+-- and possibly how many keys are required? or something?
+
+-- we need a better way of managing what doors are open/closed
+-- and how many keys we need on a path
+-- because when we die we create a path back into a dungeon, but i think it thinks
+-- that the doors in it are still open, because they don't get closed until we make it
+-- back out onto the overworld. and so we are getting stuck at the door
+
+-- the path without keys would ideally have all the doors in it, and so we could know how many keys are needed
+-- the path with keys would have no doors i guess, and would be Nothing if there was a door in the way? i think...
+-- that is all kind of convoluted though.
+
+-- there are other possible ways, but i haven't completely thought them through yet
+-- lets say we have a path that takes us outside to the overword, to garinham, and down into the grave (where a key is required)
+-- but, we died in the grave after having opened the door in the grave.
+-- i think the game thinks that door is still open when we create the path, but when we get to the overworld, the door closes.
+-- so what if we looked at the path to see if it led us out onto the overworld?
+-- then i guess we would have to use the graph with keys?
+--ugh...
+
+-- what if we abandoned key/no key graphs and just had one graph?
+-- even if we always updated it whenever we opened or closed a door... we would still have this overworld problem
+-- because we create the paths right now before we hit the overworld, so the door is still open
+
+--- === THIS === ---
+-- so what if we didn't create the path until we left tantegel?
+-- that would probably work really nice, except for when the path is to whatever is in the tantegel basement.
+-- but maybe we could analyze that.
+-- we could look at the destination map, and we could follow its parents all the way out
+-- if Tantegel is one of its parents, then we do ZZZ (what do we do?)
+-- if it is NOT one of its parents, then we could walk outside, then then calculate the path
+-- except what if there are doors and we dont have any keys?
+-- then maybe we dont' even want to go there at all... and so we have to pick a new destination
+-- and it would be kind of weird to have to walk outside tantegel in order to figure this out
+-- because its possible (maybe? maybe not actually) that we'd want to walk back into the castle
+-- i say "maybe not actually" because if we dont have keys, then there isn't really anything
+-- to do in the castle anyway, right? so we wouldn't be going back in there.
+--- i think this works actually....
+-- i also think we will ahve to rely on the stuff in `Memory:printDoorsAndChests()` to make this work properly
+-- basically, whenever we hit the overworld, we should readjust the graph for any doors that just closed
+-- and whenever we open a door, we can update the graph too. right? do we do that already?
+
+
+--
+-- -- @returns :: [MapId] aka [Int]
+-- function StaticMap:parentIds()
+--   if     self.mapId == TantegelThroneRoom then return {Tantegel}
+--   elseif self.mapId == CharlockThroneRoom then return {Charlock}
+--   elseif self.mapId == MountainCaveLv2    then return {MountainCaveLv1}
+--   elseif self.mapId == ErdricksCaveLv2    then return {ErdricksCaveLv1}
+--   elseif self.mapId == TantegelBasement   then return {self.entrances[1].from.mapId}
+--   elseif self.mapId == NorthernShrine     then return {self.entrances[1].from.mapId}
+--   elseif self.mapId == SouthernShrine     then return {self.entrances[1].from.mapId}
+--   elseif self.mapId == SwampCave          then return list.map(self.entrances, function(e) return e.from.mapId end)
+--   elseif self.mapId == ErdricksCaveLv2    then return {self.entrances[1].from.mapId}
+--   elseif self.mapId == ErdricksCaveLv2    then return {self.entrances[1].from.mapId}
+--   elseif self.mapId >= CharlockCaveLv1 and self.mapId <= CharlockCaveLv6 then return {Charlock}
+--   elseif self.mapId >= GarinsGraveLv2  and self.mapId <= GarinsGraveLv4  then return {GarinsGraveLv1}
+--   else return {1} -- TODO: constant... use OverWorldId
+--   end
+-- end
+
+
 -- @src :: Point
 -- @destination :: Point
 -- @game :: Game
@@ -91,7 +156,7 @@ function Graph:addWarp(warp, overworld)
     log.debug("Not adding warp because there's no overworld in it.", warp)
   end
   -- log.debug("adding warp in Graph", warp)
-  self:fixOverworldNeighbors(warp, overworld)
+  self:discoverTownOrCave(warp, overworld)
 end
 
 -- TODO: pretty major one... if we attempt to grind in a dungeon, this is going to all break
@@ -116,10 +181,10 @@ end
 -- @warp :: Warp
 -- @overworld :: OverworldTile
 -- @returns :: ()
-function Graph:fixOverworldNeighbors(warp, overworld)
+function Graph:discoverTownOrCave(warp, overworld)
   local overworldPoint = warp.src.mapId == OverWorldId and warp.src  or warp.dest
   local otherPoint     = warp.src.mapId == OverWorldId and warp.dest or warp.src
-  -- log.debug("fixOverworldNeighbors", overworldPoint, otherPoint)
+  -- log.debug("discoverTownOrCave", overworldPoint, otherPoint)
 
   function go(graph)
     -- we need to get each of the Walkable neighbors4 of the overworldPoint
@@ -182,6 +247,7 @@ function NewGraph:getNodeAtPoint(p)
   return self.rows[p.mapId][p.y][p.x]
 end
 
+-- zzz i dont think we need to do anything here but delegate the the static map as we already are.
 -- @p :: Point
 -- @returns :: OverworldTile or StaticMapTile (TODO: maybe a unified type for these)
 function NewGraph:getTileAtPoint(p, game)
@@ -391,6 +457,9 @@ function createStaticMapGraphs(staticMaps, haveKeys)
   return res
 end
 
+-- at the beginning of the game, all doors should be locked
+-- and so we should have a graph missing some potential neighbors because of that
+-- and that is exactly what we want.
 -- @staticMap :: StaticMap
 -- @haveKeys :: Bool
 -- @returns :: [[GraphNode]]
