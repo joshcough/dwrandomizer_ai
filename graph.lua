@@ -468,7 +468,7 @@ function mkStaticMapGraph (staticMap, haveKeys)
 
   function isWalkable(x,y)
     local t = tileSet[staticMap.rows[y][x]]
-    if table.containsUsingDotEquals(staticMap.immobileScps, Point(staticMap.mapId, x, y))
+    if list.any(staticMap.immobileScps, function(l) l:equals(Point(staticMap.mapId, x, y)) end)
       then return false
       else return haveKeys and (t.walkableWithKeys or t.walkable) or t.walkable
     end

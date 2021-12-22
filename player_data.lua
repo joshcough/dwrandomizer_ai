@@ -100,7 +100,7 @@ end
 function Items:contains(item)
   if item == Herb then return self:haveHerbs()
   elseif item == MagicKey then return self:haveKeys()
-  else return table.contains(self.slots, item, function(i1, i2) return i1 == i2 end)
+  else return table.any(self.slots, function(i) return i == item end)
   end
 end
 

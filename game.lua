@@ -368,7 +368,7 @@ function Game:searchGroundScript ()
 end
 
 function Game:addWarp(warp)
-  if table.containsUsingDotEquals(self.warps, warp) then
+  if list.any(self.warps, function(w) w:equals(warp) end) then
     -- log.debug("NOT Adding warp, it already exists!: " .. tostring(warp))
     return
   end
@@ -407,7 +407,7 @@ function swapSrcAndDest(w) return w:swap() end
 
 -- TODO: is this really needed? isnt this information just in memory somewhere? i swear it was.
 function Game:isDoorOpen(loc)
-  local res = table.containsUsingDotEquals(list.map(self.unlockedDoors, function(d) return d.loc end), loc.loc)
+  local res = list.any(list.map(self.unlockedDoors, function(d) return d.loc end), function(l) l:equals(loc.loc) end)
   -- log.debug("in Game:isDoorOpen", "loc", loc, "self.unlockedDoors", self.unlockedDoors, res)
   return res
 end

@@ -369,22 +369,63 @@ function StaticMap:childrenIds()
   end
 end
 
+local OverWorldId = 1 -- TODO: get this constant from somewhere else!
+
 -- @returns :: [MapId] aka [Int]
 function StaticMap:parentIds()
-  if     self.mapId == TantegelThroneRoom then return {Tantegel}
+  -- Note:
+  --   This whole function could be written in a simpler way (and used to be)
+  --   However, it is easier to see and understand when it is written out completely like it is now.
+  function parentIdsFromEntrances() return list.map(self.entrances, function(e) return e.from.mapId end) end
+  if     self.mapId == Charlock           then return {OverWorldId}
+  elseif self.mapId == Hauksness          then return {OverWorldId}
+  elseif self.mapId == Tantegel           then return {OverWorldId}
+  elseif self.mapId == TantegelThroneRoom then return {Tantegel}
   elseif self.mapId == CharlockThroneRoom then return {Charlock}
-  elseif self.mapId == MountainCaveLv2    then return {MountainCaveLv1}
-  elseif self.mapId == ErdricksCaveLv2    then return {ErdricksCaveLv1}
-  elseif self.mapId == TantegelBasement   then return {self.entrances[1].from.mapId}
-  elseif self.mapId == NorthernShrine     then return {self.entrances[1].from.mapId}
-  elseif self.mapId == SouthernShrine     then return {self.entrances[1].from.mapId}
-  elseif self.mapId == SwampCave          then return list.map(self.entrances, function(e) return e.from.mapId end)
-  elseif self.mapId == ErdricksCaveLv2    then return {self.entrances[1].from.mapId}
-  elseif self.mapId == ErdricksCaveLv2    then return {self.entrances[1].from.mapId}
   elseif self.mapId >= CharlockCaveLv1 and self.mapId <= CharlockCaveLv6 then return {Charlock}
+  elseif self.mapId == Kol                then return {OverWorldId}
+  elseif self.mapId == Brecconary         then return {OverWorldId}
+  elseif self.mapId == Garinham           then return {OverWorldId}
+  elseif self.mapId == Cantlin            then return {OverWorldId}
+  elseif self.mapId == Rimuldar           then return {OverWorldId}
+  elseif self.mapId == TantegelBasement   then return parentIdsFromEntrances()
+  elseif self.mapId == NorthernShrine     then return parentIdsFromEntrances()
+  elseif self.mapId == SouthernShrine     then return parentIdsFromEntrances()
+  elseif self.mapId == MountainCaveLv1    then return parentIdsFromEntrances()
+  elseif self.mapId == MountainCaveLv2    then return {MountainCaveLv1}
+  elseif self.mapId == ErdricksCaveLv1    then return parentIdsFromEntrances()
+  elseif self.mapId == ErdricksCaveLv2    then return {ErdricksCaveLv1}
+  elseif self.mapId == SwampCave          then return parentIdsFromEntrances()
+  elseif self.mapId == GarinsGraveLv1     then return parentIdsFromEntrances()
   elseif self.mapId >= GarinsGraveLv2  and self.mapId <= GarinsGraveLv4  then return {GarinsGraveLv1}
-  else return {1} -- TODO: constant... use OverWorldId
+  -- This should never happen. we just don't have proper pattern matching.
+  else log.error("unhandled map id in parentIds", self.mapId, self.mapName)
   end
+end
+
+-- Returns true if walking from TantegelThroneRoom to the given map would require going out
+-- to the overworld (vs say, just walking into the basement of Tantegel).
+-- Returns false otherwise (if the mapId is Tantegel or is somewhere in the basement of it)
+-- @allStaticMaps :: [StaticMap]
+-- @returns :: Bool
+function StaticMap:pathWouldRequireOverworld(allStaticMaps)
+  return not self:isTantegelAParent(allStaticMaps)
+end
+
+-- @allStaticMaps :: [StaticMap]
+-- @returns :: [MapId]
+function StaticMap:walkParentIds(allStaticMaps)
+  return list.bind(self:parentIds(), function(pid)
+    if pid == OverWorldId then return {OverWorldId}
+    else return table.concat({pid}, allStaticMaps[pid]:parentIds())
+    end
+  end)
+end
+
+-- @allStaticMaps :: [StaticMap]
+-- @returns :: Bool
+function StaticMap:isTantegelAParent(allStaticMaps)
+  return list.any(self:walkParentIds(allStaticMaps), function(pid) return pid == Tantegel end)
 end
 
 -- Get the point that you warp to when you enter this map from the overworld (or tantegel/garinham)

@@ -187,8 +187,7 @@ function chooseClosestTileForGrinding(playerLoc, enemyLocations)
 end
 
 function Enemy:executeBattle(game)
-
-  if not table.containsUsingDotEquals(self.locations, game:getLocation()) then
+  if not list.any(self.locations, function(loc) loc:equals(game:getLocation()) end) then
     table.insert(self.locations, game:getLocation())
     -- log.debug("have now seen " .. self.name .. " at: ", tostring(self.locations))
   end

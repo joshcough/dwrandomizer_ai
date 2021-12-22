@@ -183,19 +183,6 @@ function table.dump( t )
   end
 end
 
-function table.contains(list, x, equalityOp)
-  for _, v in pairs(list) do
-    if equalityOp == nil and x == v then return true
-    elseif equalityOp(x, v) then return true
-    end
-  end
-  return false
-end
-
-function table.containsUsingDotEquals(t, x)
-  return table.contains(t, x, function(v1, v2) return v1:equals(v2) end)
-end
-
 function table.count(list, x, equalityOp)
   local res = 0
   for _, v in pairs(list) do

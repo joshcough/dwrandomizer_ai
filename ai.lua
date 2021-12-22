@@ -110,7 +110,7 @@ function main()
   hud_main()
 
   local mem = Memory(memory, rom)
-  -- cheat(mem)
+  cheat(mem)
 
   -- always save the maps man. if we dont do this
   -- we start getting out of date and bad stuff happens.
@@ -344,3 +344,11 @@ main()
 
 -- DoneRemoveWindow:
 -- LA87F:  RTS                     ;Window is now removed. Exit.
+
+
+--   list.foreach(game.staticMaps, function(m)
+--     log.debug(m.mapId, m.mapName,
+--       "pids", m:walkParentIds(game.staticMaps),
+--       "tant", m:isTantegelAParent(game.staticMaps),
+--       "over", m:pathWouldRequireOverworld(game.staticMaps))
+--   end)
