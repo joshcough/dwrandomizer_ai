@@ -9,6 +9,8 @@ GraphNodeType = enum.new("Type of graph node", {
   "KNOWN", -- tiles on the overworld that we have discovered, or tiles on static maps.
 })
 
+-- @nodeType :: GraphNodeType
+-- @returns :: GraphNode
 GraphNode = class(function(a, nodeType)
   a.nodeType = nodeType
   -- invariant: neighbors must be empty if nodeType == UNKNOWN.
@@ -18,6 +20,8 @@ GraphNode = class(function(a, nodeType)
   a.neighbors = {}
 end)
 
+-- @staticMaps :: [StaticMap]
+-- @returns :: Graph
 Graph = class(function (a, staticMaps)
   a.graphWithKeys = NewGraph(createStaticMapGraphs(staticMaps, true), true)
   a.graphWithoutKeys = NewGraph(createStaticMapGraphs(staticMaps, false), false)
@@ -44,10 +48,16 @@ function Graph:shortestPaths(src, destinations, haveKeys, game)
   return res
 end
 
+-- @overworld :: Overworld
+-- @returns :: [Point]
 function Graph:knownWorldBorder(overworld)
   return self.graphWithKeys:knownWorldBorder(overworld)
 end
 
+-- @x :: Int
+-- @y :: Int
+-- @game :: Game
+-- @returns :: ()
 function Graph:discover(x, y, game)
   -- log.debug("Graph:discover", x, y, game == nil)
   self.graphWithKeys:discover(x, y, game)
@@ -57,11 +67,13 @@ end
 -- TODO: get these from elsewhere
 TantegelThroneRoom = 5
 
+-- @returns :: ()
 function Graph:unlockThroneRoomDoor()
   -- log.debug("unlocking throne room door")
   self.graphWithoutKeys.rows[TantegelThroneRoom] = self.graphWithKeys.rows[TantegelThroneRoom]
 end
 
+-- @returns :: ()
 function Graph:unlockRimuldar()
   log.debug("unlocking rimular")
   self.graphWithoutKeys.rows[Rimuldar] = self.graphWithKeys.rows[Rimuldar]
@@ -71,6 +83,9 @@ end
 -- we can add the neighbors normally to the neighbors4.
 -- but when we actually go into it, then we replace those neighbors
 -- with instead of the overworld location, the actual warp location
+-- @warp :: Warp
+-- @overworld :: Overworld
+-- @returns :: ()
 function Graph:addWarp(warp, overworld)
   if not (warp.src.mapId == OverWorldId or warp.dest.mapId == OverWorldId) then
     log.debug("Not adding warp because there's no overworld in it.", warp)
@@ -82,6 +97,10 @@ end
 -- TODO: pretty major one... if we attempt to grind in a dungeon, this is going to all break
 -- because the code is assuming the overworld. see `overworld:grindableNeighbors`
 -- it really shouldn't be that way. we need a static map version of grindableNeighbors as well.
+-- @game :: Game
+-- @x :: Int
+-- @y :: Int
+-- @returns :: [Neighbor]
 function Graph:grindableNeighbors(game,x,y)
   -- log.debug("in grindableNeighbors", x, y)
   local neighbors = self.graphWithKeys:getNodeAt(OverWorldId,x,y,game).neighbors
@@ -94,6 +113,9 @@ function Graph:grindableNeighbors(game,x,y)
   end)
 end
 
+-- @warp :: Warp
+-- @overworld :: OverworldTile
+-- @returns :: ()
 function Graph:fixOverworldNeighbors(warp, overworld)
   local overworldPoint = warp.src.mapId == OverWorldId and warp.src  or warp.dest
   local otherPoint     = warp.src.mapId == OverWorldId and warp.dest or warp.src
@@ -124,6 +146,9 @@ function Graph:fixOverworldNeighbors(warp, overworld)
   go(self.graphWithoutKeys)
 end
 
+-- @staticMapGraphs :: [[[GraphNode]]]
+-- @isGraphWithKeys :: Bool
+-- @returns :: NewGraph
 NewGraph = class(function(a, staticMapGraphs, isGraphWithKeys)
   a.rows = {}
   a.isGraphWithKeys = isGraphWithKeys
@@ -135,18 +160,30 @@ end)
 
 unknown = GraphNode(GraphNodeType.UNKNOWN)
 
-function NewGraph:isDiscovered(m,x,y)
-  return self:getNodeAt(m,x,y) ~= unknown
+-- @mapId :: MapId / Int
+-- @x :: Int
+-- @y :: Int
+-- @returns :: Bool
+function NewGraph:isDiscovered(mapId,x,y)
+  return self:getNodeAt(mapId,x,y) ~= unknown
 end
 
+-- @mapId :: MapId / Int
+-- @x :: Int
+-- @y :: Int
+-- @returns :: GraphNode
 function NewGraph:getNodeAt(mapId,x,y)
   return self.rows[mapId][y][x]
 end
 
+-- @p :: Point
+-- @returns :: GraphNode
 function NewGraph:getNodeAtPoint(p)
   return self.rows[p.mapId][p.y][p.x]
 end
 
+-- @p :: Point
+-- @returns :: OverworldTile or StaticMapTile (TODO: maybe a unified type for these)
 function NewGraph:getTileAtPoint(p, game)
   if p.mapId == OverWorldId then
     return game.overworld:getTileAt_NoUpdate(p.x, p.y, game)
@@ -155,10 +192,16 @@ function NewGraph:getTileAtPoint(p, game)
   end
 end
 
+-- @p :: Point
+-- @returns :: Int
 function NewGraph:getWeightAtPoint(p, game)
   return self:getTileAtPoint(p, game).weight
 end
 
+-- @x :: Int
+-- @y :: Int
+-- @overworld :: Overworld
+-- @returns :: ()
 function NewGraph:discover(x, y, overworld)
   if self:isDiscovered(OverWorldId,x,y) then return end
   if not overworld:getTileAt_NoUpdate(x,y).walkable
@@ -196,11 +239,15 @@ end
 -- @src :: Point
 -- @destinations :: [Point]
 -- @game :: Game
--- @returns [Path] (sorted by weight, ASC)
+-- @returns :: [Path] (sorted by weight, ASC)
 function NewGraph:shortestPaths(src, destinations, game)
   return self:dijkstra(src, destinations, game)
 end
 
+-- @src :: Point
+-- @dest :: Point
+-- @weight :: Int
+-- @path :: [Point/Neighbor] (first one is a Point, rest are Neighbors) TODO: maybe make a better type for this.
 Path = class(function (a, src, dest, weight, path)
   a.src    = src
   a.dest   = dest
@@ -208,8 +255,10 @@ Path = class(function (a, src, dest, weight, path)
   a.path   = path
 end)
 
+-- @returns :: Bool
 function Path:isEmpty() return #(self.path) == 0 end
 
+-- @returns :: String
 function Path:__tostring()
   return "<Path " ..
          " src: "      .. tostring(self.src) ..
@@ -290,7 +339,9 @@ function NewGraph:dijkstra (src, dests, game)
   return res
 end
 
-
+-- Returns the list of points that are on the edge of what we have discovered so far.
+-- @overworld :: Overworld
+-- @returns [Point]
 function NewGraph:knownWorldBorder(overworld)
   local res = {}
   for y,row in pairs(self.rows[1]) do
@@ -314,7 +365,9 @@ function NewGraph:knownWorldBorder(overworld)
   return res
 end
 
--- this is the empty overworld graph. the one that we would have before we ever leave tantegel.
+-- Returns an empty overworld grid (the one that we would have before we ever leave tantegel)
+-- of size 120x120, where every node in the grid is the UNKNOWN graph node.
+-- @returns :: [[GraphNode]]
 function mkOverworldGraph()
   local res = {}
   for y = 0,119 do
@@ -326,6 +379,9 @@ function mkOverworldGraph()
   return res
 end
 
+-- @staticMaps :: [StaticMap]
+-- @haveKeys :: Bool
+-- @returns :: [[[GraphNode]]] -- TODO: maybe we need a good type for this?
 function createStaticMapGraphs(staticMaps, haveKeys)
   local res = {}
   for i = 2, 29 do
@@ -335,6 +391,9 @@ function createStaticMapGraphs(staticMaps, haveKeys)
   return res
 end
 
+-- @staticMap :: StaticMap
+-- @haveKeys :: Bool
+-- @returns :: [[GraphNode]]
 function mkStaticMapGraph (staticMap, haveKeys)
   local tileSet = staticMap:getTileSet()
 
@@ -426,20 +485,21 @@ function mkStaticMapGraph (staticMap, haveKeys)
   return res
 end
 
+-- @mapId :: MapId / Int
+-- @game :: Game
+-- @printGoals :: Bool
+-- @returns :: ()
 function NewGraph:printMap(mapId, game, printGoals)
   local bottomRight = nil
   if mapId == OverWorldId
     then bottomRight = Point(mapId, 119, 119)
     else bottomRight = Point(mapId, game.staticMaps[mapId].width - 1, game.staticMaps[mapId].height - 1)
   end
-
   return self:printSquare(Square(Point(mapId, 0, 0), bottomRight), game, printGoals)
 end
 
 -- bounds :: Square
 -- game   :: Game
--- TODO: i feel like this needs to be redone using the Neighbors direction
--- instead of all this stuff: findNeighbor(x-1,y), ..., findNeighbor(x,y+1)
 function NewGraph:printSquare(square, game, printGoals)
   -- log.debug("printSquare", square, printGoals)
   local mapId = square.topLeft.mapId
@@ -461,6 +521,8 @@ function NewGraph:printSquare(square, game, printGoals)
       return i.value
     end
 
+    -- TODO: i feel like this needs to be redone using the Neighbors direction
+    -- instead of all this stuff: findNeighbor(x-1,y), ..., findNeighbor(x,y+1)
     local l,r,t,b = findNeighbor(x-1,y), findNeighbor(x+1,y), findNeighbor(x,y-1), findNeighbor(x,y+1)
 
     if l ~= nil then res = res .. "←" else res = res .. " " end
