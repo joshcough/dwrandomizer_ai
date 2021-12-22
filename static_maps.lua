@@ -243,6 +243,8 @@ mockEntranceCoordinates = {
    [28]={Entrance(Point(28,  0,  0), Point(1, 86,  84), GoalType.CAVE)}
   }
 
+-- ok i hate walkableWithKeys and i want it to die horribly.
+-- i think we can accomplish that in this PR 12/21/21
 StaticMapTile = class(function(a,tileId,name,walkable,walkableWithKeys)
   a.id = tileId
   a.tileId = tileId

@@ -240,7 +240,7 @@ function Game:interpretScript(s)
         elseif s == ShopKeeper   then self:talkToShopKeeper()
         elseif s == DoBattle     then self:executeBattle()
         elseif s == CloseCmdMenu then self:closeCmdWindow()
-        -- == doesn't work on these, so we need is_a
+        -- `==` doesn't work on these, so we need `is_a`
         elseif s:is_a(SaveUnlockedDoor) then self:saveUnlockedDoor(s.loc)
         elseif s:is_a(CastSpell)        then self:cast(s.spell)
         elseif s:is_a(UseItem)          then
@@ -412,6 +412,7 @@ function Game:isDoorOpen(loc)
   return res
 end
 
+-- ZZZ relevant, but might not need to be changed a whole lot. but actually not sure. its possible that it does
 function Game:saveUnlockedDoor(loc)
   -- if this is the throne room
   -- then we need to set that tile to brick instead of a door
@@ -497,6 +498,9 @@ function Game:convertPathToCommands(pathIn)
       end
     end
 
+    -- ZZZ hopefully all this shit will die
+    -- but im not sure if ill be able to manage that or not
+    -- it will almost definitely change though, so putting comments here.
     function nextTileIsDoor()
       if p2.mapId == OverWorldId then return false
       else return self.staticMaps[p2.mapId]:getTileAt(p2.x, p2.y, self).name == "Door"
@@ -505,8 +509,14 @@ function Game:convertPathToCommands(pathIn)
 
     if nextTileIsDoor() then
       -- TODO: this p1 here is so confusing. it does seem to work, but wtf...
+      -- i feel like it ends up putting in a MovementCommand from p1 to p1... so what is the point? dammit.
       table.insert(res,move(p1))
+      -- this doesn't really make all that much sense to me either... p2 to p2?
+      -- is it just because we are forcing everything into the MovementCommand constructor?
+      -- maybe we need subclases?
+      -- or maybe this stuff ends up dying anyway
       table.insert(res, MovementCommand(MovementCommandDir.DOOR, p2, p2))
+      -- this is the only one that actually makes sense to me.
       table.insert(res,move(p2))
     else
       table.insert(res,move(p2))
@@ -646,7 +656,7 @@ function Game:grindOrExplore()
         self:grind(grind, pd.stats.level)
       -- if haven't seen anything worth fighting... then i guess just explore...
       else
-        log.debug("goal and grind were both nil, so picking a random border tile")
+        log.debug("goal and grind were both nil, so picking a closest tile")
         self:chooseNewDestination(function (k) return self:chooseClosestBorderTile(k) end)
       end
     end
@@ -749,6 +759,7 @@ end
 -- what we really should do here is pick a random walkable border tile
 -- then get one if its unseen neighbors and walk to that location.
 -- walking to the border tile itself is kinda useless. we need to walk into unseen territory.
+-- todo: i think this function has to die.
 function Game:chooseRandomBorderTile(borderOfKnownWorld)
   log.debug("picking random border tile")
   local nrBorderTiles = #borderOfKnownWorld
@@ -796,6 +807,11 @@ function Game:exploreMove()
   -- because all we do here is check if there is a path...
   if path == Nothing then
     log.debug("couldn't find a path from player location: ", self:getLocation(), " to ", self:getExploreDest())
+    -- ZZZ todo: shouldn't we use chooseClosestBorderTile ?
+    -- or do we use random because closest might not have yielded a path?
+    -- i dont think we ever want random. i think we just want to keep finding the
+    -- next closest border tile, and going to that instead. i think they are even already ordered by distance!
+    -- this has to die man
     self:chooseNewDestination(function (k) return self:chooseRandomBorderTile(k) end)
   else
     self:castRepel()
@@ -936,7 +952,9 @@ function Game:dealWithMapChange()
     -- i doubt it. we probably just need to update the graph.
     -- except... maybe we do because we get the tile at (x,y) and if its a door it might have infinite weight?
     -- anyway, we have to double check on this.
-    self.staticMaps[TantegelThroneRoom]:setTileAt(4, 7, b and 6 or 11)
+    -- zzz this is pretty relevant to all the stuff we are working on now
+    -- but, it might not need to be changed at all. except the constants
+    self.staticMaps[TantegelThroneRoom]:setTileAt(4, 7, b and 6 or 11) -- TODO fix all these fucking constants
     if b then self.graph:unlockThroneRoomDoor() end
   end
 
