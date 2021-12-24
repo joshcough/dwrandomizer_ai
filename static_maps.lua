@@ -526,7 +526,7 @@ function StaticMap:writeTileNamesToFile (file)
   file:write(self:__tostring() .. "\n")
 end
 
-MAP_DIRECTORY = "/Users/joshcough/work/dwrandomizer_ai/maps/"
+MAP_DIRECTORY = "/Users/joshuacough/work/dwrandomizer_ai/maps/"
 STATIC_MAPS_FILE = MAP_DIRECTORY .. "static_maps.txt"
 
 function StaticMap:saveIdsToFile ()

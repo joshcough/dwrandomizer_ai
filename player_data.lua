@@ -1,5 +1,6 @@
 require 'Class'
 enum = require("enum")
+require 'helpers'
 
 -- =====================
 -- ======= Items =======
@@ -100,7 +101,7 @@ end
 function Items:contains(item)
   if item == Herb then return self:haveHerbs()
   elseif item == MagicKey then return self:haveKeys()
-  else return table.any(self.slots, function(i) return i == item end)
+  else return list.any(self.slots, function(i) return i == item end)
   end
 end
 

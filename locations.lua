@@ -1,5 +1,6 @@
 require "Class"
 enum = require("enum")
+require "helpers"
 
 -- TODO: import these. but in order to do that, we will have go create a Goal module.
 OverWorldId = 1

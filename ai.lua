@@ -121,7 +121,7 @@ function main()
   ai:register(memory)
 
   while true do
-    -- game:stateMachine()
+    game:stateMachine()
     emu.frameadvance()
   end
 end

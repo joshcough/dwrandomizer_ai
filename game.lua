@@ -42,8 +42,6 @@ Game = class(function(a, memory, warps, graph, overworld, staticMaps)
   a.windowY = -1
 
   a.goals = buildAllGoals(a.staticMaps, a.chests, a.searchSpots)
-
-  a.file_descriptor = io.open("/Users/joshcough/work/dwrandomizer_ai/ai.out", "w")
 end)
 
 function newGame(memory)
@@ -1291,7 +1289,7 @@ function Game:goalAt(p) return self.goals:goalAt(p) end
 -- @path :: Path
 -- @returns :: ObjectWithPath a
 ObjectWithPath = class(function (a, value, path)
-  a.value = v
+  a.value = value
   a.path  = path
 end)
 
