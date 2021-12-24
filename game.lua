@@ -222,8 +222,9 @@ end
 -- @returns :: TODO what should this function return?
 function Game:interpretScript(s)
   log.debug("Script: " .. tostring(s))
-  -- TODO: im not sure if these first two cases are really needed, but they dont hurt.
-  if     self.inBattle then self:executeBattle()
+  -- TODO: im not sure if these first three cases are really needed, but they dont hurt.
+  if     self.dead then log.debug("We are dead, so not executing the script."); return
+  elseif self.inBattle then self:executeBattle()
   -- TODO: consider casting repel right here instead of just closing window
   elseif self.repelTimerWindowOpen then self:closeRepelTimerWindow()
   elseif s ~= nil and s:is_a(Script) then
@@ -928,6 +929,10 @@ end
 function Game:dealWithDeath()
   controller.waitFrames(120)
   controller.holdAUntil(function () return self:getMapId() == 5 end, "map is throne room", 240)
+
+  -- todo: maybe we deal with our exploreDest here!
+
+
   self.dead = false
 end
 

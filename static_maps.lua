@@ -96,6 +96,7 @@ WARPS = {
  , Warp(Point(ErdricksCaveLv1,  9,  9),  Point(ErdricksCaveLv2,  8,  9))
 }
 
+-- TODO: omg this needs to return a Table3D and not a [[]]
 function getWarpsForMap(mapId, allWarps)
   local res = {}
   local warpsForMapId = list.filter(allWarps, function(w)
@@ -262,9 +263,11 @@ function StaticMapTile:__tostring()
   -- ok this is weird and might expose a hole in the whole program.
   -- but then again maybe not
   local wwk = self.walkableWithKeys and "true" or "true"
-  return "{ tileId: " .. self.tileId .. ", name: " .. self.name ..
-         ", walkable: " .. w .. ", walkableWithKeys: " .. wwk .. "}"
+  return "<StaticMapTile tileId: " .. self.tileId .. ", name: " .. self.name ..
+         ", walkable: " .. w .. ", walkableWithKeys: " .. wwk .. ">"
 end
+
+function StaticMapTile:isDoor() return self.name == "Door" end
 
 NON_DUNGEON_TILES = {
   [0]   = StaticMapTile(0,  "Grass" , true),
@@ -327,6 +330,14 @@ IMMOBILE_NPCS = {
   [ErdricksCaveLv2]    = {},
 }
 
+-- @mapId     :: MapId / Int
+-- @mapName   :: String
+-- @mapType   :: MapType
+-- @entrances :: [Entrance] -- TODO: could/should this be a Table3D?
+-- @width     :: Int
+-- @height    :: Int
+-- @rows      :: [[Int]] -- TODO: i think we can/should make it a [[StaticMapTile]]
+-- @allWarps  :: [Warp]
 StaticMap = class(function(a, mapId, mapName, mapType, entrances, width, height, rows, allWarps)
   a.mapId = mapId
   a.mapName = mapName
@@ -335,17 +346,40 @@ StaticMap = class(function(a, mapId, mapName, mapType, entrances, width, height,
   a.width = width
   a.height = height
   a.rows = rows
+  -- both of these are weird.
+  -- i feel like we should call these functions outside of here and pass the result in
+  -- and just do the assignment here.
   a.warps = getWarpsForMap(mapId, allWarps)
+  -- @doors :: Table3D StaticMapTile
+  a.doors = getAllDoors(mapId, rows)
   a.immobileScps = list.map(IMMOBILE_NPCS[mapId], function(xy) return Point(mapId, xy[1], xy[2]) end)
   a.seenByPlayer = false
 end)
+
+-- @rows :: [[StaticMapTile]]
+-- @returns :: Table3D StaticMapTile
+function getAllDoors(mapId, rows)
+  local tileSet = getTileSetFromMapId(mapId)
+  local res = Table3D()
+  for y,row in pairs(rows) do
+    for x,tileId in pairs(row) do
+      local tile = tileSet[tileId]
+      if tile:isDoor() then res:insert(Point(mapId, x, y), tileSet[tile.id]) end
+    end
+  end
+  return res
+end
 
 function StaticMap:resetWarps (allWarps)
   self.warps = getWarpsForMap(self.mapId, allWarps)
 end
 
+function getTileSetFromMapId(mapId)
+  return mapId < 15 and NON_DUNGEON_TILES or DUNGEON_TILES
+end
+
 function StaticMap:getTileSet ()
-  return self.mapId < 15 and NON_DUNGEON_TILES or DUNGEON_TILES
+  return getTileSetFromMapId(self.mapId)
 end
 
 function StaticMap:getTileAt(x, y)

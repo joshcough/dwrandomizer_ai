@@ -110,7 +110,7 @@ function main()
   hud_main()
 
   local mem = Memory(memory, rom)
-  cheat(mem)
+  -- cheat(mem)
 
   -- always save the maps man. if we dont do this
   -- we start getting out of date and bad stuff happens.
@@ -120,15 +120,8 @@ function main()
   local ai = AI(game)
   ai:register(memory)
 
-  -- TODO: this is a hack
-  -- right now this gets called when we move
-  -- but we need to call it here once before we move, too.
-  if(game:getLocation().mapId == 1) then
-    game.overworld:getVisibleOverworldGrid(game:getX(), game:getY(), game.graph)
-  end
-
   while true do
-    game:stateMachine()
+    -- game:stateMachine()
     emu.frameadvance()
   end
 end
@@ -138,6 +131,14 @@ end
 math.randomseed(os.time()); math.random()
 
 main()
+
+--   -- TODO: this is a hack
+--   -- right now this gets called when we move
+--   -- but we need to call it here once before we move, too.
+--   if(game:getLocation().mapId == 1) then
+--     game.overworld:getVisibleOverworldGrid(game:getX(), game:getY(), game.graph)
+--   end
+
 
 -- oldish stuff that i need to evaluate if i really want to keep
 
@@ -351,4 +352,11 @@ main()
 --       "pids", m:walkParentIds(game.staticMaps),
 --       "tant", m:isTantegelAParent(game.staticMaps),
 --       "over", m:pathWouldRequireOverworld(game.staticMaps))
+--   end)
+--
+--
+--   log.debug("Printing Doors:")
+--   list.foreach(game.staticMaps, function(m)
+--     log.debug(m.mapName, m.mapId, m.doors:isEmpty())
+--     if not m.doors:isEmpty() then m.doors:debug("Doors in AI") end
 --   end)

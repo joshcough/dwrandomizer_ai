@@ -23,7 +23,9 @@ end)
 -- @staticMaps :: [StaticMap]
 -- @returns :: Graph
 Graph = class(function (a, staticMaps)
+  -- the graphWithKeys has no doors in it. so when you have keys, doors are no obstacle, and this graph is used.
   a.graphWithKeys = NewGraph(createStaticMapGraphs(staticMaps, true), true)
+  -- the graphWithout keys has all the doors in it. when you dont have keys, this graph is used.
   a.graphWithoutKeys = NewGraph(createStaticMapGraphs(staticMaps, false), false)
 end)
 
@@ -71,24 +73,30 @@ end)
 -- basically, whenever we hit the overworld, we should readjust the graph for any doors that just closed
 -- and whenever we open a door, we can update the graph too. right? do we do that already?
 
+-- function StaticMap:pathWouldRequireOverworld(allStaticMaps)
+--   return not self:isTantegelAParent(allStaticMaps)
+-- end
 
---
--- -- @returns :: [MapId] aka [Int]
--- function StaticMap:parentIds()
---   if     self.mapId == TantegelThroneRoom then return {Tantegel}
---   elseif self.mapId == CharlockThroneRoom then return {Charlock}
---   elseif self.mapId == MountainCaveLv2    then return {MountainCaveLv1}
---   elseif self.mapId == ErdricksCaveLv2    then return {ErdricksCaveLv1}
---   elseif self.mapId == TantegelBasement   then return {self.entrances[1].from.mapId}
---   elseif self.mapId == NorthernShrine     then return {self.entrances[1].from.mapId}
---   elseif self.mapId == SouthernShrine     then return {self.entrances[1].from.mapId}
---   elseif self.mapId == SwampCave          then return list.map(self.entrances, function(e) return e.from.mapId end)
---   elseif self.mapId == ErdricksCaveLv2    then return {self.entrances[1].from.mapId}
---   elseif self.mapId == ErdricksCaveLv2    then return {self.entrances[1].from.mapId}
---   elseif self.mapId >= CharlockCaveLv1 and self.mapId <= CharlockCaveLv6 then return {Charlock}
---   elseif self.mapId >= GarinsGraveLv2  and self.mapId <= GarinsGraveLv4  then return {GarinsGraveLv1}
---   else return {1} -- TODO: constant... use OverWorldId
---   end
+-- TODO: we need a function to get the locations of all the doors.
+-- TODO: we need a function to close all the doors (except for throne room door)
+-- TODO: when the map is changed to the overworld, we need to call that function
+-- TODO: we also need to call it after we die, if the path to whatever destination we have requires
+--       going out to the overworld, before we hit the overworld (or before we even move at all)
+--       is it really this easy?
+--       if we die in the bottom of the grave before we get the chest, this works
+--       but what happens if we die after we get the chest? what is our destination then?
+--       i think it should change to somehting besides that chest, like back to the entrance of whatever map we are on
+--       and in that case this just works out anyway. it shouldnt' be back to the same chest. definitely not.
+
+function Graph:closeAllDoorsExceptThroneRoom()
+--   self.graphWithKeys:closeAllDoorsExceptThroneRoom()
+--   self.graphWithoutKeys:closeAllDoorsExceptThroneRoom()
+end
+
+-- -- @returns :: ()
+-- function Graph:unlockThroneRoomDoor()
+--   -- log.debug("unlocking throne room door")
+--   self.graphWithoutKeys.rows[TantegelThroneRoom] = self.graphWithKeys.rows[TantegelThroneRoom]
 -- end
 
 
@@ -457,13 +465,12 @@ function createStaticMapGraphs(staticMaps, haveKeys)
   return res
 end
 
--- at the beginning of the game, all doors should be locked
--- and so we should have a graph missing some potential neighbors because of that
--- and that is exactly what we want.
 -- @staticMap :: StaticMap
+-- @x :: Int
+-- @y :: Int
 -- @haveKeys :: Bool
 -- @returns :: [[GraphNode]]
-function mkStaticMapGraph (staticMap, haveKeys)
+function neighborsAt(staticMap,x,y,haveKeys)
   local tileSet = staticMap:getTileSet()
 
   function isWalkable(x,y)
@@ -541,14 +548,23 @@ function mkStaticMapGraph (staticMap, haveKeys)
     end)
     return res
   end
+  -- todo: maybe use list.join here instead of table.concatAll
+  return table.concatAll({neighbors(x,y), borderNeighbors(x,y), warpNeighbors(x,y), entranceNeighbors(x,y)})
+end
 
+-- at the beginning of the game, all doors should be locked
+-- and so we should have a graph missing some potential neighbors because of that
+-- and that is exactly what we want.
+-- @staticMap :: StaticMap
+-- @haveKeys :: Bool
+-- @returns :: [[GraphNode]]
+function mkStaticMapGraph (staticMap, haveKeys)
   local res = {}
   for y = 0, staticMap.height - 1 do
     res[y] = {}
     for x = 0, staticMap.width - 1 do
       res[y][x] = GraphNode(GraphNodeType.KNOWN)
-      -- todo: maybe use list.join here instead of table.concatAll
-      res[y][x].neighbors = table.concatAll({neighbors(x,y), borderNeighbors(x,y), warpNeighbors(x,y), entranceNeighbors(x,y)})
+      res[y][x].neighbors = neighborsAt(staticMap,x,y,haveKeys)
     end
   end
   return res
