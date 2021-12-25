@@ -50,14 +50,14 @@ emptyInputs = {
 controller = {}
 
 function controller.waitFrames (n)
-  for i = 1,n do emu.frameadvance() end
+  for _ = 1,n do emu.frameadvance() end
 end
 
 -- waits either maxFrames, or until f yields true
 function controller.waitUntil (f, maxFrames, msg)
   -- log.debug("Waiting until: " .. msg .. " for up to " .. maxFrames .. " frames.")
   local nrFramesWaited = 0
-  for i = 1,maxFrames do
+  for _ = 1,maxFrames do
     if f() then
       -- log.debug("Waited until: " .. msg .. " waited exactly " .. nrFramesWaited .. " frames, and condition is: " .. tostring(f()))
       return

@@ -91,7 +91,7 @@ function WeaponAndArmorShop:getUpgrades(equip)
   local weapons = {}
   local armors = {}
   local shields = {}
-  for i,item in ipairs(self.slots) do
+  for _,item in ipairs(self.slots) do
     if     item.item:is_a(Weapon) and item.item.byte > equip.weapon.byte then table.insert(weapons, item)
     elseif item.item:is_a(Armor)  and item.item.byte > equip.armor.byte  then table.insert(armors,  item)
     elseif item.item:is_a(Shield) and item.item.byte > equip.shield.byte then table.insert(shields, item)
@@ -106,7 +106,7 @@ function WeaponAndArmorShop:getAffordableUpgrades(playerData)
   local shields = {}
   local e = playerData.equipment
   local g = playerData.stats.gold
-  for i,item in pairs(self.slots) do
+  for _,item in pairs(self.slots) do
     if     item.item:is_a(Weapon) and item.item.byte > e.weapon.byte and item.cost < g then table.insert(weapons, item)
     elseif item.item:is_a(Armor)  and item.item.byte > e.armor.byte  and item.cost < g then table.insert(armors,  item)
     elseif item.item:is_a(Shield) and item.item.byte > e.shield.byte and item.cost < g then table.insert(shields, item)
@@ -198,7 +198,7 @@ function WeaponAndArmorShopsUpgrades:__tostring()
   return res
 end
 
-function WeaponAndArmorShops:getUpgrades(playerData, f)
+function WeaponAndArmorShops:getUpgrades(f)
   return WeaponAndArmorShopsUpgrades(
     f(self.brecconary),
     f(self.cantlin1),
@@ -211,13 +211,13 @@ function WeaponAndArmorShops:getUpgrades(playerData, f)
 end
 
 function WeaponAndArmorShops:getAllKnownUpgrades(playerData)
-  return self:getUpgrades(playerData, function(shop)
+  return self:getUpgrades(function(shop)
     if shop.seenByPlayer then return shop:getUpgrades(playerData.equipment) else return nil end
   end)
 end
 
 function WeaponAndArmorShops:getAllKnownAffordableUpgrades(playerData)
-  return self:getUpgrades(playerData, function(shop)
+  return self:getUpgrades(function(shop)
     if shop.seenByPlayer then return shop:getAffordableUpgrades(playerData) else return nil end
   end)
 end

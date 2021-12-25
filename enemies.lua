@@ -137,8 +137,8 @@ end
 --    if that is true, then walk to one of the locs where we've seen that enemy and just walk back and forth
 --    fighting it (and others) until we get to the next level
 function getGrindInfo(playerData, game)
-  local bestEnemy = nil
-  local bestEnemyLocs = nil
+  local bestEnemy
+  local bestEnemyLocs
 
   -- filter out locations
   -- remove all things that aren't the overworld

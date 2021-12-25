@@ -151,7 +151,7 @@ function Game:followPath(path)
   if commands:isEmpty() then log.err("path is empty in followPath") end
   log.debug(commands)
 
-  for i,c in pairs(commands.commands) do
+  for _,c in pairs(commands.commands) do
     -- if we are in battle or the repel window opened, then abort
     if self.inBattle then return GotoExitValue.IN_BATTLE
     elseif self.repelTimerWindowOpen then return GotoExitValue.REPEL_TIMER
@@ -258,7 +258,7 @@ function Game:interpretScript(s)
         local branch = cond and s.trueBranch or s.falseBranch
         return self:interpretScript(branch)
     elseif s:is_a(Consecutive)
-      then for i,branch in pairs(s.scripts) do self:interpretScript(branch) end
+      then for _,branch in pairs(s.scripts) do self:interpretScript(branch) end
     elseif s:is_a(PressButtonScript) then controller.pressButton(s.button, s.waitFrames)
     elseif s:is_a(HoldButtonScript) then controller.holdButton(s.button, s.duration)
     elseif s:is_a(HoldButtonUntilScript) then controller.holdButtonUntil(s.button, tostring(s.condition), function ()
@@ -271,16 +271,15 @@ function Game:interpretScript(s)
       controller.waitUntil(function() return self:evaluateCondition(s.condition) end, s.duration, s.msg)
     elseif s:is_a(DebugScript) then log.debug(s.name)
     elseif s:is_a(NTimes) then
-      local n = self:interpretScript(s.n)
       -- log.debug("in NTimes", "s.n", s.n, "n", n, "s.script", s.script)
-      for i = 1, self:interpretScript(s.n) do
+      for _ = 1, self:interpretScript(s.n) do
         self:interpretScript(s.script)
       end
     elseif s:is_a(BinaryOperator) then
       local lv = self:interpretScript(s.l)
       local rv = self:interpretScript(s.r)
       -- log.debug("in BinaryOperator", s.name, s.l, s.r, lv, rv)
-      return s.f(self:interpretScript(s.l), self:interpretScript(s.r))
+      return s.f(lv, rv)
     elseif s:is_a(ConditionScript) then
       return self:evaluateCondition(s)
     end
@@ -303,7 +302,7 @@ function Game:evaluateCondition(s)
     local lv = self:interpretScript(s.l)
     local rv = self:interpretScript(s.r)
     -- log.debug("in BinaryOperator", s.name, s.l, s.r, lv, rv)
-    return s.f(self:interpretScript(s.l), self:interpretScript(s.r))
+    return s.f(lv, rv)
   elseif s:is_a(Any)      then return list.any(s.conditions, function(x)
     -- log.debug("Any calling evaluateCondition with", x)
     return self:evaluateCondition(x)
@@ -615,14 +614,14 @@ function Game:dealWithAnyGoals()
   log.debug("in dealWithAnyGoals")
   self.goals:debug(self)
 
-  local maybeAchievableGoal = list.toMaybe(self.goals:reachableReadyGoals(self))
+  local maybeAchievableGoal = list.toMaybe(self.goals:reachableReadyGoals(self:getLocation()))
   if maybeAchievableGoal:isDefined() then
     log.debug("Headed towards achievable goal", maybeAchievableGoal.value)
     return Just(Right(maybeAchievableGoal.value))
   else
     -- if this is non-empty, it means there must be something either behind a locked door
     -- or i guess possibly on an island or something... but lets assume its a door for now
-    local goalsWithNoPaths = self.goals:readyGoals(self)
+    local goalsWithNoPaths = self.goals:readyGoals()
     if goalsWithNoPaths:isEmpty() then return Nothing
     else return self:getRimuldarEntrance():map(function(e) return Left(e) end)
     end
@@ -1027,7 +1026,7 @@ end
 --       but...sometimes we might just want to go to the goal, no?
 function Game:markMapsSeen(newMapId)
   if newMapId > OverWorldId then
-    local goals = self.staticMaps[newMapId]:childGoals(self.goals, self.staticMaps)
+    local goals = self.staticMaps[newMapId]:childGoals(self.goals)
     list.foreach(goals, function(goal) goal.seenByPlayer = true end)
   end
 end
@@ -1045,7 +1044,7 @@ function Game:useItem(item)
   else
     self:interpretScript(self.scripts.OpenItemMenu)
     -- TODO: if it is faster to press UP, we should do that
-    for i = 1, itemIndex-1 do controller.pressDown(2) end
+    for _ = 1, itemIndex-1 do controller.pressDown(2) end
     -- wait 2 seconds for the item to be done being used.
     -- TODO: do all items take the same length to use?
     -- or is it possible to get out sooner than 2 seconds?
@@ -1068,7 +1067,7 @@ function Game:cast(spell)
   else
     self:interpretScript(self.scripts.OpenSpellMenu)
     -- TODO: if it is faster to press UP, we should do that
-    for i = 1, spellIndex-1 do controller.pressDown(2) end
+    for _ = 1, spellIndex-1 do controller.pressDown(2) end
     -- wait 2 seconds for the spell to be done casting.
     -- TODO: do all spells take the same length to cast?
     -- or is it possible to get out sooner than 2 seconds?
@@ -1190,8 +1189,8 @@ function Game:buyItem(shop, itemId, sellExisting)
   -- the rest of this should be easy too, but
   -- it will need to take a boolean argument `sellExisting`
   -- and we will need to deal with it being like
-  -- just a regular boolean or a `Value(bool)` or soemthing like that
-  for i = 1, itemIndex-1 do controller.pressDown(10) end
+  -- just a regular boolean or a `Value(bool)` or something like that
+  for _ = 1, itemIndex-1 do controller.pressDown(10) end
   controller.pressA(30)
 
   if sellExisting then

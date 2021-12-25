@@ -44,7 +44,7 @@ end)
 -- that is all kind of convoluted though.
 
 -- there are other possible ways, but i haven't completely thought them through yet
--- lets say we have a path that takes us outside to the overword, to garinham, and down into the grave (where a key is required)
+-- lets say we have a path that takes us outside to the overworld, to garinham, and down into the grave (where a key is required)
 -- but, we died in the grave after having opened the door in the grave.
 -- i think the game thinks that door is still open when we create the path, but when we get to the overworld, the door closes.
 -- so what if we looked at the path to see if it led us out onto the overworld?
@@ -69,7 +69,7 @@ end)
 -- i say "maybe not actually" because if we dont have keys, then there isn't really anything
 -- to do in the castle anyway, right? so we wouldn't be going back in there.
 --- i think this works actually....
--- i also think we will ahve to rely on the stuff in `Memory:printDoorsAndChests()` to make this work properly
+-- i also think we will have to rely on the stuff in `Memory:printDoorsAndChests()` to make this work properly
 -- basically, whenever we hit the overworld, we should readjust the graph for any doors that just closed
 -- and whenever we open a door, we can update the graph too. right? do we do that already?
 
@@ -85,8 +85,8 @@ end)
 --       is it really this easy?
 --       if we die in the bottom of the grave before we get the chest, this works
 --       but what happens if we die after we get the chest? what is our destination then?
---       i think it should change to somehting besides that chest, like back to the entrance of whatever map we are on
---       and in that case this just works out anyway. it shouldnt' be back to the same chest. definitely not.
+--       i think it should change to something besides that chest, like back to the entrance of whatever map we are on
+--       and in that case this just works out anyway. it shouldn't be back to the same chest. definitely not.
 
 function Graph:closeAllDoorsExceptThroneRoom()
 --   self.graphWithKeys:closeAllDoorsExceptThroneRoom()
@@ -114,7 +114,7 @@ end
 -- @game :: Game
 -- @returns [Path] (sorted by weight, ASC)
 function Graph:shortestPaths(src, destinations, haveKeys, game)
-  local res = nil
+  local res
   res = haveKeys and self.graphWithKeys:shortestPaths(src, destinations, game)
                  or  self.graphWithoutKeys:shortestPaths(src, destinations, game)
   -- log.debug("in shortestPath", res)
@@ -419,7 +419,7 @@ end
 function NewGraph:knownWorldBorder(overworld)
   local res = {}
   for y,row in pairs(self.rows[1]) do
-    for x,tile in pairs(row) do
+    for x,_ in pairs(row) do
       local overworldTile = overworld:getTileAt_NoUpdate(x,y)
       if overworldTile.walkable and self:isDiscovered(OverWorldId, x, y) then
         local nbrs = overworld:neighbors(x,y)
@@ -524,7 +524,7 @@ function neighborsAt(staticMap,x,y,haveKeys)
     function insertNeighbor(dir)
       local bn = Neighbor(coor.from.mapId, coor.from.x, coor.from.y, dir)
       -- log.debug("adding border neighbor: ", staticMap.mapId, x, y, bn)
-      table.insert(res, Neighbor(coor.from.mapId, coor.from.x, coor.from.y, dir))
+      table.insert(res, bn)
     end
     if     x == 0                    then insertNeighbor(NeighborDir.LEFT)
     elseif x == staticMap.width  - 1 then insertNeighbor(NeighborDir.RIGHT)
@@ -575,11 +575,9 @@ end
 -- @printGoals :: Bool
 -- @returns :: ()
 function NewGraph:printMap(mapId, game, printGoals)
-  local bottomRight = nil
-  if mapId == OverWorldId
-    then bottomRight = Point(mapId, 119, 119)
-    else bottomRight = Point(mapId, game.staticMaps[mapId].width - 1, game.staticMaps[mapId].height - 1)
-  end
+  local bottomRight = mapId == OverWorldId
+    and Point(mapId, 119, 119)
+    or Point(mapId, game.staticMaps[mapId].width - 1, game.staticMaps[mapId].height - 1)
   return self:printSquare(Square(Point(mapId, 0, 0), bottomRight), game, printGoals)
 end
 
@@ -599,8 +597,7 @@ function NewGraph:printSquare(square, game, printGoals)
 
     function findNeighbor(x,y)
       local i = list.findWithIndex(neighborsCopy, function(n)
-        local res = n:getPoint():equals(Point(mapId,x,y))
-        return res
+        return n:getPoint():equals(Point(mapId,x,y))
       end)
       if i ~= nil then list.delete(neighborsCopy, i.index) end
       return i.value
@@ -637,7 +634,7 @@ function NewGraph:printSquare(square, game, printGoals)
   square:iterate(
     function(x,y) row = row .. "|" .. printTile(x, y, self:getNodeAt(mapId,x,y).neighbors) end,
     function(y) row = padded(y) .. " " end,
-    function(y) res = res .. row .. "|\n" end
+    function(_) res = res .. row .. "|\n" end
   )
   return res
 end

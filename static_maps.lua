@@ -491,7 +491,7 @@ end
 -- @goals :: Goals
 -- @allStaticMaps :: [StaticMap]
 -- @returns :: [Goal]
-function StaticMap:childGoals(goals, allStaticMaps)
+function StaticMap:childGoals(goals)
   local myLoc = goals:allEntriesForMap(self.mapId)
   local childLocs = list.bind(self:childrenIds(), function(cId) return goals:allEntriesForMap(cId) end)
   return table.concat(myLoc, childLocs)
@@ -600,11 +600,6 @@ function readStaticMapFromRom(memory, mapId, allWarps)
       end
     end
     return res
-  end
-
-  local entrances = nil
-  if mapData.entrances ~= nil then
-    entrances = list.map(mapData.entrances, function(e) return e:convertToEntrance(memory) end)
   end
 
   return StaticMap(mapId, mapData.name, mapData.mapType, mapData:readEntranceCoordinates(memory),

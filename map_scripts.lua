@@ -6,7 +6,7 @@ require 'locations'
 require 'player_data'
 require 'static_maps'
 
-Script = class(function(a, name, body) a.name = name end)
+Script = class(function(a, name) a.name = name end)
 -- TODO: we need to do indent level stuff here, but right now i dont feel like it.
 function Script:__tostring() return self.name end
 
@@ -193,7 +193,7 @@ end)
 
 function Any:__tostring()
   local res = "ANY of:\n"
-  for i,s in pairs(self.conditions) do
+  for _,s in pairs(self.conditions) do
     res = res .. "  " .. tostring(s) .. "\n"
   end
   return res
@@ -206,7 +206,7 @@ end)
 
 function All:__tostring()
   local res = "ALL of:\n"
-  for i,s in pairs(self.conditions) do
+  for _,s in pairs(self.conditions) do
     res = res .. "  " .. tostring(s) .. "\n"
   end
   return res
@@ -249,7 +249,7 @@ GetMaxHP    = PlayerDataScript("Amount of HP the player has.", function(pd) retu
 GetMaxMP    = PlayerDataScript("Amount of MP the player has.", function(pd) return pd.stats.maxMP end)
 
 function CanAfford(amount)
- return GtEq(GetGold, Value(53))
+ return GtEq(GetGold, Value(amount))
 end
 
 function CanCast(spell)
@@ -310,7 +310,7 @@ end)
 
 function Consecutive:__tostring()
   local res = self.name .. ":\n"
-  for i,s in pairs(self.scripts) do
+  for _,s in pairs(self.scripts) do
     res = res .. "  " .. tostring(s) .. "\n"
   end
   return res

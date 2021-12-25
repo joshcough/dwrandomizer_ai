@@ -185,7 +185,7 @@ function Memory:readPlayerData()
 end
 
 -- ShopItemsTbl:
--- ;Koll weapons and armor shop.
+-- ;Kol weapons and armor shop.
 -- L9991:  .byte $02, $03, $0A, $0B, $0E, $FD
 -- ;Brecconary weapons and armor shop.
 -- L9997:  .byte $00, $01, $02, $07, $08, $0E, $FD
@@ -341,7 +341,7 @@ function Memory:printDoorsAndChests()
   end
 
   log.debug("=== Chests:")
-  local i = 0x601C
+  i = 0x601C
   while i <= 0x602A do
     log.debug(self:readRAM(i), self:readRAM(i+1))
     i = i + 2

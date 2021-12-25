@@ -430,7 +430,7 @@ function table.log(arr, indentLevel)
         return
     end
 
-    for i = 0, indentLevel do
+    for _ = 0, indentLevel do
         indentStr = indentStr.."\t"
     end
 
@@ -539,7 +539,7 @@ end
 -- @returns :: Table3D b
 function Table3D:map(f)
   local res = Table3D()
-  self:iterate(function (p, a) res:insert(p,a) end)
+  self:iterate(function (p, a) res:insert(p,f(a)) end)
   return res
 end
 
@@ -556,9 +556,9 @@ end
 -- @f :: a -> Bool
 -- @returns :: Maybe a
 function Table3D:find(f)
-  for i,v in pairs(self.body) do
-    for j,v2 in pairs(v) do
-      for k,v3 in pairs(v2) do
+  for _,v in pairs(self.body) do
+    for _,v2 in pairs(v) do
+      for _,v3 in pairs(v2) do
         if f(v3) then return Just(v3) end
       end
     end
@@ -620,7 +620,7 @@ function table3D.concatAll(table3Ds)
   return res
 end
 
-Maybe = class(function(a) end)
+Maybe = class(function(_) end)
 
 function Maybe:map(f)            return maybe.map(self, f)            end
 function Maybe:bind(f)           return maybe.bind(self, f)           end

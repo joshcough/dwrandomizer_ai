@@ -120,7 +120,7 @@ end
 
 function Neighbor:equalsPoint(p)
   if n == nil then return false end
-  return self.loc:equals(n)
+  return self.loc:equals(p)
 end
 
 function Neighbor:getPoint()
@@ -235,21 +235,21 @@ end)
 function Goals:debug(game)
   self.goals:debug("all goals")
   self.flatGoals:debug("flat goals")
-  list.debugWithMsg(self:reachableReadyGoals(game), "achievableGoals")
+  list.debugWithMsg(self:reachableReadyGoals(game:getLocation()), "achievableGoals")
 end
 
 -- Returns the Goals that are ready AND we can reach, ordered by the shortest path to them
 -- also returns the Path to get to the Goal.
--- @game :: Game
+-- @currentLoc :: Point
 -- @returns [ObjectWithPath Goal] ordered by distance (from the players current loc) ASC
-function Goals:reachableReadyGoals(game)
-  return game:getPathsForTable3D(game:getLocation(), self:readyGoals(game))
+function Goals:reachableReadyGoals(currentLoc)
+  return game:getPathsForTable3D(currentLoc, self:readyGoals())
 end
 
 -- Returns all the Goals that are ready to be completed, even if we can't reach them.
 -- @game :: Game
 -- @returns Table3D Goal
-function Goals:readyGoals(game)
+function Goals:readyGoals()
   return self.flatGoals:filter(function(g) return g:ready() end)
 end
 
@@ -287,8 +287,8 @@ end
 function buildAllGoals(allStaticMaps, allChests, searchSpots)
 
   local allEntrances = list.bind(allStaticMaps, function(m) return m.entrances end)
-  local harpGoal = nil
-  local northernShrineGoal = nil
+  local harpGoal
+  local northernShrineGoal
 
   -- @staticMap :: StaticMap
   function childGoalsOfStaticMap(staticMap)
@@ -333,7 +333,7 @@ function buildAllGoals(allStaticMaps, allChests, searchSpots)
 
   function addGoalsForAllMaps(res)
     -- for all the static maps that have entrances, we do stuff
-    for mapId, staticMap in pairs(allStaticMaps) do
+    for _, staticMap in pairs(allStaticMaps) do
       if staticMap.entrances ~= nil then
         for _, entrance in pairs(staticMap.entrances) do
           if entrance.from.mapId == OverWorldId then
