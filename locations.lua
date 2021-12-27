@@ -235,15 +235,15 @@ end)
 function Goals:debug(game)
   self.goals:debug("all goals")
   self.flatGoals:debug("flat goals")
-  list.debugWithMsg(self:reachableReadyGoals(game:getLocation()), "achievableGoals")
+  list.debugWithMsg(self:reachableReadyGoals(game), "achievableGoals")
 end
 
 -- Returns the Goals that are ready AND we can reach, ordered by the shortest path to them
 -- also returns the Path to get to the Goal.
 -- @currentLoc :: Point
 -- @returns [ObjectWithPath Goal] ordered by distance (from the players current loc) ASC
-function Goals:reachableReadyGoals(currentLoc)
-  return game:getPathsForTable3D(currentLoc, self:readyGoals())
+function Goals:reachableReadyGoals(game)
+  return game:getPathsForTable3D(game:getLocation(), self:readyGoals())
 end
 
 -- Returns all the Goals that are ready to be completed, even if we can't reach them.

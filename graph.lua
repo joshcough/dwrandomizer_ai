@@ -18,7 +18,17 @@ GraphNode = class(function(a, nodeType)
   -- but only if its not walkable, or there's literally no possible way to get to it.
   -- like a grass node surrounded by mountains. there would not be a path to it.
   a.neighbors = {}
+  a.isDoor = false
 end)
+
+unknown = GraphNode(GraphNodeType.UNKNOWN)
+
+function known(neighbors, isDoor)
+  local res = GraphNode(GraphNodeType.KNOWN)
+  res.neighbors = neighbors
+  res.isDoor = isDoor
+  return res
+end
 
 -- @staticMaps :: [StaticMap]
 -- @returns :: Graph
@@ -88,10 +98,37 @@ end)
 --       i think it should change to something besides that chest, like back to the entrance of whatever map we are on
 --       and in that case this just works out anyway. it shouldn't be back to the same chest. definitely not.
 
-function Graph:closeAllDoorsExceptThroneRoom()
---   self.graphWithKeys:closeAllDoorsExceptThroneRoom()
---   self.graphWithoutKeys:closeAllDoorsExceptThroneRoom()
-end
+
+-- christmas day thoughts
+-- if we just have one graph total, and we keep perfect track of its door states
+-- and if all paths have a nrKeysRequired
+-- and if we always go out to the overworld before generating the path
+-- maybe?
+-- but what if we are in the bottom of the grave and wanting to like...
+-- go to the basement of tantegel, and we dont have outside
+-- lets think about death warping later i guess
+-- actually i tihnk thats totally fine. the only problem is when we die, it doesn't reset the
+-- doors until we hit the overworld. so its only a problem when we are creating
+-- a new path when standing in front of the king.
+
+-- what if we only use the graph that has doors.. but we give those nodes neighbors anyway
+-- and we simply count the number of keys needed
+-- then when on the path, we just check if there is a door there or not
+-- eh... this kinda works
+-- but if we want do something like go to tantegel basement and die
+-- and we want to go back down, it will think we need a key
+-- this is close though!
+-- hmm... but will it need a key? this is where we could actually use the doors in memory
+
+-- what if we can "break up" the path into "before overworld" and "after overworld"
+-- if we do this, and doors that happen before the overworld wouldn't be counted towards the key count
+-- and any others would, whether they are currently open or not.
+
+
+--function Graph:closeAllDoorsExceptThroneRoom()
+----   self.graphWithKeys:closeAllDoorsExceptThroneRoom()
+----   self.graphWithoutKeys:closeAllDoorsExceptThroneRoom()
+--end
 
 -- -- @returns :: ()
 -- function Graph:unlockThroneRoomDoor()
@@ -219,6 +256,37 @@ function Graph:discoverTownOrCave(warp, overworld)
   go(self.graphWithoutKeys)
 end
 
+
+-- @src :: Point
+-- @dest :: Point
+-- @weight :: Int
+-- @path :: [Point/Neighbor] (first one is a Point, rest are Neighbors) TODO: maybe make a better type for this.
+Path = class(function (a, src, dest, weight, path, pathBeforeOverworld, pathRest, nrKeysRequired)
+  a.src    = src
+  a.dest   = dest
+  a.weight = weight
+  a.path   = path
+  a.pathBeforeOverworld = pathBeforeOverworld
+  a.pathRest            = pathRest
+  a.nrKeysRequired      = nrKeysRequired
+end)
+
+-- @returns :: Bool
+function Path:isEmpty() return #(self.path) == 0 end
+
+-- @returns :: String
+function Path:__tostring()
+  return "<Path " ..
+    " src: "      .. tostring(self.src) ..
+    ", dest:"     .. tostring(self.dest) ..
+    ", weight:"   .. tostring(self.weight) ..
+    ", path: {"   .. list.intercalateS(", ", self.path) .. "}" ..
+    ", pathBeforeOverworld:"   .. tostring(#(self.pathBeforeOverworld)) ..
+    ", pathRest:"   .. tostring(#(self.pathRest)) ..
+    ", nrKeysRequired:"   .. tostring(self.nrKeysRequired) ..
+    ">"
+end
+
 -- @staticMapGraphs :: [[[GraphNode]]]
 -- @isGraphWithKeys :: Bool
 -- @returns :: NewGraph
@@ -230,8 +298,6 @@ NewGraph = class(function(a, staticMapGraphs, isGraphWithKeys)
     a.rows[i] = staticMapGraphs[i]
   end
 end)
-
-unknown = GraphNode(GraphNodeType.UNKNOWN)
 
 -- @mapId :: MapId / Int
 -- @x :: Int
@@ -270,6 +336,34 @@ end
 -- @returns :: Int
 function NewGraph:getWeightAtPoint(p, game)
   return self:getTileAtPoint(p, game).weight
+end
+
+-- @src :: Point
+-- @dest :: Point
+-- @weight :: Int
+-- @path :: [Point/Neighbor] (first one is a Point, rest are Neighbors) TODO: maybe make a better type for this.
+function NewGraph:mkPath(src, dest, weight, path, unlockedDoors)
+  -- TODO:
+  -- after each step, we can ask if the tile ahead is a door (and check if that door is closed)
+  -- and if its there and closed, we open it. we must have keys because
+  -- we wouldn't be walking on the path if we didn't have enough keys.
+  local pathBeforeOverworld, pathRest = list.span(path, function(p)
+    return p.mapId ~= OverWorldId
+  end)
+  -- the unlocked doors stay unlocked until we get to the overworld
+  -- so we only have to count the doors that are already locked before the overworld
+  -- the ones that are unlocked dont matter.
+  local nrKeysRequiredBeforeOverworld = list.count(pathBeforeOverworld, function(n)
+    local p = Point(n.mapId, n.x, n.y)
+    return self:getNodeAt(n.mapId, n.x, n.y).isDoor and not unlockedDoors:contains(p)
+  end)
+  -- after we get to the overworld though, all doors become locked
+  -- so we just count every door after that.
+  local nrKeysRequiredAfterOverworld = list.count(pathRest, function(n)
+    return self:getNodeAt(n.mapId, n.x, n.y).isDoor
+  end)
+  local nrKeysRequired = nrKeysRequiredBeforeOverworld + nrKeysRequiredAfterOverworld
+  return Path(src, dest, weight, path, pathBeforeOverworld, pathRest, nrKeysRequired)
 end
 
 -- @x :: Int
@@ -316,30 +410,6 @@ end
 -- @returns :: [Path] (sorted by weight, ASC)
 function NewGraph:shortestPaths(src, destinations, game)
   return self:dijkstra(src, destinations, game)
-end
-
--- @src :: Point
--- @dest :: Point
--- @weight :: Int
--- @path :: [Point/Neighbor] (first one is a Point, rest are Neighbors) TODO: maybe make a better type for this.
-Path = class(function (a, src, dest, weight, path)
-  a.src    = src
-  a.dest   = dest
-  a.weight = weight
-  a.path   = path
-end)
-
--- @returns :: Bool
-function Path:isEmpty() return #(self.path) == 0 end
-
--- @returns :: String
-function Path:__tostring()
-  return "<Path " ..
-         " src: "      .. tostring(self.src) ..
-         ", dest:"     .. tostring(self.dest) ..
-         ", weight:"   .. tostring(self.weight) ..
-         ", path: {"   .. list.intercalateS(", ", self.path) .. "}" ..
-         ">"
 end
 
 -- Find the shortest path between the current and dest nodes
@@ -400,7 +470,7 @@ function NewGraph:dijkstra (src, dests, game)
       end
       prevMaybe = trail:lookup(prev)
     end
-    local res = Path(src, dest, getDistanceTo(dest), table.reverse(path))
+    local res = self:mkPath(src, dest, getDistanceTo(dest), table.reverse(path), game.unlockedDoors)
     -- log.debug("res inside", res)
     return Just(res)
   end
@@ -470,10 +540,10 @@ end
 -- @y :: Int
 -- @haveKeys :: Bool
 -- @returns :: [[GraphNode]]
-function neighborsAt(staticMap,x,y,haveKeys)
-  local tileSet = staticMap:getTileSet()
+function neighborsAt(staticMap,xIn,yIn,haveKeys)
 
   function isWalkable(x,y)
+    local tileSet = staticMap:getTileSet()
     local t = tileSet[staticMap.rows[y][x]]
     if list.any(staticMap.immobileScps, function(l) l:equals(Point(staticMap.mapId, x, y)) end)
       then return false
@@ -488,7 +558,7 @@ function neighborsAt(staticMap,x,y,haveKeys)
     -- if we can't walk to the node, dont bother including the node in the graph at all
     if not isWalkable(x,y) then return {} end
     local res = {}
-    function insertNeighbor(x,y,dir) table.insert(res, Neighbor(staticMap.mapId, x, y, dir)) end
+    function insertNeighbor(x_,y_,dir) table.insert(res, Neighbor(staticMap.mapId, x_, y_, dir)) end
     if x > 0                    and isWalkable(x-1, y) then insertNeighbor(x-1, y, NeighborDir.LEFT) end
     if x < staticMap.width - 1  and isWalkable(x+1, y) then insertNeighbor(x+1, y, NeighborDir.RIGHT) end
     if y > 0                    and isWalkable(x, y-1) then insertNeighbor(x, y-1, NeighborDir.UP) end
@@ -548,8 +618,13 @@ function neighborsAt(staticMap,x,y,haveKeys)
     end)
     return res
   end
-  -- todo: maybe use list.join here instead of table.concatAll
-  return table.concatAll({neighbors(x,y), borderNeighbors(x,y), warpNeighbors(x,y), entranceNeighbors(x,y)})
+
+  return list.join({
+    neighbors(xIn,yIn),
+    borderNeighbors(xIn,yIn),
+    warpNeighbors(xIn,yIn),
+    entranceNeighbors(xIn,yIn)
+  })
 end
 
 -- at the beginning of the game, all doors should be locked
@@ -563,8 +638,7 @@ function mkStaticMapGraph (staticMap, haveKeys)
   for y = 0, staticMap.height - 1 do
     res[y] = {}
     for x = 0, staticMap.width - 1 do
-      res[y][x] = GraphNode(GraphNodeType.KNOWN)
-      res[y][x].neighbors = neighborsAt(staticMap,x,y,haveKeys)
+      res[y][x] = known(neighborsAt(staticMap,x,y,haveKeys), staticMap:getTileAt(x,y):isDoor())
     end
   end
   return res
@@ -595,9 +669,9 @@ function NewGraph:printSquare(square, game, printGoals)
     if neighborsCopy == nil then return "   " end
     local res = ""
 
-    function findNeighbor(x,y)
+    function findNeighbor(x_,y_)
       local i = list.findWithIndex(neighborsCopy, function(n)
-        return n:getPoint():equals(Point(mapId,x,y))
+        return n:getPoint():equals(Point(mapId,x_,y_))
       end)
       if i ~= nil then list.delete(neighborsCopy, i.index) end
       return i.value

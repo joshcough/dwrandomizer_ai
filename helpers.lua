@@ -183,16 +183,6 @@ function table.dump( t )
   end
 end
 
-function table.count(list, x, equalityOp)
-  local res = 0
-  for _, v in pairs(list) do
-    if equalityOp == nil then if v == x then res = res + 1 end
-    elseif equalityOp(x, v) then res = res + 1
-    end
-  end
-  return res
-end
-
 function table.copy(tbl)
   local t = {}
   for _, v in pairs(tbl) do table.insert(t, v)  end
@@ -217,56 +207,72 @@ function table.concat(tbl1, tbl2)
   return res
 end
 
--- TODO: is this join? it looks identical
-function table.concatAll(tbls)
-  local res = {}
-  for i=1, #tbls do
-    for _,v in ipairs(tbls[i]) do
-      table.insert(res, v)
-    end
-  end
-  return res
-end
-
 list = {}
 
-function list.drop(n, t)
+-- @l :: [a]
+-- @n :: Int
+-- @returns :: [a]
+function list.drop(l, n)
   local res = {}
-  if n > #(t) then return {} end
-  for i = n+1, #(t) do
-    table.insert(res, t[i])
+  if n > #(l) then return {} end
+  for i = n+1, #(l) do
+    table.insert(res, l[i])
   end
   return res
 end
 
-function list.zip(t1, t2)
-  return list.zipWith(t1, t2, function(l,r) return {l,r} end)
-end
-
-function list.zipWith(f, t1, t2)
-  local res = {}
-  for i = 1, math.min(#(t1), #(t2)) do
-    table.insert(res, f(t1[i], t2[i]))
+-- @l :: [a]
+-- @f :: a -> Bool
+-- @returns :: Int
+function list.count(l, f)
+  local res = 0
+  for _, v in pairs(l) do
+    if f(v) then res = res + 1 end
   end
   return res
 end
 
-function list.foldLeft(t, initialValue, op)
+-- @l :: [a]
+-- @r :: [b]
+-- @returns :: [{a,b}]
+function list.zip(l, r)
+  return list.zipWith(l, r, function(a,b) return {a,b} end)
+end
+
+-- @f :: a -> b -> c
+-- @l :: [a]
+-- @r :: [b]
+-- @returns :: [c]
+function list.zipWith(f, l, r)
+  local res = {}
+  for i = 1, math.min(#(l), #(r)) do
+    table.insert(res, f(l[i], r[i]))
+  end
+  return res
+end
+
+function list.foldLeft(l, initialValue, op)
   local res = initialValue
-  for _,v in pairs(t) do res = op(res, v) end
+  for _,v in pairs(l) do res = op(res, v) end
   return res
 end
 
-function list.map(t, f)
+-- @l :: [a]
+-- @f :: a -> b
+-- @returns :: [b]
+function list.map(l, f)
   local res = {}
-  for _,v in pairs(t) do table.insert(res, f(v)) end
+  for _,v in pairs(l) do table.insert(res, f(v)) end
   return res
 end
 
-function list.foreach(t, f)
-  if t == nil then error("t is nil in list.foreach") end
+-- @l :: [a]
+-- @f :: a -> ()
+-- @returns :: ()
+function list.foreach(l, f)
+  if l == nil then error("t is nil in list.foreach") end
   if f == nil then error("f is nil in list.foreach") end
-  for _,v in pairs(t) do f(v) end
+  for _,v in pairs(l) do f(v) end
 end
 
 -- join :: [[a]] -> [a]
@@ -410,7 +416,7 @@ function list.span(t, pred)
       table.insert(resR, t[i])
     end
   end
-  return {resL, resR}
+  return resL, resR
 end
 
 function list.debug(l) list.foreach(l, log.debug) end

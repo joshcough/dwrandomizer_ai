@@ -106,15 +106,15 @@ function Items:contains(item)
 end
 
 function Items:numberOfTorches()
-  return table.count(self.slots, Torch)
+  return list.count(self.slots, function(i) return i == Torch end)
 end
 
 function Items:numberOfFairyWaters()
-  return table.count(self.slots, FairyWater)
+  return list.count(self.slots, function(i) return i == FairyWater end)
 end
 
 function Items:numberOfWings()
-  return table.count(self.slots, Wings)
+  return list.count(self.slots, function(i) return i == Wings end)
 end
 
 function Items:hasWings()
@@ -142,7 +142,7 @@ function Items:hasGwaelinsLove()
 end
 
 function Items:numberOfCursedBelts()
-  return table.count(self.slots, CursedBelt)
+  return list.count(self.slots, function(i) return i == CursedBelt end)
 end
 
 function Items:hasSilverHarp()

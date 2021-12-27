@@ -30,7 +30,7 @@ Game = class(function(a, memory, warps, graph, overworld, staticMaps)
 
   -- various other things
   a.exploreDest = nil
-  a.unlockedDoors = {}
+  a.unlockedDoors = Table3D()
   a.weaponAndArmorShops = memory:readWeaponAndArmorShops()
   a.searchSpots = memory:readSearchSpots()
   a.chests = memory:readChests()
@@ -111,7 +111,7 @@ function Game:goTo(dest)
     return GotoExitValue.AT_LOCATION
   end
   local path = self:shortestPath(src, dest)
-  log.debug("in goto, shortestPath: ", src, dest, path)
+  -- log.debug("in goto, shortestPath: ", src, dest, path)
 
   if path == Nothing then
     log.err("ERROR: Could not create path from: " .. tostring(src) .. " to: " .. tostring(dest))
@@ -219,7 +219,7 @@ end
 -- @s :: Script
 -- @returns :: TODO what should this function return?
 function Game:interpretScript(s)
-  log.debug("Script: " .. tostring(s))
+  -- log.debug("Script: " .. tostring(s))
   -- TODO: im not sure if these first three cases are really needed, but they dont hurt.
   if     self.dead then log.debug("We are dead, so not executing the script."); return
   elseif self.inBattle then self:executeBattle()
@@ -405,7 +405,7 @@ function swapSrcAndDest(w) return w:swap() end
 
 -- TODO: is this really needed? isnt this information just in memory somewhere? i swear it was.
 function Game:isDoorOpen(loc)
-  local res = list.any(list.map(self.unlockedDoors, function(d) return d.loc end), function(l) l:equals(loc.loc) end)
+  local res = self.unlockedDoors:contains(loc)
   -- log.debug("in Game:isDoorOpen", "loc", loc, "self.unlockedDoors", self.unlockedDoors, res)
   return res
 end
@@ -417,13 +417,15 @@ function Game:saveUnlockedDoor(loc)
   -- and then we will probably have to regenerate the graphs or whatever.
   if (loc:equalsPoint(Point(TantegelThroneRoom, 4, 7))) then
     self.graph:unlockThroneRoomDoor()
+  -- TODO: why do we need this? I cant remember
+  -- i feel like with the new stuff we are doing in this PR, this should be able to die
   elseif (loc:equalsPoint(Point(Rimuldar, 22, 23))) then
     self.graph:unlockRimuldar()
   end
-  table.insert(self.unlockedDoors, loc)
+  self.unlockedDoors:insert(loc, loc)
 end
 
-MovementCommandDir = enum.new("MovementCommand Direction", {
+MovementCommandDir = enum.new("MovementCommandDir", {
   "LEFT",
   "RIGHT",
   "UP",
@@ -453,7 +455,7 @@ function MovementCommand:__tostring()
   return "<MovementCommand" ..
          " from: "       .. tostring(self.from) ..
          ", to: "        .. tostring(self.to) ..
-         ", direction: " .. tostring(self.direction) ..
+         ", direction: " .. tostring(self.direction.name) ..
          ">"
 end
 
@@ -482,7 +484,7 @@ end
 -- @pathIn :: Path
 -- @returns :: CommandsList
 function Game:convertPathToCommands(pathIn)
-  log.debug("pathIn", pathIn)
+  -- log.debug("pathIn", pathIn)
   function directionFromP1ToP2(p1, p2)
     local res = {}
 
@@ -501,7 +503,7 @@ function Game:convertPathToCommands(pathIn)
     -- it will almost definitely change though, so putting comments here.
     function nextTileIsDoor()
       if p2.mapId == OverWorldId then return false
-      else return self.staticMaps[p2.mapId]:getTileAt(p2.x, p2.y, self).name == "Door"
+      else return self.staticMaps[p2.mapId]:getTileAt(p2.x, p2.y).name == "Door"
       end
     end
 
@@ -523,7 +525,7 @@ function Game:convertPathToCommands(pathIn)
     return res
   end
 
-  local zippedPath = list.zipWith(directionFromP1ToP2, pathIn.path, list.drop(1, pathIn.path))
+  local zippedPath = list.zipWith(directionFromP1ToP2, pathIn.path, list.drop(pathIn.path, 1))
   local joinedZippedPath = list.join(zippedPath)
 
   local res = list.foldLeft(joinedZippedPath, {}, function(acc, c)
@@ -614,7 +616,7 @@ function Game:dealWithAnyGoals()
   log.debug("in dealWithAnyGoals")
   self.goals:debug(self)
 
-  local maybeAchievableGoal = list.toMaybe(self.goals:reachableReadyGoals(self:getLocation()))
+  local maybeAchievableGoal = list.toMaybe(self.goals:reachableReadyGoals(self))
   if maybeAchievableGoal:isDefined() then
     log.debug("Headed towards achievable goal", maybeAchievableGoal.value)
     return Just(Right(maybeAchievableGoal.value))
@@ -1332,7 +1334,7 @@ end
 
 -- @returns :: ()
 function Game:closeCmdWindow()
-  log.debug("Closing Non-combat command window")
+  -- log.debug("Closing Non-combat command window")
   self.cmdWindowOpen = false
 end
 
@@ -1347,11 +1349,11 @@ end
 -- @returns :: ()
 function Game:windowXCursor()
   self.windowX = self.memory:readRAM(0xD8)
-  log.debug("Cursor X pos is now", self.windowX)
+  -- log.debug("Cursor X pos is now", self.windowX)
 end
 
 -- @returns :: ()
 function Game:windowYCursor()
   self.windowY = self.memory:readRAM(0xD9)
-  log.debug("Cursor Y pos is now", self.windowY)
+  -- log.debug("Cursor Y pos is now", self.windowY)
 end
